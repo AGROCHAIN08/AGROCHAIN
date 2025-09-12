@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AgroChain Signup</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="signup-container">
+    <!-- Stepper navigation -->
+    <ul class="stepper">
+      <li class="active">1. Basic Info</li>
+      <li>2. Select Role</li>
+      <li>3. Additional Details</li>
+    </ul>
+
+    <form id="signupForm">
+      <!-- Step 1: Basic Info -->
+      <div class="form-step active" id="step1">
+        <label>First Name <span class="required">*</span></label>
+        <input type="text" id="firstName" name="firstName" required>
+
+        <label>Last Name</label>
+        <input type="text" name="lastName">
+
+        <label>Mobile <span class="required">*</span></label>
+        <input type="text" id="mobile" name="mobile" required>
+
+        <label>Email <span class="required">*</span></label>
+        <input type="email" id="email" name="email" required>
+
+        <div class="buttons">
+          <span></span>
+          <button type="button" id="next1">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Role Selection -->
+      <div class="form-step" id="step2">
+        <label>Select Role <span class="required">*</span></label>
+        <select id="role" name="role" required>
+          <option value="">Choose Role</option>
+          <option value="farmer">Farmer</option>
+          <option value="dealer">Dealer</option>
+          <option value="retailer">Retailer</option>
+        </select>
+
+        <div class="buttons">
+          <button type="button" id="back1">Back</button>
+          <button type="button" id="next2">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Additional Details -->
+      <div class="form-step" id="step3">
+        <!-- Farmer fields -->
+        <div id="farmerFields" style="display:none">
+          <label>Aadhaar (12 digits) <span class="required">*</span></label>
+          <input type="text" id="aadhaar" name="aadhaar">
+          <label>Farm Location <span class="required">*</span></label>
+          <input type="text" id="farmLocation" name="farmLocation">
+          <label>Geo Tag <span class="required">*</span></label>
+          <input type="text" id="geoTag" name="geoTag">
+          <label>Farm Size <span class="required">*</span></label>
+          <input type="text" id="farmSize" name="farmSize">
+          <label>Crops Grown <span class="required">*</span></label>
+          <input type="text" id="cropsGrown" name="cropsGrown">
+        </div>
+
+        <!-- Dealer fields -->
+        <div id="dealerFields" style="display:none">
+          <label>Business Name <span class="required">*</span></label>
+          <input type="text" id="businessName" name="businessName">
+          <label>GSTIN <span class="required">*</span></label>
+          <input type="text" id="gstin" name="gstin">
+          <label>Warehouse Address <span class="required">*</span></label>
+          <input type="text" id="warehouseAddress" name="warehouseAddress">
+          <label>Preferred Commodities</label>
+          <input type="text" id="preferredCommodities" name="preferredCommodities">
+        </div>
+
+        <!-- Retailer fields -->
+        <div id="retailerFields" style="display:none">
+          <label>Shop Name <span class="required">*</span></label>
+          <input type="text" id="shopName" name="shopName">
+          <label>Shop Address <span class="required">*</span></label>
+          <input type="text" id="shopAddress" name="shopAddress">
+          <label>Shop Type <span class="required">*</span></label>
+          <input type="text" id="shopType" name="shopType">
+          <label>Monthly Purchase Volume</label>
+          <input type="text" id="monthlyPurchaseVolume" name="monthlyPurchaseVolume">
+        </div>
+
+        <div class="buttons">
+          <button type="button" id="back2">Back</button>
+          <button type="submit">Signup</button>
+        </div>
+      </div>
+    </form>
+    <div id="message"></div>
+  </div>
+
+  <script src="js/signup.js"></script>
+</body>
+</html>

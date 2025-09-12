@@ -17,7 +17,7 @@ const farmerSchema = new mongoose.Schema({
                 enum: ["kg", "litre", "ton", "dozen"]
             },
             productPrice: {
-                type: Number, // price per unit
+                type: Number, 
                 required: true,
             },
             expiryDate: {
