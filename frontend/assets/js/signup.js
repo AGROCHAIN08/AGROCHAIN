@@ -37,8 +37,8 @@ document.getElementById("next1").addEventListener("click", () => {
     alert("Mobile number must be exactly 10 digits.");
     return;
   }
-  if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email)) {
-    alert("Email must be a valid Gmail address (ending with @gmail.com).");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert("Please enter a valid email address.");
     return;
   }
   goToStep(1);
