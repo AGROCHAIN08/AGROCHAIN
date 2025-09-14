@@ -4,14 +4,17 @@
   <meta charset="UTF-8">
   <title>AgroChain Signup</title>
   <link rel="stylesheet" href="../assets/css/signup.css">
+  <!-- Google Sign-In API -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div class="signup-container">
     <!-- Stepper navigation -->
     <ul class="stepper">
       <li class="active">1. Basic Info</li>
-      <li>2. Select Role</li>
-      <li>3. Additional Details</li>
+      <li>2. Email Verification</li>
+      <li>3. Select Role</li>
+      <li>4. Additional Details</li>
     </ul>
 
     <form id="signupForm">
@@ -21,7 +24,8 @@
         <input type="text" id="firstName" name="firstName" required>
 
         <label>Last Name</label>
-        <input type="text" name="lastName">
+        <input type="text" id="lastName" name="lastName">
+
 
         <label>Mobile <span class="required">*</span></label>
         <input type="text" id="mobile" name="mobile" required>
@@ -35,8 +39,64 @@
         </div>
       </div>
 
-      <!-- Step 2: Role Selection -->
+      <!-- Step 2: Email Verification -->
       <div class="form-step" id="step2">
+        <div class="verification-container">
+          <h3>Verify Your Email</h3>
+          <p>Choose your verification method:</p>
+          
+          <!-- Google Sign-In Button -->
+          <div class="google-signin-section">
+            <h4>Option 1: Sign in with Google</h4>
+            <div id="g_id_onload"
+                 data-client_id="262898642473-niisbi298nfo33a175rju6acmpkatrs4.apps.googleusercontent.com"
+                 data-context="signup"
+                 data-ux_mode="popup"
+                 data-callback="handleGoogleSignIn"
+                 data-auto_prompt="false">
+            </div>
+            
+            <div class="g_id_signin" 
+                 data-type="standard"
+                 data-shape="rectangular"
+                 data-theme="outline"
+                 data-text="signin_with"
+                 data-size="large"
+                 data-logo_alignment="left">
+            </div>
+          </div>
+
+          <div class="divider">
+            <span>OR</span>
+          </div>
+
+          <!-- Email OTP Section -->
+          <div class="email-otp-section">
+            <h4>Option 2: Email Verification Code</h4>
+            <p>We'll send a verification code to <span id="emailDisplay"></span></p>
+            
+            <button type="button" id="sendOtpBtn" class="otp-btn">Send Verification Code</button>
+            
+            <div id="otpSection" style="display: none;">
+              <label>Enter 6-digit verification code</label>
+              <input type="text" id="otpInput" maxlength="6" placeholder="000000">
+              <button type="button" id="verifyOtpBtn" class="otp-btn">Verify Code</button>
+              <p class="otp-timer" id="otpTimer"></p>
+              <button type="button" id="resendOtpBtn" style="display: none;">Resend Code</button>
+            </div>
+          </div>
+          
+          <div id="verificationStatus"></div>
+        </div>
+
+        <div class="buttons">
+          <button type="button" id="back1">Back</button>
+          <button type="button" id="next2" disabled>Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Role Selection -->
+      <div class="form-step" id="step3">
         <label>Select Role <span class="required">*</span></label>
         <select id="role" name="role" required>
           <option value="">Choose Role</option>
@@ -46,13 +106,13 @@
         </select>
 
         <div class="buttons">
-          <button type="button" id="back1">Back</button>
-          <button type="button" id="next2">Continue</button>
+          <button type="button" id="back2">Back</button>
+          <button type="button" id="next3">Continue</button>
         </div>
       </div>
 
-      <!-- Step 3: Additional Details -->
-      <div class="form-step" id="step3">
+      <!-- Step 4: Additional Details -->
+      <div class="form-step" id="step4">
         <!-- Farmer fields -->
         <div id="farmerFields" style="display:none">
           <label>Aadhaar (12 digits) <span class="required">*</span></label>
@@ -92,7 +152,7 @@
         </div>
 
         <div class="buttons">
-          <button type="button" id="back2">Back</button>
+          <button type="button" id="back3">Back</button>
           <button type="submit">Signup</button>
         </div>
       </div>

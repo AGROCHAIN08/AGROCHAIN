@@ -77,6 +77,224 @@ button {
   border-radius: 4px;
   cursor: pointer;
 }
+
 button[disabled] {
   background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Email verification specific styles */
+.verification-container {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.verification-container h3 {
+  color: #2e7d32;
+  margin-bottom: 20px;
+}
+
+.verification-container p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+#emailDisplay {
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+/* Google Sign-In Section */
+.google-signin-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 25px;
+  margin: 20px 0;
+  border: 1px solid #e9ecef;
+}
+
+.google-signin-section h4 {
+  color: #2e7d32;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.g_id_signin {
+  margin: 15px auto;
+  display: flex;
+  justify-content: center;
+}
+
+/* Divider */
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 30px 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #ddd;
+}
+
+.divider span {
+  background: #fff;
+  padding: 0 20px;
+  color: #666;
+  font-weight: bold;
+  position: relative;
+  z-index: 1;
+}
+
+/* Email OTP Section */
+.email-otp-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 25px;
+  margin: 20px 0;
+  border: 1px solid #e9ecef;
+}
+
+.email-otp-section h4 {
+  color: #2e7d32;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.otp-btn {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin: 10px 5px;
+}
+
+.otp-btn:hover:not([disabled]) {
+  background: #1b5e20;
+}
+
+.otp-btn[disabled] {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+#otpSection {
+  margin-top: 20px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+#otpInput {
+  font-size: 18px;
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin: 10px 0;
+  max-width: 200px;
+}
+
+.otp-timer {
+  color: #666;
+  font-size: 14px;
+  margin: 10px 0;
+}
+
+#verificationStatus {
+  margin-top: 15px;
+  min-height: 25px;
+}
+
+#verificationStatus p {
+  margin: 5px 0;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+#verificationStatus p[style*="green"] {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+#verificationStatus p[style*="red"] {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Success/Error messages */
+.message-success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 15px 0;
+}
+
+.message-error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 15px 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .signup-container {
+    width: 90%;
+    margin: 20px auto;
+    padding: 20px;
+  }
+  
+  .stepper {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .stepper li {
+    text-align: left;
+  }
+  
+  .google-signin-section,
+  .email-otp-section {
+    padding: 15px;
+  }
+  
+  .divider {
+    margin: 20px 0;
+  }
+}
+
+/* Animation for smooth transitions */
+.form-step {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

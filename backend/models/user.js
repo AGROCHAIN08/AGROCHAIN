@@ -6,6 +6,10 @@ const userSchema = new mongoose.Schema({
   lastName: { type: String },
   mobile: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  
+  // Email verification fields
+  emailVerified: { type: Boolean, default: false },
+  googleAuth: { type: Boolean, default: false },
 
   // Farmer fields
   aadhaar: { type: String },

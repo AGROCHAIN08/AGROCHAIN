@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Dashboard</title>
+</head>
+<body>
+    <!-- Farmer Dashboard -->
+<h2>Welcome Farmer Dashboard</h2>
+
+<!-- Sign Out button -->
+<button id="signoutBtn" style="margin-top:20px;">Sign Out</button>
+
+<script>
+  document.getElementById("signoutBtn").addEventListener("click", () => {
+    // If you later store token in localStorage/sessionStorage, clear it here
+    // localStorage.removeItem("authToken");
+
+    // Redirect to login page
+    window.location.href = "login.html";
+  });
+</script>
+
+</body>
+</html>
