@@ -323,8 +323,8 @@ exports.signup = async (req, res) => {
       if (!req.body.gstin) {
         return res.status(400).json({ msg: "Dealer GSTIN is required" });
       }
-      if (req.body.mobile.length !== 12) {
-        return res.status(400).json({ msg: "Dealer mobile must be 12 digits" });
+      if (req.body.mobile.length !== 10) {
+        return res.status(400).json({ msg: "Dealer mobile must be 10 digits" });
       }
     }
 
@@ -386,8 +386,8 @@ exports.signupWithGoogle = async (req, res) => {
       if (!otherData.gstin) {
         return res.status(400).json({ msg: "Dealer GSTIN is required" });
       }
-      if (otherData.mobile && otherData.mobile.length !== 12) {
-        return res.status(400).json({ msg: "Dealer mobile must be 12 digits" });
+      if (otherData.mobile && otherData.mobile.length !== 10) {
+        return res.status(400).json({ msg: "Dealer mobile must be 10 digits" });
       }
     }
 

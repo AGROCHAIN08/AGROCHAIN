@@ -18,6 +18,9 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
+app.use("/api/farmer", require("./routes/farmer"));
+app.use("/api/dealer", require("./routes/dealer"));
+
 
 // Health check route
 app.get("/", (req, res) => {

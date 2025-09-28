@@ -1,24 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dealer Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Dealer Dashboard</title>
+  <link rel="stylesheet" href="../assets/css/dealer.css">
 </head>
 <body>
-    <h2>Welcome Dealer Dashboard</h2>
+  <div class="sidebar">
+    <h2>🚛 Dealer Panel</h2>
+    <button id="vehiclesBtn" class="active">🚐 Vehicle Management</button>
+    <button id="browseBtn">🌾 Browse Products</button>
+    <button id="ordersBtn">📦 My Orders</button>
+    <button id="profileBtn">👤 Profile</button>
+    <button id="signoutBtn">🚪 Sign Out</button>
+  </div>
 
-<!-- Sign Out button -->
-<button id="signoutBtn" style="margin-top:20px;">Sign Out</button>
+  <div class="content">
+    <!-- Vehicle Management Section -->
+    <section id="vehiclesSection" class="section active">
+      <div class="section-header">
+        <h1 class="section-title">Vehicle Management</h1>
+      </div>
 
-<script>
-  document.getElementById("signoutBtn").addEventListener("click", () => {
-    // If you later store token in localStorage/sessionStorage, clear it here
-    // localStorage.removeItem("authToken");
+      <!-- Add Vehicle Form -->
+      <div class="vehicle-form">
+        <h3>Add New Vehicle</h3>
+        <form id="vehicleForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Vehicle ID *</label>
+              <input type="text" id="vehicleId" placeholder="e.g., DL-14-RE-5678" required>
+            </div>
+            <div class="form-group">
+              <label>Vehicle Type *</label>
+              <select id="vehicleType" required>
+                <option value="">Select Vehicle Type</option>
+                <option value="Reefer Truck (5 MT)">Reefer Truck (5 MT)</option>
+                <option value="Insulated Van (2 MT)">Insulated Van (2 MT)</option>
+                <option value="Inspection Van">Inspection Van</option>
+                <option value="Heavy Truck (10 MT)">Heavy Truck (10 MT)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Temperature Capacity *</label>
+              <input type="text" id="temperatureCapacity" placeholder="e.g., -18°C to 0°C" required>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Add Vehicle</button>
+        </form>
+      </div>
 
-    // Redirect to login page
-    window.location.href = "login.html";
-  });
-</script>
+      <div id="vehicleMessage"></div>
+
+      <!-- Vehicles Grid -->
+      <div id="vehiclesGrid" class="vehicles-grid">
+        <!-- Vehicles will be loaded here -->
+      </div>
+    </section>
+
+    <!-- Browse Products Section -->
+    <section id="browseSection" class="section">
+      <div class="section-header">
+        <h1 class="section-title">Browse Farmer Products</h1>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters">
+        <div class="filters-grid">
+          <div class="form-group">
+            <label>Product Type</label>
+            <select id="filterProductType">
+              <option value="">All Types</option>
+              <option value="Fruit">Fruit</option>
+              <option value="Vegetable">Vegetable</option>
+              <option value="Cereal">Cereal</option>
+              <option value="Spices">Spices</option>
+              <option value="Pulses">Pulses</option>
+              <option value="Oil Seeds">Oil Seeds</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Variety</label>
+            <input type="text" id="filterVariety" placeholder="e.g., Alphonso Mango">
+          </div>
+          <div class="form-group">
+            <label>Max Price (₹)</label>
+            <input type="number" id="filterPrice" placeholder="Enter max price">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="filterStatus">
+              <option value="">All Status</option>
+              <option value="Available">Available</option>
+              <option value="Inspection Initiated">Inspection Initiated</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <button class="btn-primary" onclick="applyFilters()">Apply Filters</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="browseMessage"></div>
+
+      <!-- Products Grid -->
+      <div id="productsGrid" class="products-grid">
+        <!-- Products will be loaded here -->
+      </div>
+    </section>
+
+    <!-- Orders Section -->
+    <section id="ordersSection" class="section">
+      <div class="section-header">
+        <h1 class="section-title">My Orders</h1>
+      </div>
+
+      <div id="ordersGrid" class="orders-grid">
+        <!-- Orders will be loaded here -->
+      </div>
+    </section>
+
+    <!-- Profile Section -->
+    <section id="profileSection" class="section">
+      <div class="section-header">
+        <h1 class="section-title">My Profile</h1>
+      </div>
+      <div id="profileInfo"></div>
+    </section>
+  </div>
+
+  <!-- Vehicle Assignment Modal -->
+  <div id="assignModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Assign Vehicle</h3>
+      <div id="assignmentDetails"></div>
+      <div class="form-group">
+        <label>Select Vehicle</label>
+        <select id="vehicleSelect">
+          <option value="">Choose available vehicle...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity to Purchase (kg)</label>
+        <input type="number" id="purchaseQuantity" placeholder="Enter quantity">
+      </div>
+      <button class="btn-primary" onclick="confirmAssignment()">Confirm Assignment</button>
+    </div>
+  </div>
+   <script src="../assets/js/dealer.js"></script>
+  
 </body>
 </html>

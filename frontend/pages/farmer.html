@@ -1,26 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farmer Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Farmer Dashboard</title>
+  <link rel="stylesheet" href="../assets/css/farmer.css">
 </head>
 <body>
-    <!-- Farmer Dashboard -->
-<h2>Welcome Farmer Dashboard</h2>
+    <div class="sidebar">
+    <h2>👨‍🌾 Farmer Panel</h2>
+    <button id="inventoryBtn">Inventory</button>
+    <button id="ordersBtn">Orders</button>
+    <button id="profileBtn">Profile</button>
+    <button id="signoutBtn">Sign Out</button>
+  </div>
 
-<!-- Sign Out button -->
-<button id="signoutBtn" style="margin-top:20px;">Sign Out</button>
+  <!-- Main Content -->
+  <div class="content">
 
-<script>
-  document.getElementById("signoutBtn").addEventListener("click", () => {
-    // If you later store token in localStorage/sessionStorage, clear it here
-    // localStorage.removeItem("authToken");
+    <!-- Inventory Section -->
+    <section id="inventorySection">
+      <h2>🌾 My Inventory</h2>
+      <button class="add-btn" id="addCropToggleBtn">Add New Product</button>
 
-    // Redirect to login page
-    window.location.href = "login.html";
-  });
-</script>
+      <form id="cropForm" style="display:none;" enctype="multipart/form-data">
+        <div class="form-row">
+          <label>Product Type: 
+            <select id="productType" required>
+              <option value="">Select Product Type</option>
+              <option value="Fruit">Fruit</option>
+              <option value="Vegetable">Vegetable</option>
+              <option value="Cereal">Cereal</option>
+              <option value="Spices">Spices</option>
+              <option value="Pulses">Pulses</option>
+              <option value="Oil Seeds">Oil Seeds</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+        </div>
 
+        <div class="form-row">
+          <label>Variety/Species: <input type="text" id="varietySpecies" placeholder="e.g., Alphonso Mango, Red Delicious Apple" required></label>
+        </div>
+
+        <div class="form-row">
+          <label>Harvest Quantity: <input type="number" id="harvestQuantity" step="0.01" required></label>
+          <label>Unit of Sale: 
+            <select id="unitOfSale" required>
+              <option value="">Select Unit</option>
+              <option value="Kg">Kg</option>
+              <option value="Box (20 Kg)">Box (20 Kg)</option>
+              <option value="Crate">Crate</option>
+              <option value="Quintal">Quintal</option>
+              <option value="Ton">Ton</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>Target Price (₹): <input type="number" id="targetPrice" step="0.01" required></label>
+        </div>
+
+        <div class="form-row">
+          <label>Geotag Location: 
+            <button type="button" id="getLocationBtn" class="location-btn">📍 Get Current Location</button>
+            <input type="text" id="geotagLocation" placeholder="Location will be auto-detected" readonly required>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>Origin Latitude: <input type="number" id="originLatitude" step="0.000001" placeholder="e.g., 34.0532" readonly required></label>
+        </div>
+
+        <div class="form-row">
+          <label>Origin Longitude: <input type="number" id="originLongitude" step="0.000001" placeholder="e.g., 74.8308" readonly required></label>
+        </div>
+
+        <div class="form-row">
+          <label>Field Address: 
+            <textarea id="fieldAddress" rows="2" placeholder="Village Name, Nearest Landmark/Road" required></textarea>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>Upload Product Image: <input type="file" id="image" accept="image/*" required></label>
+        </div>
+
+        <div class="form-row">
+          <label>Availability Status: 
+            <select id="availabilityStatus" required>
+              <option value="Available">Available</option>
+              <option value="Out of Stock">Out of Stock</option>
+              <option value="Coming Soon">Coming Soon</option>
+            </select>
+          </label>
+        </div>
+
+        <button type="submit" class="submit-btn">Save Product</button>
+      </form>
+
+      <p id="cropError" style="color:red;"></p>
+      <p id="successMsg" class="message"></p>
+
+      <div id="productsGrid" class="products-grid">
+        <!-- Products will be displayed as cards here -->
+      </div>
+    </section>
+
+    <!-- Orders Section -->
+    <section id="ordersSection" style="display:none;">
+      <h2>📦 My Orders</h2>
+      
+      <!-- Notifications Panel -->
+      <div class="notifications-panel">
+        <h3>🔔 Recent Notifications</h3>
+        <div id="notificationsList"></div>
+      </div>
+
+      <!-- Orders Grid -->
+      <div id="farmerOrdersGrid" class="orders-grid">
+        <!-- Orders will be loaded here -->
+      </div>
+    </section>
+
+    <!-- Profile Section -->
+    <section id="profileSection" style="display:none;">
+      <h2>👤 My Profile</h2>
+      <div id="profileInfo"></div>
+    </section>
+
+  </div>
+
+  <script src="../assets/js/farmer.js"></script>
 </body>
 </html>

@@ -237,24 +237,39 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
   // Role-specific validation
   if (role === "farmer") {
     const aadhaar = document.getElementById("aadhaar").value.trim();
+    const farmLocation = document.getElementById("farmLocation").value.trim();
+    const geoTag = document.getElementById("geoTag").value.trim();
+    const farmSize = document.getElementById("farmSize").value.trim();
+    const cropsGrown = document.getElementById("cropsGrown").value.trim();
+
     if (!/^\d{12}$/.test(aadhaar)) {
       alert("Aadhaar must be exactly 12 digits.");
+      return;
+    }
+    if (!farmLocation || !geoTag || !farmSize || !cropsGrown) {
+      alert("Please fill all farmer details.");
       return;
     }
   }
 
   if (role === "dealer") {
+    const businessName = document.getElementById("businessName").value.trim();
     const gstin = document.getElementById("gstin").value.trim();
-    if (!gstin) {
-      alert("GSTIN is required for dealers.");
+    const warehouseAddress = document.getElementById("warehouseAddress").value.trim();
+
+    if (!businessName || !gstin || !warehouseAddress) {
+      alert("Please fill all dealer details.");
       return;
     }
   }
 
   if (role === "retailer") {
     const shopName = document.getElementById("shopName").value.trim();
-    if (!shopName) {
-      alert("Shop name is required for retailers.");
+    const shopAddress = document.getElementById("shopAddress").value.trim();
+    const shopType = document.getElementById("shopType").value.trim();
+
+    if (!shopName || !shopAddress || !shopType) {
+      alert("Please fill all retailer details.");
       return;
     }
   }
