@@ -124,79 +124,129 @@ exports.getAllProducts = async (req, res) => {
   }
 };
 
-// ---------------- Assign Vehicle to Product ----------------
+// ---------------- Assign Vehicle to Product (FIXED) ----------------
+// ---------------- Simplified and Robust Assign Vehicle Function ----------------
 exports.assignVehicle = async (req, res) => {
   try {
+    console.log("=== VEHICLE ASSIGNMENT START ===");
+    console.log("Raw request body:", JSON.stringify(req.body, null, 2));
+    
     const { dealerEmail, productId, vehicleId, quantity, farmerEmail } = req.body;
 
-    // Validate input
+    // Basic validation
     if (!dealerEmail || !productId || !vehicleId || !quantity || !farmerEmail) {
+      console.log("Missing required fields");
       return res.status(400).json({ msg: "All fields are required" });
     }
 
-    // Find dealer and vehicle
+    console.log("1. Finding dealer...");
     const dealer = await User.findOne({ email: dealerEmail, role: "dealer" });
-    if (!dealer) return res.status(404).json({ msg: "Dealer not found" });
+    if (!dealer) {
+      console.log("Dealer not found");
+      return res.status(404).json({ msg: "Dealer not found" });
+    }
+    console.log("✓ Dealer found");
 
-    const vehicle = dealer.vehicles.id(vehicleId);
-    if (!vehicle) return res.status(404).json({ msg: "Vehicle not found" });
-
+    console.log("2. Finding vehicle...");
+    console.log("Looking for vehicle ID:", vehicleId);
+    console.log("Available vehicles:", dealer.vehicles?.map(v => ({ id: v._id?.toString(), vehicleId: v.vehicleId })));
+    
+    const vehicleIndex = dealer.vehicles?.findIndex(v => v._id?.toString() === vehicleId?.toString());
+    if (vehicleIndex === -1 || vehicleIndex === undefined) {
+      console.log("Vehicle not found");
+      return res.status(404).json({ msg: "Vehicle not found" });
+    }
+    
+    const vehicle = dealer.vehicles[vehicleIndex];
     if (vehicle.currentStatus !== 'AVAILABLE') {
+      console.log("Vehicle not available, status:", vehicle.currentStatus);
       return res.status(400).json({ msg: "Vehicle is not available" });
     }
+    console.log("✓ Vehicle found and available");
 
-    // Find farmer and product
+    console.log("3. Finding farmer...");
     const farmer = await User.findOne({ email: farmerEmail, role: "farmer" });
-    if (!farmer) return res.status(404).json({ msg: "Farmer not found" });
+    if (!farmer) {
+      console.log("Farmer not found");
+      return res.status(404).json({ msg: "Farmer not found" });
+    }
+    console.log("✓ Farmer found");
 
-    const product = farmer.crops.id(productId);
-    if (!product) return res.status(404).json({ msg: "Product not found" });
-
+    console.log("4. Finding product...");
+    console.log("Looking for product ID:", productId);
+    console.log("Available products:", farmer.crops?.map(c => ({ id: c._id?.toString(), name: c.varietySpecies })));
+    
+    const productIndex = farmer.crops?.findIndex(c => c._id?.toString() === productId?.toString());
+    if (productIndex === -1 || productIndex === undefined) {
+      console.log("Product not found");
+      return res.status(404).json({ msg: "Product not found" });
+    }
+    
+    const product = farmer.crops[productIndex];
     if (product.availabilityStatus !== 'Available') {
+      console.log("Product not available, status:", product.availabilityStatus);
       return res.status(400).json({ msg: "Product is not available" });
     }
 
-    if (quantity > product.harvestQuantity) {
+    if (parseFloat(quantity) > parseFloat(product.harvestQuantity)) {
+      console.log("Insufficient quantity");
       return res.status(400).json({ msg: "Requested quantity exceeds available stock" });
     }
+    console.log("✓ Product found and available");
 
-    // Update product status
-    product.availabilityStatus = 'Inspection Initiated';
+    console.log("5. Updating product status...");
+    farmer.crops[productIndex].availabilityStatus = 'Inspection Initiated';
     await farmer.save();
+    console.log("✓ Product status updated");
 
-    // Update vehicle status
-    vehicle.currentStatus = 'ASSIGNED';
-    vehicle.assignedTo = {
-      productId: productId,
+    console.log("6. Updating vehicle status...");
+    dealer.vehicles[vehicleIndex].currentStatus = 'ASSIGNED';
+    dealer.vehicles[vehicleIndex].assignedTo = {
+      productId: productId?.toString(),
       productName: product.varietySpecies,
       farmerEmail: farmerEmail,
       farmerName: `${farmer.firstName} ${farmer.lastName || ''}`.trim(),
-      quantity: quantity,
+      quantity: parseFloat(quantity),
       assignedDate: new Date()
     };
     await dealer.save();
+    console.log("✓ Vehicle status updated");
 
-    // Create order record
-    const newOrder = new Order({
-      dealerEmail,
-      farmerEmail,
-      productId,
-      vehicleId,
-      quantity,
-      totalAmount: quantity * product.targetPrice,
+    console.log("7. Creating order...");
+    const orderData = {
+      dealerEmail: dealerEmail,
+      farmerEmail: farmerEmail,
+      productId: productId?.toString(),
+      vehicleId: vehicleId?.toString(),
+      quantity: parseFloat(quantity),
+      totalAmount: parseFloat(quantity) * parseFloat(product.targetPrice),
       status: 'Vehicle Assigned',
       assignedDate: new Date()
-    });
+    };
+    
+    console.log("Order data:", orderData);
+    
+    const newOrder = new Order(orderData);
     await newOrder.save();
+    console.log("✓ Order created:", newOrder._id);
 
+    console.log("=== ASSIGNMENT SUCCESSFUL ===");
     res.json({ 
       msg: "Vehicle assigned successfully",
-      orderId: newOrder._id
+      orderId: newOrder._id,
+      success: true
     });
-    
+
   } catch (err) {
-    console.error("Error assigning vehicle:", err);
-    res.status(500).json({ msg: "Error assigning vehicle" });
+    console.error("=== ASSIGNMENT ERROR ===");
+    console.error("Error:", err);
+    console.error("Stack:", err.stack);
+    
+    res.status(500).json({ 
+      msg: "Internal server error during vehicle assignment",
+      error: err.message,
+      success: false
+    });
   }
 };
 
@@ -214,9 +264,17 @@ exports.getDealerOrders = async (req, res) => {
       const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
       const vehicle = dealer?.vehicles.id(order.vehicleId);
 
-      // Get farmer details
+      // Get farmer details and find product
       const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
-      const product = farmer?.crops.id(order.productId);
+      let product = null;
+      
+      if (farmer && farmer.crops) {
+        farmer.crops.forEach(crop => {
+          if (crop._id.toString() === order.productId.toString()) {
+            product = crop;
+          }
+        });
+      }
 
       if (dealer && farmer && vehicle && product) {
         populatedOrders.push({

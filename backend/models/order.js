@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const orderSchema = new mongoose.Schema({
   dealerEmail: { type: String, required: true },
   farmerEmail: { type: String, required: true },
-  productId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  vehicleId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  productId: { type: String, required: true }, // Changed from ObjectId to String
+  vehicleId: { type: String, required: true }, // Changed from ObjectId to String
   quantity: { type: Number, required: true },
   totalAmount: { type: Number, required: true },
   status: { 
