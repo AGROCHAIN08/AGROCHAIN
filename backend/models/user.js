@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
   farmSize: { type: String },
   cropsGrown: [{ type: String }],
 
-  // Updated crops schema with new field structure
+  // FIXED: Updated crops schema with corrected enum values
   crops: [
     {
       productType: { type: String, required: true }, // Fruit, Vegetable, Cereal, etc.
@@ -30,7 +30,12 @@ const userSchema = new mongoose.Schema({
       originLatitude: { type: Number, required: true }, // GPS latitude
       originLongitude: { type: Number, required: true }, // GPS longitude
       fieldAddress: { type: String, required: true }, // Village, landmark details
-      availabilityStatus: { type: String, enum: ["Available", "Out of Stock", "Coming Soon"], default: "Available" },
+      // FIXED: Updated enum values to match what's being used in the code
+      availabilityStatus: { 
+        type: String, 
+        enum: ["Available", "Out of Stock", "Coming Soon", "Inspection Initiated"], // Added "Inspection Initiated"
+        default: "Available" 
+      },
       imageUrl: { type: String, required: true }, // Product image
       dateAdded: { type: Date, default: Date.now },
       lastUpdated: { type: Date, default: Date.now }

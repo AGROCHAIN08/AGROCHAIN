@@ -200,7 +200,7 @@ exports.deleteCrop = async (req, res) => {
     const crop = farmer.crops[cropIndex];
     const activeOrder = await Order.findOne({ 
       farmerEmail: farmer.email, 
-      productId: crop._id, 
+      productId: crop._id.toString(), // Convert to string for comparison
       status: { $in: ['Vehicle Assigned', 'In Transit'] }
     });
 
@@ -222,7 +222,7 @@ exports.deleteCrop = async (req, res) => {
   }
 };
 
-// ---------------- Get Farmer Orders ----------------
+// ---------------- Get Farmer Orders (FIXED) ----------------
 exports.getFarmerOrders = async (req, res) => {
   try {
     const orders = await Order.find({ farmerEmail: req.params.email })
@@ -238,7 +238,16 @@ exports.getFarmerOrders = async (req, res) => {
 
       // Get farmer and product details
       const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
-      const product = farmer?.crops.id(order.productId);
+      
+      // FIXED: Find product using string comparison
+      let product = null;
+      if (farmer && farmer.crops) {
+        farmer.crops.forEach(crop => {
+          if (crop._id.toString() === order.productId.toString()) {
+            product = crop;
+          }
+        });
+      }
 
       if (dealer && farmer && vehicle && product) {
         populatedOrders.push({
@@ -253,6 +262,13 @@ exports.getFarmerOrders = async (req, res) => {
           },
           productDetails: product
         });
+      } else {
+        console.log("Missing data for order:", order._id, {
+          dealer: !!dealer,
+          farmer: !!farmer,
+          vehicle: !!vehicle,
+          product: !!product
+        });
       }
     }
 
@@ -263,7 +279,7 @@ exports.getFarmerOrders = async (req, res) => {
   }
 };
 
-// ---------------- Get Farmer Notifications ----------------
+// ---------------- Get Farmer Notifications (FIXED) ----------------
 exports.getFarmerNotifications = async (req, res) => {
   try {
     const farmerEmail = req.params.email;
@@ -280,7 +296,16 @@ exports.getFarmerNotifications = async (req, res) => {
       const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
       const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
       const vehicle = dealer?.vehicles.id(order.vehicleId);
-      const product = farmer?.crops.id(order.productId);
+      
+      // FIXED: Find product using string comparison
+      let product = null;
+      if (farmer && farmer.crops) {
+        farmer.crops.forEach(crop => {
+          if (crop._id.toString() === order.productId.toString()) {
+            product = crop;
+          }
+        });
+      }
 
       if (dealer && vehicle && product) {
         notifications.push({
