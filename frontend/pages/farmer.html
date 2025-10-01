@@ -9,7 +9,8 @@
     <div class="sidebar">
     <h2>👨‍🌾 Farmer Panel</h2>
     <button id="inventoryBtn">Inventory</button>
-    <button id="ordersBtn">Orders</button>
+    <button id="ordersBtn">My Active Orders</button>
+    <button id="historyBtn">Order History</button>
     <button id="profileBtn">Profile</button>
     <button id="signoutBtn">Sign Out</button>
   </div>
@@ -108,7 +109,7 @@
 
     <!-- Orders Section -->
     <section id="ordersSection" style="display:none;">
-      <h2>📦 My Orders</h2>
+      <h2>📦 My Active Orders</h2>
       
       <!-- Notifications Panel -->
       <div class="notifications-panel">
@@ -118,7 +119,15 @@
 
       <!-- Orders Grid -->
       <div id="farmerOrdersGrid" class="orders-grid">
-        <!-- Orders will be loaded here -->
+        <!-- Active orders will be loaded here -->
+      </div>
+    </section>
+
+    <!-- History Section -->
+    <section id="historySection" style="display:none;">
+      <h2>📜 Order History</h2>
+      <div id="farmerHistoryGrid" class="orders-grid">
+        <!-- Completed/Cancelled orders will be loaded here -->
       </div>
     </section>
 

@@ -10,26 +10,25 @@
     <h2>🚛 Dealer Panel</h2>
     <button id="vehiclesBtn" class="active">🚐 Vehicle Management</button>
     <button id="browseBtn">🌾 Browse Products</button>
-    <button id="ordersBtn">📦 My Orders</button>
+    <button id="cartBtn">🛒 Cart</button> <button id="ordersBtn">📦 My Orders</button>
+    <button id="inventoryBtn">📋 My Inventory</button>
     <button id="profileBtn">👤 Profile</button>
     <button id="signoutBtn">🚪 Sign Out</button>
   </div>
 
   <div class="content">
-    <!-- Vehicle Management Section -->
     <section id="vehiclesSection" class="section active">
       <div class="section-header">
         <h1 class="section-title">Vehicle Management</h1>
       </div>
 
-      <!-- Add Vehicle Form -->
       <div class="vehicle-form">
         <h3>Add New Vehicle</h3>
         <form id="vehicleForm">
           <div class="form-grid">
             <div class="form-group">
               <label>Vehicle ID *</label>
-              <input type="text" id="vehicleId" placeholder="e.g., DL-14-RE-5678" required>
+              <input type="text" id="vehicleId" placeholder="e.g., AP-01-XY-1234" required>
             </div>
             <div class="form-group">
               <label>Vehicle Type *</label>
@@ -52,19 +51,15 @@
 
       <div id="vehicleMessage"></div>
 
-      <!-- Vehicles Grid -->
       <div id="vehiclesGrid" class="vehicles-grid">
-        <!-- Vehicles will be loaded here -->
-      </div>
+        </div>
     </section>
 
-    <!-- Browse Products Section -->
     <section id="browseSection" class="section">
       <div class="section-header">
         <h1 class="section-title">Browse Farmer Products</h1>
       </div>
 
-      <!-- Filters -->
       <div class="filters">
         <div class="filters-grid">
           <div class="form-group">
@@ -103,24 +98,34 @@
 
       <div id="browseMessage"></div>
 
-      <!-- Products Grid -->
       <div id="productsGrid" class="products-grid">
-        <!-- Products will be loaded here -->
-      </div>
+        </div>
+    </section>
+    
+    <section id="cartSection" class="section">
+        <div class="section-header">
+            <h1 class="section-title">My Cart</h1>
+        </div>
+        <div id="cartGrid" class="cart-grid"></div>
     </section>
 
-    <!-- Orders Section -->
     <section id="ordersSection" class="section">
       <div class="section-header">
         <h1 class="section-title">My Orders</h1>
       </div>
 
       <div id="ordersGrid" class="orders-grid">
-        <!-- Orders will be loaded here -->
-      </div>
+        </div>
     </section>
 
-    <!-- Profile Section -->
+    <section id="inventorySection" class="section">
+      <div class="section-header">
+        <h1 class="section-title">My Inventory</h1>
+      </div>
+      <button class="btn-primary" id="addInventoryBtn">Add Item to Inventory</button>
+      <div id="inventoryGrid" class="inventory-grid"></div>
+    </section>
+
     <section id="profileSection" class="section">
       <div class="section-header">
         <h1 class="section-title">My Profile</h1>
@@ -129,11 +134,10 @@
     </section>
   </div>
 
-  <!-- Vehicle Assignment Modal -->
   <div id="assignModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
-      <h3>Assign Vehicle</h3>
+      <h3>Assign Vehicle for Inspection</h3>
       <div id="assignmentDetails"></div>
       <div class="form-group">
         <label>Select Vehicle</label>
@@ -142,13 +146,129 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Quantity to Purchase (kg)</label>
+        <label>Quantity to Purchase</label>
         <input type="number" id="purchaseQuantity" placeholder="Enter quantity">
       </div>
       <button class="btn-primary" onclick="confirmAssignment()">Confirm Assignment</button>
     </div>
   </div>
+
+  <div id="reviewModal" class="modal">
+    <div class="modal-content">
+      <span class="close-review">&times;</span>
+      <h3>Submit Inspection Review</h3>
+      <form id="reviewForm">
+        <input type="hidden" id="reviewProductId">
+        <input type="hidden" id="reviewOrderId">
+        <input type="hidden" id="reviewFarmerId">
+        <div id="reviewProductInfo"></div>
+        <div class="form-group">
+          <label>Quality Grade *</label>
+          <select id="qualityGrade" required>
+            <option value="">Select Grade</option>
+            <option value="A">A (Excellent)</option>
+            <option value="B">B (Good)</option>
+            <option value="C">C (Average)</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label>Color</label><input type="text" id="reviewColor" placeholder="e.g., Uniformly Red"></div>
+          <div class="form-group"><label>Damage Level</label><select id="damageLevel"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></select></div>
+          <div class="form-group"><label>Pest Infection (%)</label><input type="number" id="pestInfection" placeholder="e.g., 5" min="0" max="100"></div>
+        </div>
+        <div class="form-group"><label>Remarks</label><textarea id="remarks" rows="3" placeholder="Add any additional comments"></textarea></div>
+        <div class="form-group"><label>Attachments (up to 5 images)</label><input type="file" id="attachments" multiple accept="image/*"></div>
+        <button type="submit" class="btn-primary">Submit Review</button>
+      </form>
+      <div id="reviewMessage"></div>
+    </div>
+  </div>
+
+  <div id="bidModal" class="modal">
+    <div class="modal-content">
+      <span class="close-bid">&times;</span>
+      <h3>Place Your Order Bid</h3>
+      <form id="bidForm">
+        <input type="hidden" id="bidOrderId">
+        <div id="bidProductInfo" style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Ordered Quantity *</label>
+                <input type="number" id="bidQuantity" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label>Price per Unit (₹) *</label>
+                <input type="number" id="bidPricePerUnit" step="0.01" required>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 15px;">
+            <label>Total Price (₹)</label>
+            <input type="text" id="bidTotalPrice" readonly style="font-weight: bold; background: #e5e7eb;">
+        </div>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Expected Delivery Date *</label>
+                <input type="date" id="bidDeliveryDate" required>
+            </div>
+            <div class="form-group">
+                <label>Payment Method *</label>
+                <select id="bidPaymentMethod" required>
+                    <option value="">Select Method</option>
+                    <option value="Cash">Cash on Delivery</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Online">Online Payment</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Delivery Address *</label>
+            <textarea id="bidDeliveryAddress" rows="3" placeholder="Enter full delivery address" required></textarea>
+        </div>
+        
+        <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
+            <input type="checkbox" id="bidTerms" required style="width: auto;">
+            <label for="bidTerms" style="margin-top: 0;">I agree to the terms and conditions.</label>
+        </div>
+
+        <button type="submit" class="btn-primary">Submit Bid</button>
+      </form>
+      <div id="bidMessage"></div>
+    </div>
+  </div>
+
+  <div id="inventoryModal" class="modal">
+    <div class="modal-content">
+        <span class="close-inventory">&times;</span>
+        <h3 id="inventoryModalTitle">Add to Inventory</h3>
+        <form id="inventoryForm">
+            <input type="hidden" id="inventoryItemId">
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="inventoryProductName" required>
+            </div>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="inventoryQuantity" required>
+            </div>
+            <div class="form-group">
+                <label>Unit of Sale</label>
+                <input type="text" id="inventoryUnitOfSale" required>
+            </div>
+            <div class="form-group">
+                <label>Purchase Price</label>
+                <input type="number" id="inventoryPurchasePrice" required>
+            </div>
+            <button type="submit" class="btn-primary">Save Item</button>
+        </form>
+    </div>
+  </div>
+
    <script src="../assets/js/dealer.js"></script>
-  
+
 </body>
 </html>

@@ -9,7 +9,8 @@ const {
   updateCrop,
   deleteCrop,
   getFarmerOrders,
-  getFarmerNotifications
+  getFarmerNotifications,
+  respondToBid 
 } = require("../controllers/farmercontroller");
 
 // Profile routes
@@ -24,6 +25,7 @@ router.delete("/crops/:email/:id", deleteCrop); // Delete product
 
 // Orders and notifications routes
 router.get("/orders/:email", getFarmerOrders); // Get farmer orders
+router.post("/respond-bid", respondToBid); // <-- Add new route for responding to a bid
 router.get("/notifications/:email", getFarmerNotifications); // Get farmer notifications
 
 module.exports = router;

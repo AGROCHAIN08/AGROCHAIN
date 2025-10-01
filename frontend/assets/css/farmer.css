@@ -417,6 +417,11 @@ section {
   color: #065f46;
 }
 
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
 .order-product-info {
   margin-bottom: 15px;
 }
@@ -561,3 +566,34 @@ section {
     height: auto;
   }
 }
+
+/* ... (at the end of the file) ... */
+.reviews-section {
+  padding: 15px 20px;
+  margin-top: 15px;
+  border-top: 1px solid #eee;
+  background: #f9f9f9;
+}
+.reviews-section h4 {
+  color: #2e8b57;
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+.review-item {
+  background: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border-left: 3px solid #3cb371;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+.review-header span { color: #666; font-style: italic; }
+.review-item p { font-size: 14px; margin: 5px 0; color: #333; }
+.review-item small { font-size: 12px; color: #666; }

@@ -20,19 +20,21 @@ app.use(express.json());
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/farmer", require("./routes/farmer"));
 app.use("/api/dealer", require("./routes/dealer"));
-
+app.use("/api/reviews", require("./routes/review")); 
 
 // Health check route
 app.get("/", (req, res) => {
-  res.json({ 
-    message: "AgroChain API is running", 
+  res.json({
+    message: "AgroChain API is running",
     version: "1.0.0",
     endpoints: {
       "POST /api/auth/send-otp": "Send email OTP",
-      "POST /api/auth/verify-otp": "Verify email OTP", 
+      "POST /api/auth/verify-otp": "Verify email OTP",
       "POST /api/auth/verify-google": "Verify Google token",
       "POST /api/auth/signup": "Regular signup with email OTP",
-      "POST /api/auth/signup-google": "Signup with Google OAuth"
+      "POST /api/auth/signup-google": "Signup with Google OAuth",
+      "POST /api/reviews": "Submit a new inspection review",
+      "GET /api/reviews/:productId": "Get all reviews for a product"
     }
   });
 });
@@ -45,10 +47,10 @@ app.use((err, req, res, next) => {
 
 // 404 handler - catch all unmatched routes
 app.use((req, res) => {
-  res.status(404).json({ 
-    msg: "API endpoint not found", 
+  res.status(404).json({
+    msg: "API endpoint not found",
     path: req.path,
-    method: req.method 
+    method: req.method
   });
 });
 

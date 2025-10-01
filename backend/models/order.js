@@ -11,15 +11,24 @@ const orderSchema = new mongoose.Schema({
     type: String, 
     enum: [
       'Vehicle Assigned',
+      'Inspection Complete',
+      'Bid Placed', // New status for when a dealer makes an offer
+      'Payment Pending', // This is after farmer accepts the bid
       'In Transit',
       'Delivered',
-      'Inspection Complete',
-      'Payment Pending',
       'Completed',
       'Cancelled'
     ], 
     default: 'Vehicle Assigned'
   },
+  
+  // New fields for the bidding process
+  bidPrice: { type: Number }, // Price per unit offered by dealer
+  negotiatedTotalAmount: { type: Number }, // Total amount after bid
+  expectedDeliveryDate: { type: Date },
+  paymentMethod: { type: String },
+  deliveryAddress: { type: String },
+  
   assignedDate: { type: Date, default: Date.now },
   pickupDate: { type: Date },
   deliveryDate: { type: Date },

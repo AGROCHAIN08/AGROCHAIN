@@ -9,8 +9,13 @@ const {
   deleteVehicle,
   getAllProducts,
   assignVehicle,
-  getDealerOrders
-} = require("../controllers/dealerController");
+  getDealerOrders,
+  placeBid,
+  getInventory,
+  addInventory,
+  updateInventory,
+  deleteInventory
+} = require("../controllers/dealercontroller");
 
 // Profile routes
 router.get("/profile/:email", getDealerProfile);
@@ -28,5 +33,12 @@ router.get("/all-products", getAllProducts);
 // Order management routes
 router.post("/assign-vehicle", assignVehicle);
 router.get("/orders/:email", getDealerOrders);
+router.post("/place-bid", placeBid);
+
+// Inventory management routes
+router.get("/inventory/:email", getInventory);
+router.post("/inventory/:email", addInventory);
+router.put("/inventory/:email/:inventoryId", updateInventory);
+router.delete("/inventory/:email/:inventoryId", deleteInventory);
 
 module.exports = router;

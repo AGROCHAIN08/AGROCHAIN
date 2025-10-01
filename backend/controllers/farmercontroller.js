@@ -1,5 +1,7 @@
 const User = require("../models/user");
 const Order = require("../models/order");
+const Review = require("../models/review");
+const Inventory = require("../models/inventory");
 const { cloudinary } = require("../config/cloudinary");
 
 // ---------------- Get Farmer Profile ----------------
@@ -36,30 +38,27 @@ exports.addCrop = async (req, res) => {
     const farmer = await User.findOne({ email: req.params.email, role: "farmer" });
     if (!farmer) return res.status(404).json({ msg: "Farmer not found" });
 
-    const { 
-      productType, 
-      varietySpecies, 
-      harvestQuantity, 
-      unitOfSale, 
-      targetPrice, 
-      geotagLocation, 
-      originLatitude, 
-      originLongitude, 
+    const {
+      productType,
+      varietySpecies,
+      harvestQuantity,
+      unitOfSale,
+      targetPrice,
+      geotagLocation,
+      originLatitude,
+      originLongitude,
       fieldAddress,
       availabilityStatus
     } = req.body;
 
-    // Validate required fields
     if (!productType || !varietySpecies || !harvestQuantity || !unitOfSale || !targetPrice || !geotagLocation || !originLatitude || !originLongitude || !fieldAddress || !availabilityStatus) {
       return res.status(400).json({ msg: "All fields are required" });
     }
 
-    // Validate numeric fields
     if (isNaN(harvestQuantity) || isNaN(targetPrice) || isNaN(originLatitude) || isNaN(originLongitude)) {
       return res.status(400).json({ msg: "Quantity, price, and coordinates must be valid numbers" });
     }
 
-    // Handle image upload
     const imageFile = req.file;
     let imageUrl = "";
     if (imageFile) {
@@ -89,17 +88,16 @@ exports.addCrop = async (req, res) => {
       dateAdded: new Date()
     };
 
-    // Initialize crops array if it doesn't exist
     if (!Array.isArray(farmer.crops)) farmer.crops = [];
-    
+
     farmer.crops.push(newCrop);
     await farmer.save();
 
-    res.json({ 
-      msg: "Product added successfully", 
-      crop: newCrop 
+    res.json({
+      msg: "Product added successfully",
+      crop: newCrop
     });
-    
+
   } catch (err) {
     console.error("Error adding crop:", err);
     res.status(500).json({ msg: "Error adding product" });
@@ -112,8 +110,24 @@ exports.getCrops = async (req, res) => {
     const farmer = await User.findOne({ email: req.params.email, role: "farmer" });
     if (!farmer) return res.status(404).json({ msg: "Farmer not found" });
 
-    // Return crops sorted by date (newest first)
-    const crops = farmer.crops || [];
+    const productIds = farmer.crops.map(crop => crop._id);
+
+    const allReviews = await Review.find({ productId: { $in: productIds } })
+        .populate('dealerId', 'firstName businessName')
+        .sort({ createdAt: -1 });
+
+    const reviewsByProduct = allReviews.reduce((acc, review) => {
+        const productId = review.productId.toString();
+        if (!acc[productId]) acc[productId] = [];
+        acc[productId].push(review);
+        return acc;
+    }, {});
+    
+    const crops = (farmer.crops || []).map(crop => {
+        const cropId = crop._id.toString();
+        return { ...crop.toObject(), reviews: reviewsByProduct[cropId] || [] };
+    });
+
     crops.sort((a, b) => new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0));
     
     res.json(crops);
@@ -134,20 +148,19 @@ exports.updateCrop = async (req, res) => {
       return res.status(404).json({ msg: "Product not found" });
     }
 
-    const { 
-      productType, 
-      varietySpecies, 
-      harvestQuantity, 
-      unitOfSale, 
-      targetPrice, 
-      geotagLocation, 
-      originLatitude, 
-      originLongitude, 
+    const {
+      productType,
+      varietySpecies,
+      harvestQuantity,
+      unitOfSale,
+      targetPrice,
+      geotagLocation,
+      originLatitude,
+      originLongitude,
       fieldAddress,
       availabilityStatus
     } = req.body;
 
-    // Update crop fields
     const crop = farmer.crops[cropIndex];
     if (productType) crop.productType = productType;
     if (varietySpecies) crop.varietySpecies = varietySpecies;
@@ -160,7 +173,6 @@ exports.updateCrop = async (req, res) => {
     if (fieldAddress) crop.fieldAddress = fieldAddress;
     if (availabilityStatus) crop.availabilityStatus = availabilityStatus;
 
-    // Handle image update if provided
     if (req.file) {
       try {
         const uploadResult = await cloudinary.uploader.upload(req.file.path);
@@ -174,11 +186,11 @@ exports.updateCrop = async (req, res) => {
     crop.lastUpdated = new Date();
     await farmer.save();
 
-    res.json({ 
-      msg: "Product updated successfully", 
-      crop 
+    res.json({
+      msg: "Product updated successfully",
+      crop
     });
-    
+
   } catch (err) {
     console.error("Error updating crop:", err);
     res.status(500).json({ msg: "Error updating product" });
@@ -196,59 +208,48 @@ exports.deleteCrop = async (req, res) => {
       return res.status(404).json({ msg: "Product not found" });
     }
 
-    // Check if crop is assigned to any vehicle
     const crop = farmer.crops[cropIndex];
-    const activeOrder = await Order.findOne({ 
-      farmerEmail: farmer.email, 
-      productId: crop._id.toString(), // Convert to string for comparison
+    const activeOrder = await Order.findOne({
+      farmerEmail: farmer.email,
+      productId: crop._id.toString(),
       status: { $in: ['Vehicle Assigned', 'In Transit'] }
     });
 
     if (activeOrder) {
-      return res.status(400).json({ 
-        msg: "Cannot delete product with active vehicle assignment" 
+      return res.status(400).json({
+        msg: "Cannot delete product with active vehicle assignment"
       });
     }
 
-    // Remove crop by index
     farmer.crops.splice(cropIndex, 1);
     await farmer.save();
 
     res.json({ msg: "Product deleted successfully" });
-    
+
   } catch (err) {
     console.error("Error deleting crop:", err);
     res.status(500).json({ msg: "Error deleting product" });
   }
 };
 
-// ---------------- Get Farmer Orders (FIXED) ----------------
+// ---------------- Get Farmer Orders ----------------
 exports.getFarmerOrders = async (req, res) => {
   try {
     const orders = await Order.find({ farmerEmail: req.params.email })
       .sort({ assignedDate: -1 });
 
-    // Populate order details
     const populatedOrders = [];
-    
+
     for (let order of orders) {
-      // Get dealer details
       const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
       const vehicle = dealer?.vehicles.id(order.vehicleId);
-
-      // Get farmer and product details
       const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
-      
-      // FIXED: Find product using string comparison
       let product = null;
-      if (farmer && farmer.crops) {
-        farmer.crops.forEach(crop => {
-          if (crop._id.toString() === order.productId.toString()) {
-            product = crop;
-          }
-        });
-      }
 
+      if (farmer && farmer.crops) {
+        product = farmer.crops.find(crop => crop._id.toString() === order.productId.toString());
+      }
+      
       if (dealer && farmer && vehicle && product) {
         populatedOrders.push({
           ...order.toObject(),
@@ -262,13 +263,6 @@ exports.getFarmerOrders = async (req, res) => {
           },
           productDetails: product
         });
-      } else {
-        console.log("Missing data for order:", order._id, {
-          dealer: !!dealer,
-          farmer: !!farmer,
-          vehicle: !!vehicle,
-          product: !!product
-        });
       }
     }
 
@@ -279,15 +273,104 @@ exports.getFarmerOrders = async (req, res) => {
   }
 };
 
-// ---------------- Get Farmer Notifications (FIXED) ----------------
+// ---------------- Respond to Bid (MODIFIED) ----------------
+exports.respondToBid = async (req, res) => {
+  try {
+    const { orderId, response } = req.body;
+
+    if (!orderId || !response) {
+      return res.status(400).json({ msg: "Order ID and response are required." });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json({ msg: "Order not found." });
+    if (order.status !== 'Bid Placed') {
+      return res.status(400).json({ msg: `Can only respond to orders with a 'Bid Placed' status. Current status: ${order.status}` });
+    }
+
+    const farmer = await User.findOne({ email: order.farmerEmail, role: 'farmer' });
+    if (!farmer) throw new Error('Farmer associated with the order not found.');
+    
+    const cropIndex = farmer.crops.findIndex(c => c._id.toString() === order.productId);
+
+    if (response === 'Accepted') {
+      if (cropIndex === -1) {
+        return res.status(404).json({ msg: "The ordered product could not be found in your inventory." });
+      }
+      
+      const crop = farmer.crops[cropIndex];
+
+      // Check if there is enough stock
+      if (crop.harvestQuantity < order.quantity) {
+        return res.status(400).json({ msg: `Insufficient stock for ${crop.varietySpecies}. Available: ${crop.harvestQuantity}, Ordered: ${order.quantity}` });
+      }
+      
+      const newInventoryItem = new Inventory({
+        dealerEmail: order.dealerEmail,
+        productId: order.productId,
+        productName: crop.varietySpecies,
+        quantity: order.quantity,
+        unitOfSale: crop.unitOfSale,
+        purchasePrice: order.bidPrice,
+        farmerEmail: order.farmerEmail,
+        imageUrl: crop.imageUrl
+      });
+      await newInventoryItem.save();
+
+      // NEW LOGIC: Reduce farmer's inventory quantity or remove product entirely
+      if (crop.harvestQuantity - order.quantity <= 0) {
+        // If the ordered quantity is all or more of the stock, remove the product
+        farmer.crops.splice(cropIndex, 1);
+      } else {
+        // Otherwise, just reduce the quantity
+        farmer.crops[cropIndex].harvestQuantity -= order.quantity;
+      }
+      await farmer.save();
+
+      order.status = 'Completed';
+      order.paymentStatus = 'Completed'; // As per request, payment process is not shown
+      order.timeline.push({ status: 'Bid Accepted', notes: 'Farmer accepted the bid.' });
+      order.timeline.push({ status: 'Completed', notes: 'Order marked as completed and item moved to dealer inventory.' });
+
+    } else if (response === 'Rejected') {
+      // NOTE: Logic to add quantity back is removed as it's no longer necessary.
+      // The quantity is only subtracted upon bid acceptance now.
+      
+      order.status = 'Cancelled';
+      order.timeline.push({ status: 'Bid Rejected', notes: 'Farmer rejected the bid.' });
+      
+      // Make the assigned vehicle available again
+      const dealer = await User.findOne({ email: order.dealerEmail, role: 'dealer' });
+      if (dealer) {
+          const vehicleIndex = dealer.vehicles.findIndex(v => v._id.toString() === order.vehicleId);
+          if (vehicleIndex !== -1) {
+              dealer.vehicles[vehicleIndex].currentStatus = 'AVAILABLE';
+              dealer.vehicles[vehicleIndex].assignedTo = undefined;
+              await dealer.save();
+          }
+      }
+
+    } else {
+      return res.status(400).json({ msg: "Invalid response. Must be 'Accepted' or 'Rejected'." });
+    }
+
+    await order.save();
+    res.json({ msg: `Bid has been ${response.toLowerCase()}.`, order });
+
+  } catch (err) {
+    console.error("Error responding to bid:", err);
+    res.status(500).json({ msg: "Server error while responding to bid", error: err.message });
+  }
+};
+
+// ---------------- Get Farmer Notifications ----------------
 exports.getFarmerNotifications = async (req, res) => {
   try {
     const farmerEmail = req.params.email;
-    
-    // Get recent orders for notifications
-    const recentOrders = await Order.find({ 
+
+    const recentOrders = await Order.find({
       farmerEmail: farmerEmail,
-      assignedDate: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Last 7 days
+      assignedDate: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
     }).sort({ assignedDate: -1 });
 
     const notifications = [];
@@ -296,15 +379,10 @@ exports.getFarmerNotifications = async (req, res) => {
       const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
       const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
       const vehicle = dealer?.vehicles.id(order.vehicleId);
-      
-      // FIXED: Find product using string comparison
       let product = null;
+
       if (farmer && farmer.crops) {
-        farmer.crops.forEach(crop => {
-          if (crop._id.toString() === order.productId.toString()) {
-            product = crop;
-          }
-        });
+        product = farmer.crops.find(crop => crop._id.toString() === order.productId.toString());
       }
 
       if (dealer && vehicle && product) {
