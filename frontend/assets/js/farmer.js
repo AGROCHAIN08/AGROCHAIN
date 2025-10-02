@@ -1,8 +1,8 @@
 // ---------------- Farmer Dashboard JS ----------------
-// Updated with new field structure
-
 const storedUser = JSON.parse(localStorage.getItem("agroChainUser"));
 const userEmail = storedUser?.email;
+let allCrops = [];
+let currentUserProfile = null; // To store current profile data
 
 // Redirect to login if not found
 if (!userEmail) {
@@ -31,8 +31,11 @@ const successMsg = document.getElementById("successMsg");
 const addCropToggleBtn = document.getElementById("addCropToggleBtn");
 const getLocationBtn = document.getElementById("getLocationBtn");
 
-// Profile Info
+// Profile Elements
 const profileInfo = document.getElementById("profileInfo");
+const editProfileBtn = document.getElementById("editProfileBtn");
+const editProfileModal = document.getElementById("editProfileModal");
+const editProfileForm = document.getElementById("editProfileForm");
 
 // Orders Elements
 const notificationsList = document.getElementById("notificationsList");
@@ -67,28 +70,9 @@ getLocationBtn.onclick = () => {
       async (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-
-        // Update coordinate fields
         document.getElementById("originLatitude").value = lat.toFixed(6);
         document.getElementById("originLongitude").value = lng.toFixed(6);
-
-        // Try to get address using reverse geocoding
-        try {
-          // NOTE: Replace YOUR_API_KEY with your actual OpenCageData API key
-          const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=YOUR_API_KEY`);
-          const data = await response.json();
-
-          if (data.results && data.results[0]) {
-            const address = data.results[0].formatted;
-            document.getElementById("geotagLocation").value = address;
-          } else {
-            document.getElementById("geotagLocation").value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-          }
-        } catch (error) {
-          // Fallback to coordinates if reverse geocoding fails
-          document.getElementById("geotagLocation").value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-        }
-
+        document.getElementById("geotagLocation").value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
         getLocationBtn.textContent = "📍 Location Retrieved";
         getLocationBtn.disabled = false;
       },
@@ -108,16 +92,19 @@ async function loadProfile() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/profile/${userEmail}`);
     const data = await res.json();
+    currentUserProfile = data; // Store profile data
 
     if (res.ok) {
       profileInfo.innerHTML = `
-        <p><b>Name:</b> ${data.firstName} ${data.lastName}</p>
-        <p><b>Email:</b> ${data.email}</p>
-        <p><b>Mobile:</b> ${data.mobile}</p>
-        <p><b>Aadhaar:</b> ${data.aadhaar}</p>
-        <p><b>Farm Location:</b> ${data.farmLocation}</p>
-        <p><b>Farm Size:</b> ${data.farmSize}</p>
-        <p><b>Crops Grown:</b> ${data.cropsGrown || "N/A"}</p>
+        <div class="profile-grid">
+            <div class="profile-item"><span>Name:</span> ${data.firstName} ${data.lastName || ''}</div>
+            <div class="profile-item"><span>Email:</span> ${data.email}</div>
+            <div class="profile-item"><span>Mobile:</span> ${data.mobile}</div>
+            <div class="profile-item"><span>Aadhaar:</span> ${data.aadhaar}</div>
+            <div class="profile-item"><span>Farm Location:</span> ${data.farmLocation}</div>
+            <div class="profile-item"><span>Farm Size:</span> ${data.farmSize}</div>
+            <div class="profile-item" style="grid-column: 1 / -1;"><span>Crops Grown:</span> ${data.cropsGrown.join(', ') || "N/A"}</div>
+        </div>
       `;
     } else {
       profileInfo.innerHTML = `<p style="color:red">${data.msg}</p>`;
@@ -132,6 +119,7 @@ async function loadCrops() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}`);
     const crops = await res.json();
+    allCrops = crops;
 
     productsGrid.innerHTML = "";
     if (res.ok && crops.length > 0) {
@@ -162,8 +150,6 @@ async function loadCrops() {
 // ---------------- Add Crop ----------------
 cropForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-
-  // Clear previous messages
   cropError.textContent = "";
   successMsg.textContent = "";
 
@@ -185,9 +171,7 @@ cropForm.addEventListener("submit", async (e) => {
       method: "POST",
       body: formData,
     });
-
     const data = await res.json();
-
     if (res.ok) {
       successMsg.textContent = "✅ Product added successfully!";
       cropForm.reset();
@@ -205,13 +189,12 @@ cropForm.addEventListener("submit", async (e) => {
 // ---------------- Helper: Add Crop to Grid ----------------
 function addCropToGrid(crop, index) {
   const statusClass = getStatusClass(crop.availabilityStatus);
-  const reviewsHtml = createFarmerReviewsSection(crop.reviews);
+  const reviewsCount = crop.reviews ? crop.reviews.length : 0;
 
   const card = document.createElement("div");
   card.className = "product-card";
   card.innerHTML = `
-    <img src="${crop.imageUrl}" alt="${crop.varietySpecies}" class="product-card-image">
-
+    <img src="${crop.imageUrl}" alt="${crop.varietySpecies}" class="product-card-image" onclick="openImagePage('${crop.imageUrl}')">
     <div class="product-card-content">
       <div class="product-header">
         <div class="product-title">
@@ -220,7 +203,6 @@ function addCropToGrid(crop, index) {
         </div>
         <span class="availability-tag ${statusClass}">${crop.availabilityStatus}</span>
       </div>
-
       <div class="product-details">
         <div class="product-detail-item">
           <div class="product-detail-label">Quantity</div>
@@ -231,7 +213,6 @@ function addCropToGrid(crop, index) {
           <div class="product-detail-value">₹${crop.targetPrice}</div>
         </div>
       </div>
-
       <div class="product-location">
         <div class="product-location-label">Farm Location</div>
         <div class="product-location-value">${crop.geotagLocation}</div>
@@ -240,7 +221,6 @@ function addCropToGrid(crop, index) {
           📍 ${crop.originLatitude?.toFixed(4)}, ${crop.originLongitude?.toFixed(4)}
         </div>
       </div>
-
       <div class="product-actions">
         <button class="action-btn edit-btn" onclick="editCrop('${index}')">
           📝 Edit
@@ -248,9 +228,9 @@ function addCropToGrid(crop, index) {
         <button class="action-btn delete-btn" onclick="deleteCrop('${index}')">
           🗑️ Delete
         </button>
+        ${reviewsCount > 0 ? `<button class="action-btn" style="background-color: #4f46e5;" onclick="showReviewDetails('${crop._id}')">⭐ View Reviews (${reviewsCount})</button>` : ''}
       </div>
     </div>
-    ${reviewsHtml}
   `;
   productsGrid.appendChild(card);
 }
@@ -261,6 +241,7 @@ function getStatusClass(status) {
     case 'Available': return 'status-available';
     case 'Out of Stock': return 'status-out-of-stock';
     case 'Coming Soon': return 'status-coming-soon';
+    case 'Inspection Initiated': return 'status-inspection-initiated';
     default: return 'status-available';
   }
 }
@@ -278,9 +259,7 @@ async function deleteCrop(id) {
     const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}/${id}`, {
       method: "DELETE"
     });
-
     const data = await res.json();
-
     if (res.ok) {
       successMsg.textContent = "🗑️ Product deleted successfully!";
       loadCrops();
@@ -299,7 +278,6 @@ addCropToggleBtn.onclick = () => {
   addCropToggleBtn.textContent = isHidden ? "Cancel" : "Add New Product";
 
   if (!isHidden) {
-    // Clear form and messages when hiding
     cropForm.reset();
     cropError.textContent = "";
     successMsg.textContent = "";
@@ -308,8 +286,7 @@ addCropToggleBtn.onclick = () => {
 
 // ---------------- Sign Out ----------------
 signoutBtn.onclick = () => {
-  const confirmLogout = confirm("Are you sure you want to sign out?");
-  if (confirmLogout) {
+  if (confirm("Are you sure you want to sign out?")) {
     localStorage.clear();
     window.location.href = "login.html";
   }
@@ -335,31 +312,18 @@ async function loadFarmerOrders() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/orders/${userEmail}`);
     const allOrders = await res.json();
-
     if (res.ok) {
         const activeOrders = allOrders.filter(order => order.status !== 'Completed' && order.status !== 'Cancelled');
         if (activeOrders.length > 0) {
             farmerOrdersGrid.innerHTML = activeOrders.map(order => createFarmerOrderCard(order)).join('');
         } else {
-          farmerOrdersGrid.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon">📦</div>
-              <h3>No Active Orders</h3>
-              <p>New vehicle assignments and bids for your products will appear here.</p>
-            </div>
-          `;
+          farmerOrdersGrid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📦</div><h3>No Active Orders</h3><p>New vehicle assignments and bids for your products will appear here.</p></div>`;
         }
     } else {
         farmerOrdersGrid.innerHTML = `<div class="empty-state"><h3>Error loading orders</h3><p>${allOrders.msg || ''}</p></div>`;
     }
   } catch (error) {
-    farmerOrdersGrid.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">⚠️</div>
-        <h3>Error Loading Orders</h3>
-        <p>Please try again later</p>
-      </div>
-    `;
+    farmerOrdersGrid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><h3>Error Loading Orders</h3><p>Please try again later</p></div>`;
   }
 }
 
@@ -368,19 +332,12 @@ async function loadOrderHistory() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/orders/${userEmail}`);
     const allOrders = await res.json();
-
     if (res.ok) {
         const pastOrders = allOrders.filter(order => order.status === 'Completed' || order.status === 'Cancelled');
         if (pastOrders.length > 0) {
             farmerHistoryGrid.innerHTML = pastOrders.map(order => createFarmerOrderCard(order)).join('');
         } else {
-            farmerHistoryGrid.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon">📜</div>
-              <h3>No Order History</h3>
-              <p>Your completed and cancelled orders will appear here.</p>
-            </div>
-          `;
+            farmerHistoryGrid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📜</div><h3>No Order History</h3><p>Your completed and cancelled orders will appear here.</p></div>`;
         }
     } else {
       farmerHistoryGrid.innerHTML = `<div class="empty-state"><h3>Error loading history</h3><p>${allOrders.msg || ''}</p></div>`;
@@ -389,7 +346,6 @@ async function loadOrderHistory() {
     farmerHistoryGrid.innerHTML = `<div class="empty-state"><h3>Network error loading history</h3></div>`;
   }
 }
-
 
 function createFarmerOrderCard(order) {
   const statusClass = order.status.toLowerCase().replace(/\s+/g, '-');
@@ -419,16 +375,13 @@ function createFarmerOrderCard(order) {
       `;
   }
 
-
   return `
     <div class="farmer-order-card ${statusClass}">
       <span class="order-status-badge ${statusBadgeClass}">${order.status}</span>
-
       <div class="order-product-info">
         <div class="order-product-name">${order.productDetails.varietySpecies}</div>
         <div style="color: #6b7280; font-size: 14px;">${order.productDetails.productType}</div>
       </div>
-
       <div class="order-details-grid">
         ${bidDetails}
         <div class="order-detail-item">
@@ -448,7 +401,6 @@ function createFarmerOrderCard(order) {
           <div class="order-detail-value">${new Date(order.assignedDate).toLocaleDateString()}</div>
         </div>
       </div>
-
       <div class="dealer-info-panel">
         <div class="dealer-info-title">🏢 Dealer Information</div>
         <div class="dealer-contact-info">
@@ -457,13 +409,12 @@ function createFarmerOrderCard(order) {
           <span><strong>Email:</strong> ${order.dealerDetails.email}</span>
         </div>
       </div>
-      
       ${actionButtons}
     </div>
   `;
 }
 
-// ---------------- Respond to Bid (NEW) ----------------
+// ---------------- Respond to Bid ----------------
 async function respondToBid(orderId, response) {
     const confirmationText = response === 'Accepted'
         ? "Are you sure you want to accept this bid? This will update your inventory and complete the order."
@@ -495,23 +446,13 @@ async function loadNotifications() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}`);
     const notifications = await res.json();
-
     if (res.ok && notifications.length > 0) {
       notificationsList.innerHTML = notifications.map(notification => createNotificationItem(notification)).join('');
     } else {
-      notificationsList.innerHTML = `
-        <div style="text-align: center; color: #6b7280; padding: 20px;">
-          <div style="font-size: 24px; margin-bottom: 10px;">🔔</div>
-          <p>No new notifications</p>
-        </div>
-      `;
+      notificationsList.innerHTML = `<div style="text-align: center; color: #6b7280; padding: 20px;"><div style="font-size: 24px; margin-bottom: 10px;">🔔</div><p>No new notifications</p></div>`;
     }
   } catch (error) {
-    notificationsList.innerHTML = `
-      <div style="text-align: center; color: #ef4444; padding: 20px;">
-        <p>Error loading notifications</p>
-      </div>
-    `;
+    notificationsList.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px;"><p>Error loading notifications</p></div>`;
   }
 }
 
@@ -537,28 +478,127 @@ function getTimeAgo(date) {
   const now = new Date();
   const diffTime = Math.abs(now - date);
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
   if (diffDays === 1) return '1 day ago';
   if (diffDays < 7) return `${diffDays} days ago`;
   return date.toLocaleDateString();
 }
 
 // ---------------- Review Section ----------------
-function createFarmerReviewsSection(reviews) {
-    if (!reviews || reviews.length === 0) return '';
-    return `
-      <div class="reviews-section">
-        <h4>Inspection Reviews</h4>
-        ${reviews.map(review => `
-          <div class="review-item">
-            <div class="review-header">
-              <strong>Grade: ${review.qualityGrade}</strong>
-              <span>by ${(review.dealerId && (review.dealerId.businessName || 'a Dealer')) || 'a Dealer'}</span>
-            </div>
-            <p><strong>Remarks:</strong> ${review.remarks || 'N/A'}</p>
-            <small>${new Date(review.createdAt).toLocaleDateString()}</small>
-          </div>
-        `).join('')}
-      </div>
-    `;
+function showReviewDetails(productId) {
+  const product = allCrops.find(p => p._id === productId);
+  if (!product || !product.reviews || product.reviews.length === 0) {
+    return;
   }
+  const reviewDetailsContent = document.getElementById('reviewDetailsContent');
+  reviewDetailsContent.innerHTML = product.reviews.map(review => `
+    <div class="review-item">
+      <div class="review-header">
+        <strong>Grade: ${review.qualityGrade}</strong>
+        <span>by ${review.dealerId?.businessName || 'a Dealer'} on ${new Date(review.inspectionDate).toLocaleDateString()}</span>
+      </div>
+      <p><strong>Remarks:</strong> ${review.remarks || 'N/A'}</p>
+      <div class="product-details">
+        <div class="product-detail-item">
+          <div class="product-detail-label">Color</div>
+          <div class="product-detail-value">${review.parameters.color || 'N/A'}</div>
+        </div>
+        <div class="product-detail-item">
+          <div class="product-detail-label">Damage Level</div>
+          <div class="product-detail-value">${review.parameters.damageLevel || 'N/A'}</div>
+        </div>
+        <div class="product-detail-item">
+          <div class="product-detail-label">Pest Infection</div>
+          <div class="product-detail-value">${review.parameters.pestInfection || 0}%</div>
+        </div>
+      </div>
+      ${review.attachments && review.attachments.length > 0 ? `
+        <div class="review-attachments">
+          <strong>Attachments:</strong>
+          <div>
+            ${review.attachments.map(url => `<img src="${url}" width="100" alt="Attachment" onclick="openImagePage('${url}')">`).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+
+  document.getElementById('viewReviewModal').style.display = 'block';
+}
+
+function openImagePage(imageUrl) {
+  window.open(`image-view.html?url=${encodeURIComponent(imageUrl)}`, '_blank');
+}
+
+// ---------------- Profile Edit Functionality ----------------
+editProfileBtn.onclick = () => openEditProfileModal();
+document.querySelector('.close-edit-profile').onclick = () => editProfileModal.style.display = 'none';
+
+function openEditProfileModal() {
+    if (!currentUserProfile) {
+        alert("Profile data not loaded yet. Please wait.");
+        return;
+    }
+    // Populate the form
+    document.getElementById('editFirstName').value = currentUserProfile.firstName || '';
+    document.getElementById('editLastName').value = currentUserProfile.lastName || '';
+    document.getElementById('editMobile').value = currentUserProfile.mobile || '';
+    document.getElementById('editAadhaar').value = currentUserProfile.aadhaar || '';
+    document.getElementById('editFarmLocation').value = currentUserProfile.farmLocation || '';
+    document.getElementById('editFarmSize').value = currentUserProfile.farmSize || '';
+    document.getElementById('editCropsGrown').value = currentUserProfile.cropsGrown ? currentUserProfile.cropsGrown.join(', ') : '';
+
+    editProfileModal.style.display = 'block';
+}
+
+editProfileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const saveBtn = editProfileForm.querySelector('button[type="submit"]');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    const updatedData = {
+        firstName: document.getElementById('editFirstName').value,
+        lastName: document.getElementById('editLastName').value,
+        mobile: document.getElementById('editMobile').value,
+        aadhaar: document.getElementById('editAadhaar').value,
+        farmLocation: document.getElementById('editFarmLocation').value,
+        farmSize: document.getElementById('editFarmSize').value,
+        cropsGrown: document.getElementById('editCropsGrown').value.split(',').map(s => s.trim()).filter(s => s),
+    };
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/farmer/profile/${userEmail}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+        const result = await response.json();
+        const messageEl = document.getElementById('editProfileMessage');
+
+        if (response.ok) {
+            messageEl.innerHTML = `<p style="color:green">Profile updated successfully!</p>`;
+            await loadProfile(); // Reload profile data
+            setTimeout(() => {
+                editProfileModal.style.display = 'none';
+                messageEl.innerHTML = '';
+            }, 2000);
+        } else {
+            messageEl.innerHTML = `<p style="color:red">${result.msg || 'Failed to update profile.'}</p>`;
+        }
+    } catch (error) {
+        document.getElementById('editProfileMessage').innerHTML = `<p style="color:red">A network error occurred.</p>`;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
+    }
+});
+
+// ---------------- Modal Close Handlers ----------------
+window.addEventListener('click', function(event) {
+    const viewReviewModal = document.getElementById('viewReviewModal');
+    if (event.target == viewReviewModal) viewReviewModal.style.display = 'none';
+    if (event.target == editProfileModal) editProfileModal.style.display = 'none';
+});
+
+document.querySelector('.close-view-review').onclick = function() { document.getElementById('viewReviewModal').style.display = 'none'; };
+

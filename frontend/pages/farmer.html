@@ -133,11 +133,52 @@
 
     <!-- Profile Section -->
     <section id="profileSection" style="display:none;">
-      <h2>👤 My Profile</h2>
+      <div class="section-header">
+        <h2>👤 My Profile</h2>
+        <button class="add-btn" id="editProfileBtn">Edit Profile</button>
+      </div>
       <div id="profileInfo"></div>
     </section>
 
   </div>
+
+  <div id="viewReviewModal" class="modal">
+    <div class="modal-content">
+      <span class="close-view-review">&times;</span>
+      <h3>Inspection Review Details</h3>
+      <div id="reviewDetailsContent"></div>
+    </div>
+  </div>
+
+  <div id="editProfileModal" class="modal">
+    <div class="modal-content">
+        <span class="close-edit-profile">&times;</span>
+        <h3>Edit Profile</h3>
+        <form id="editProfileForm">
+            <div class="form-row">
+                <label>First Name: <input type="text" id="editFirstName" required></label>
+                <label>Last Name: <input type="text" id="editLastName"></label>
+            </div>
+            <div class="form-row">
+                <label>Mobile: <input type="text" id="editMobile" required></label>
+            </div>
+             <div class="form-row">
+                <label>Aadhaar: <input type="text" id="editAadhaar" required></label>
+            </div>
+            <div class="form-row">
+                <label>Farm Location: <input type="text" id="editFarmLocation"></label>
+            </div>
+            <div class="form-row">
+                <label>Farm Size: <input type="text" id="editFarmSize"></label>
+            </div>
+            <div class="form-row">
+                <label>Crops Grown (comma-separated): <input type="text" id="editCropsGrown"></label>
+            </div>
+            <button type="submit" class="submit-btn">Save Changes</button>
+        </form>
+        <div id="editProfileMessage"></div>
+    </div>
+</div>
 
   <script src="../assets/js/farmer.js"></script>
 </body>

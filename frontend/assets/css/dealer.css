@@ -63,6 +63,9 @@ body {
     }
 
     .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       border-bottom: 2px solid #e5e7eb;
       padding-bottom: 15px;
       margin-bottom: 25px;
@@ -167,6 +170,7 @@ body {
       width: 100%;
       height: 200px;
       object-fit: cover;
+      cursor: pointer;
     }
 
     .product-content {
@@ -322,6 +326,37 @@ body {
       padding: 20px;
       border: 2px solid transparent;
     }
+    
+    .vehicle-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 15px;
+    }
+    
+    .btn-free, .btn-delete-vehicle {
+        flex-grow: 1;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        border: none;
+        color: white;
+    }
+
+    .btn-free {
+        background-color: #10b981;
+    }
+
+    .btn-delete-vehicle {
+        background-color: #ef4444;
+    }
+
+    .btn-delete-vehicle:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+    }
 
     .vehicle-available {
       border-color: #10b981;
@@ -408,14 +443,14 @@ body {
       padding: 25px;
       border-radius: 12px;
       width: 90%;
-      max-width: 550px;
+      max-width: 700px;
       position: relative;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
       max-height: 85vh;
       overflow-y: auto;
     }
 
-    .close, .close-review, .close-bid, .close-inventory {
+    .close, .close-review, .close-bid, .close-inventory, .close-view-review, .close-image-modal, .close-edit-profile {
       color: #aaa;
       float: right;
       font-size: 28px;
@@ -423,7 +458,7 @@ body {
       cursor: pointer;
     }
 
-    .close:hover, .close-review:hover, .close-bid:hover, .close-inventory:hover {
+    .close:hover, .close-review:hover, .close-bid:hover, .close-inventory:hover, .close-view-review:hover, .close-image-modal:hover, .close-edit-profile:hover {
       color: #000;
     }
 
@@ -491,3 +526,12 @@ body {
 .cart-item-card .product-details {
     margin-bottom: 10px;
 }
+.review-attachments {
+  margin-top: 10px;
+}
+.review-attachments img {
+  border-radius: 4px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+

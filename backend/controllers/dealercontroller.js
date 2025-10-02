@@ -134,7 +134,7 @@ exports.getAllProducts = async (req, res) => {
   }
 };
 
-// ---------------- Assign Vehicle to Product (MODIFIED) ----------------
+// ---------------- Assign Vehicle to Product (MODIFIED for locking) ----------------
 exports.assignVehicle = async (req, res) => {
   try {
     const { dealerEmail, productId, vehicleId, quantity, farmerEmail } = req.body;
@@ -169,8 +169,18 @@ exports.assignVehicle = async (req, res) => {
       return res.status(400).json({ msg: "Requested quantity exceeds available stock" });
     }
 
-    // NOTE: Quantity reduction logic is now handled in farmercontroller's respondToBid function
-    // after the farmer accepts the bid.
+    // --- NEW LOGIC: Lock the quantity ---
+    // Reduce the quantity from the farmer's product
+    farmer.crops[productIndex].harvestQuantity -= parseFloat(quantity);
+    
+    // If the remaining quantity is zero, mark it as Out of Stock, otherwise Inspection Initiated
+    if (farmer.crops[productIndex].harvestQuantity <= 0) {
+        farmer.crops[productIndex].availabilityStatus = 'Out of Stock';
+    } else {
+        farmer.crops[productIndex].availabilityStatus = 'Inspection Initiated';
+    }
+    await farmer.save();
+    // --- END NEW LOGIC ---
 
     dealer.vehicles[vehicleIndex].currentStatus = 'ASSIGNED';
     dealer.vehicles[vehicleIndex].assignedTo = {
@@ -198,16 +208,19 @@ exports.assignVehicle = async (req, res) => {
     await newOrder.save();
     
     res.json({
-      msg: "Vehicle assigned for inspection. Product quantity will be updated after farmer accepts your bid.",
+      msg: "Vehicle assigned and product quantity locked for inspection.",
       orderId: newOrder._id,
       success: true
     });
 
   } catch (err) {
     console.error("Error assigning vehicle:", err);
+    // If something fails, we should ideally revert the quantity change.
+    // This requires a more complex transaction logic, but for now, we'll log the error.
     res.status(500).json({ msg: "Internal server error" });
   }
 };
+
 
 // ---------------- Place Bid on Product ----------------
 exports.placeBid = async (req, res) => {
@@ -275,15 +288,27 @@ exports.getDealerOrders = async (req, res) => {
       const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
       const vehicle = dealer?.vehicles.id(order.vehicleId);
       const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
-      let product = null;
-
-      if (farmer && farmer.crops) {
-        // Find product from the farmer's current crop list
-        product = farmer.crops.find(crop => crop._id.toString() === order.productId.toString());
+      
+      // We need to find the product, even if it was modified or sold out.
+      // A better approach in a larger system would be to store a snapshot of the product in the order.
+      // For now, we find it, but it might not reflect the exact state at time of order.
+      let product = farmer?.crops.find(crop => crop._id.toString() === order.productId.toString());
+      
+      // Fallback: If product is not in current crops, it means it was sold out completely.
+      // We still want to show the order, so we create a placeholder product detail.
+      if (farmer && !product) {
+        // This is a simple fallback. A more robust solution would be needed for historical accuracy.
+        const originalProduct = await User.findOne(
+            { "email": order.farmerEmail, "crops._id": order.productId },
+            { "crops.$": 1 }
+        );
+        if (originalProduct && originalProduct.crops.length > 0) {
+            product = originalProduct.crops[0];
+        } else {
+             product = { varietySpecies: "N/A", unitOfSale: "N/A", fieldAddress: "N/A" };
+        }
       }
       
-      // If product not found in current list (maybe it was sold out), we need a fallback.
-      // For now, this handles cases where product is still listed.
       if (dealer && farmer && vehicle && product) {
         populatedOrders.push({
           ...order.toObject(),

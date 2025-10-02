@@ -8,6 +8,7 @@ let cart = JSON.parse(localStorage.getItem("cart")) || [];
 let currentProduct = null;
 let currentOrderForBid = null; 
 let currentInventoryItem = null;
+let currentUserProfile = null; // To store current profile data
 
 // Check authentication
 if (!currentUser || currentUser.role !== 'dealer') {
@@ -30,6 +31,10 @@ const cartSection = document.getElementById("cartSection");
 const ordersSection = document.getElementById("ordersSection");
 const inventorySection = document.getElementById("inventorySection");
 const profileSection = document.getElementById("profileSection");
+const editProfileBtn = document.getElementById('editProfileBtn');
+const editProfileModal = document.getElementById('editProfileModal');
+const editProfileForm = document.getElementById('editProfileForm');
+
 
 // Navigation
 function showSection(section, btn) {
@@ -63,6 +68,7 @@ profileBtn.onclick = () => {
   showSection(profileSection, profileBtn);
   loadProfile();
 };
+editProfileBtn.onclick = () => openEditProfileModal();
 
 // Vehicle Management
 document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
@@ -114,6 +120,7 @@ async function loadVehicles() {
 function createVehicleCard(vehicle) {
   const statusClass = `vehicle-${vehicle.currentStatus.toLowerCase().replace(' ', '-')}`;
   const statusBadgeClass = `status-${vehicle.currentStatus.toLowerCase().replace(' ', '-')}-vehicle`;
+  const isAssigned = vehicle.currentStatus === 'ASSIGNED';
 
   return `
     <div class="vehicle-card ${statusClass}">
@@ -131,15 +138,63 @@ function createVehicleCard(vehicle) {
           <div class="product-detail-value">${vehicle.temperatureCapacity}</div>
         </div>
       </div>
-      ${vehicle.assignedTo ? `
+      ${isAssigned ? `
         <div style="margin-top: 15px; padding: 10px; background: #fef3c7; border-radius: 6px;">
           <strong>Assigned to:</strong> ${vehicle.assignedTo.productName}<br>
           <strong>Farmer:</strong> ${vehicle.assignedTo.farmerName}
         </div>
       ` : ''}
+      <div class="vehicle-actions">
+        ${isAssigned ? `<button class="btn-free" onclick="freeVehicle('${vehicle._id}')">Free Vehicle</button>` : ''}
+        <button class="btn-delete-vehicle" onclick="deleteVehicle('${vehicle._id}')" ${isAssigned ? 'disabled' : ''}>Delete Vehicle</button>
+      </div>
     </div>
   `;
 }
+
+async function freeVehicle(vehicleId) {
+    if (!confirm("Are you sure you want to free this vehicle? This action cannot be undone and may affect an ongoing order.")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/dealer/vehicles/${currentUser.email}/${vehicleId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentStatus: 'AVAILABLE' })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            showMessage('vehicleMessage', 'Vehicle has been freed successfully!', 'success');
+            loadVehicles();
+        } else {
+            showMessage('vehicleMessage', data.msg || 'Error freeing vehicle', 'error');
+        }
+    } catch (error) {
+        showMessage('vehicleMessage', 'Network error. Please try again.', 'error');
+    }
+}
+
+async function deleteVehicle(vehicleId) {
+    if (!confirm("Are you sure you want to permanently delete this vehicle?")) {
+        return;
+    }
+    try {
+        const response = await fetch(`http://localhost:3000/api/dealer/vehicles/${currentUser.email}/${vehicleId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+        if (response.ok) {
+            showMessage('vehicleMessage', 'Vehicle deleted successfully!', 'success');
+            loadVehicles();
+        } else {
+            showMessage('vehicleMessage', data.msg || 'Error deleting vehicle', 'error');
+        }
+    } catch (error) {
+        showMessage('vehicleMessage', 'Network error. Please try again.', 'error');
+    }
+}
+
 
 // Browse Products
 async function loadAllProducts() {
@@ -169,11 +224,10 @@ function displayProducts(products) {
 function createProductCard(product) {
   const statusClass = product.availabilityStatus === 'Available' ? 'status-available' : 'status-inspection-initiated';
   const reviewsCount = product.reviews ? product.reviews.length : 0;
-  const reviewsSectionHtml = reviewsCount > 0 ? createReviewsSection(product.reviews, product._id) : '';
 
   return `
     <div class="product-card">
-      <img src="${product.imageUrl}" alt="${product.varietySpecies}" class="product-image">
+      <img src="${product.imageUrl}" alt="${product.varietySpecies}" class="product-image" onclick="openImagePage('${product.imageUrl}')">
       <div class="product-content">
         <div class="product-header">
           <div class="product-title">
@@ -201,35 +255,25 @@ function createProductCard(product) {
             </div>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <button class="btn-contact" onclick="contactFarmer('${product.farmerEmail}', '${product.farmerMobile}')">📞 Contact Farmer</button>
-                ${reviewsCount > 0 ? `<button class="btn-contact" style="background-color: #4f46e5;" onclick="toggleReviews('reviews-for-${product._id}')">⭐ Reviews (${reviewsCount})</button>` : ''}
+                ${reviewsCount > 0 ? `<button class="btn-contact" style="background-color: #4f46e5;" onclick="showReviewDetails('${product._id}')">⭐ View Reviews (${reviewsCount})</button>` : ''}
             </div>
           </div>
         </div>
         ${product.availabilityStatus === 'Available' ? `<button class="btn-add-to-cart" onclick="addToCart('${product._id}')">🛒 Add to Cart</button>` : `<button class="btn-add-to-cart" disabled>⏳ Inspection in Progress</button>`}
       </div>
-      ${reviewsSectionHtml}
     </div>
   `;
-}
-
-function toggleReviews(elementId) {
-    const reviewsSection = document.getElementById(elementId);
-    if (reviewsSection) {
-        reviewsSection.style.display = reviewsSection.style.display === 'block' ? 'none' : 'block';
-    }
 }
 
 function applyFilters() {
   const productType = document.getElementById('filterProductType').value;
   const variety = document.getElementById('filterVariety').value.toLowerCase();
   const maxPrice = parseFloat(document.getElementById('filterPrice').value) || Infinity;
-  const status = document.getElementById('filterStatus').value;
 
   const filtered = allProducts.filter(product => {
     return (!productType || product.productType === productType) &&
            (!variety || product.varietySpecies.toLowerCase().includes(variety)) &&
-           (product.targetPrice <= maxPrice) &&
-           (!status || product.availabilityStatus === status);
+           (product.targetPrice <= maxPrice);
   });
   displayProducts(filtered);
 }
@@ -416,7 +460,7 @@ async function loadInventory() {
 function createInventoryCard(item) {
     return `
         <div class="inventory-card">
-            <img src="${item.imageUrl}" alt="${item.productName}" class="product-image">
+            <img src="${item.imageUrl}" alt="${item.productName}" class="product-image" onclick="openImagePage('${item.imageUrl}')">
             <div class="product-content">
                 <h3>${item.productName}</h3>
                 <div class="product-details">
@@ -509,6 +553,8 @@ async function loadProfile() {
   try {
     const response = await fetch(`http://localhost:3000/api/dealer/profile/${currentUser.email}`);
     const data = await response.json();
+    currentUserProfile = data; // Store data
+
     if (response.ok) {
       document.getElementById('profileInfo').innerHTML = `
         <div class="product-details">
@@ -518,6 +564,7 @@ async function loadProfile() {
           <div class="product-detail-item"><div class="product-detail-label">Business Name</div><div class="product-detail-value">${data.businessName || 'Not specified'}</div></div>
           <div class="product-detail-item"><div class="product-detail-label">GSTIN</div><div class="product-detail-value">${data.gstin || 'Not specified'}</div></div>
           <div class="product-detail-item"><div class="product-detail-label">Warehouse Address</div><div class="product-detail-value">${data.warehouseAddress || 'Not specified'}</div></div>
+          <div class="product-detail-item" style="grid-column: 1 / -1;"><div class="product-detail-label">Preferred Commodities</div><div class="product-detail-value">${data.preferredCommodities?.join(', ') || 'Not specified'}</div></div>
         </div>
       `;
     } else {
@@ -539,15 +586,24 @@ function showMessage(elementId, message, type) {
 document.querySelector('.close').onclick = function() { document.getElementById('assignModal').style.display = 'none'; }
 document.querySelector('.close-review').onclick = function() { document.getElementById('reviewModal').style.display = 'none'; document.getElementById('reviewForm').reset(); }
 document.querySelector('.close-bid').onclick = () => document.getElementById('bidModal').style.display = 'none';
+document.querySelector('.close-view-review').onclick = function() { document.getElementById('viewReviewModal').style.display = 'none'; };
+document.querySelector('.close-edit-profile').onclick = function() { document.getElementById('editProfileModal').style.display = 'none'; };
+
+
 window.onclick = function(event) {
   const assignModal = document.getElementById('assignModal');
   const reviewModal = document.getElementById('reviewModal');
   const bidModal = document.getElementById('bidModal');
   const inventoryModal = document.getElementById('inventoryModal');
+  const viewReviewModal = document.getElementById('viewReviewModal');
+  const editProfileModal = document.getElementById('editProfileModal');
   if (event.target == assignModal) assignModal.style.display = 'none';
   if (event.target == reviewModal) reviewModal.style.display = 'none';
   if (event.target == bidModal) bidModal.style.display = 'none';
   if (event.target == inventoryModal) inventoryModal.style.display = 'none';
+  if (event.target == viewReviewModal) viewReviewModal.style.display = 'none';
+  if (event.target == editProfileModal) editProfileModal.style.display = 'none';
+
 }
 
 // Sign out
@@ -574,21 +630,7 @@ function openReviewModal(orderId) {
     document.getElementById('reviewProductInfo').innerHTML = `<p><strong>Reviewing:</strong> ${order.productDetails.varietySpecies}</p><p><strong>Farmer:</strong> ${order.farmerDetails.firstName} ${order.farmerDetails.lastName}</p>`;
     document.getElementById('reviewModal').style.display = 'block';
 }
-function createReviewsSection(reviews, productId) {
-    if (!reviews || reviews.length === 0) return '';
-    return `
-      <div class="reviews-section" id="reviews-for-${productId}" style="display:none;">
-        <h4>Inspection Reviews (${reviews.length})</h4>
-        ${reviews.slice(0, 2).map(review => `
-          <div class="review-item">
-            <div class="review-header"><strong>Grade: ${review.qualityGrade}</strong><span>by ${(review.dealerId && (review.dealerId.businessName || review.dealerId.firstName)) || 'Anonymous Dealer'}</span></div>
-            <p>${review.remarks || 'No remarks.'}</p>
-            <small>${new Date(review.createdAt).toLocaleDateString()}</small>
-          </div>
-        `).join('')}
-      </div>
-    `;
-}
+
 document.getElementById('reviewForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const reviewBtn = e.target.querySelector('button[type="submit"]');
@@ -629,6 +671,53 @@ document.getElementById('reviewForm').addEventListener('submit', async (e) => {
           reviewBtn.textContent = 'Submit Review';
       }
 });
+
+function showReviewDetails(productId) {
+  const product = allProducts.find(p => p._id === productId);
+  if (!product || !product.reviews || product.reviews.length === 0) {
+    return;
+  }
+
+  const reviewDetailsContent = document.getElementById('reviewDetailsContent');
+  reviewDetailsContent.innerHTML = product.reviews.map(review => `
+    <div class="review-item">
+      <div class="review-header">
+        <strong>Grade: ${review.qualityGrade}</strong>
+        <span>by ${review.dealerId?.businessName || 'a Dealer'} on ${new Date(review.inspectionDate).toLocaleDateString()}</span>
+      </div>
+      <p><strong>Remarks:</strong> ${review.remarks || 'N/A'}</p>
+      <div class="product-details">
+        <div class="product-detail-item">
+          <div class="product-detail-label">Color</div>
+          <div class="product-detail-value">${review.parameters.color || 'N/A'}</div>
+        </div>
+        <div class="product-detail-item">
+          <div class="product-detail-label">Damage Level</div>
+          <div class="product-detail-value">${review.parameters.damageLevel || 'N/A'}</div>
+        </div>
+        <div class="product-detail-item">
+          <div class="product-detail-label">Pest Infection</div>
+          <div class="product-detail-value">${review.parameters.pestInfection || 0}%</div>
+        </div>
+      </div>
+      ${review.attachments && review.attachments.length > 0 ? `
+        <div class="review-attachments">
+          <strong>Attachments:</strong>
+          <div>
+            ${review.attachments.map(url => `<img src="${url}" width="100" alt="Attachment" onclick="openImagePage('${url}')">`).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+
+  document.getElementById('viewReviewModal').style.display = 'block';
+}
+
+function openImagePage(imageUrl) {
+  window.open(`image-view.html?url=${encodeURIComponent(imageUrl)}`, '_blank');
+}
+
 
 // BIDDING MODAL FUNCTIONS
 function openBidModal(orderId) {
@@ -694,3 +783,65 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
         submitBtn.textContent = 'Submit Bid';
     }
 });
+
+function openEditProfileModal() {
+    if (!currentUserProfile) {
+        alert("Profile data not loaded yet. Please wait.");
+        return;
+    }
+    // Populate the form
+    document.getElementById('editFirstName').value = currentUserProfile.firstName || '';
+    document.getElementById('editLastName').value = currentUserProfile.lastName || '';
+    document.getElementById('editMobile').value = currentUserProfile.mobile || '';
+    document.getElementById('editBusinessName').value = currentUserProfile.businessName || '';
+    document.getElementById('editGstin').value = currentUserProfile.gstin || '';
+    document.getElementById('editWarehouseAddress').value = currentUserProfile.warehouseAddress || '';
+    document.getElementById('editPreferredCommodities').value = currentUserProfile.preferredCommodities ? currentUserProfile.preferredCommodities.join(', ') : '';
+
+    document.getElementById('editProfileModal').style.display = 'block';
+}
+
+editProfileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const saveBtn = editProfileForm.querySelector('button[type="submit"]');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    const updatedData = {
+        firstName: document.getElementById('editFirstName').value,
+        lastName: document.getElementById('editLastName').value,
+        mobile: document.getElementById('editMobile').value,
+        businessName: document.getElementById('editBusinessName').value,
+        gstin: document.getElementById('editGstin').value,
+        warehouseAddress: document.getElementById('editWarehouseAddress').value,
+        preferredCommodities: document.getElementById('editPreferredCommodities').value.split(',').map(s => s.trim()).filter(s => s),
+    };
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/dealer/profile/${currentUser.email}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+
+        const result = await response.json();
+        const messageEl = document.getElementById('editProfileMessage');
+
+        if (response.ok) {
+            showMessage('editProfileMessage', 'Profile updated successfully!', 'success');
+            await loadProfile(); // Reload profile data
+            setTimeout(() => {
+                document.getElementById('editProfileModal').style.display = 'none';
+                messageEl.innerHTML = '';
+            }, 2000);
+        } else {
+            showMessage('editProfileMessage', result.msg || 'Failed to update profile.', 'error');
+        }
+    } catch (error) {
+        document.getElementById('editProfileMessage').innerHTML = `<p style="color:red">A network error occurred.</p>`;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Changes';
+    }
+});
+

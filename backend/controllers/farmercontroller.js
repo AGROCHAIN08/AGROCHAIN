@@ -212,12 +212,12 @@ exports.deleteCrop = async (req, res) => {
     const activeOrder = await Order.findOne({
       farmerEmail: farmer.email,
       productId: crop._id.toString(),
-      status: { $in: ['Vehicle Assigned', 'In Transit'] }
+      status: { $in: ['Vehicle Assigned', 'In Transit', 'Inspection Complete', 'Bid Placed'] }
     });
 
     if (activeOrder) {
       return res.status(400).json({
-        msg: "Cannot delete product with active vehicle assignment"
+        msg: "Cannot delete product with an active order process."
       });
     }
 
@@ -244,10 +244,18 @@ exports.getFarmerOrders = async (req, res) => {
       const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
       const vehicle = dealer?.vehicles.id(order.vehicleId);
       const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
-      let product = null;
-
-      if (farmer && farmer.crops) {
-        product = farmer.crops.find(crop => crop._id.toString() === order.productId.toString());
+      
+      // The product might have been modified or sold out, so we find its current state.
+      let product = farmer?.crops.find(crop => crop._id.toString() === order.productId.toString());
+      
+      // If product not found (because it was fully sold), we still need to show the order.
+      // We create a placeholder. A more robust solution would snapshot product details in the order itself.
+      if (farmer && !product) {
+          product = { 
+              varietySpecies: "Product Sold", 
+              unitOfSale: "N/A", 
+              fieldAddress: "N/A" 
+            };
       }
       
       if (dealer && farmer && vehicle && product) {
@@ -273,7 +281,7 @@ exports.getFarmerOrders = async (req, res) => {
   }
 };
 
-// ---------------- Respond to Bid (MODIFIED) ----------------
+// ---------------- Respond to Bid (MODIFIED for locking logic) ----------------
 exports.respondToBid = async (req, res) => {
   try {
     const { orderId, response } = req.body;
@@ -294,17 +302,9 @@ exports.respondToBid = async (req, res) => {
     const cropIndex = farmer.crops.findIndex(c => c._id.toString() === order.productId);
 
     if (response === 'Accepted') {
-      if (cropIndex === -1) {
-        return res.status(404).json({ msg: "The ordered product could not be found in your inventory." });
-      }
-      
+      // --- NEW LOGIC: Quantity was already subtracted. Finalize the sale. ---
       const crop = farmer.crops[cropIndex];
 
-      // Check if there is enough stock
-      if (crop.harvestQuantity < order.quantity) {
-        return res.status(400).json({ msg: `Insufficient stock for ${crop.varietySpecies}. Available: ${crop.harvestQuantity}, Ordered: ${order.quantity}` });
-      }
-      
       const newInventoryItem = new Inventory({
         dealerEmail: order.dealerEmail,
         productId: order.productId,
@@ -317,24 +317,25 @@ exports.respondToBid = async (req, res) => {
       });
       await newInventoryItem.save();
 
-      // NEW LOGIC: Reduce farmer's inventory quantity or remove product entirely
-      if (crop.harvestQuantity - order.quantity <= 0) {
-        // If the ordered quantity is all or more of the stock, remove the product
+      // If the remaining quantity is 0, remove the crop from the farmer's list.
+      if (crop.harvestQuantity <= 0) {
         farmer.crops.splice(cropIndex, 1);
       } else {
-        // Otherwise, just reduce the quantity
-        farmer.crops[cropIndex].harvestQuantity -= order.quantity;
+        // If there's still quantity left, make it available again.
+        farmer.crops[cropIndex].availabilityStatus = 'Available';
       }
-      await farmer.save();
 
       order.status = 'Completed';
-      order.paymentStatus = 'Completed'; // As per request, payment process is not shown
+      order.paymentStatus = 'Completed';
       order.timeline.push({ status: 'Bid Accepted', notes: 'Farmer accepted the bid.' });
-      order.timeline.push({ status: 'Completed', notes: 'Order marked as completed and item moved to dealer inventory.' });
+      order.timeline.push({ status: 'Completed', notes: 'Order marked as completed.' });
 
     } else if (response === 'Rejected') {
-      // NOTE: Logic to add quantity back is removed as it's no longer necessary.
-      // The quantity is only subtracted upon bid acceptance now.
+      // --- NEW LOGIC: Add the locked quantity back. ---
+      if (cropIndex !== -1) {
+        farmer.crops[cropIndex].harvestQuantity += order.quantity;
+        farmer.crops[cropIndex].availabilityStatus = 'Available';
+      }
       
       order.status = 'Cancelled';
       order.timeline.push({ status: 'Bid Rejected', notes: 'Farmer rejected the bid.' });
@@ -354,6 +355,7 @@ exports.respondToBid = async (req, res) => {
       return res.status(400).json({ msg: "Invalid response. Must be 'Accepted' or 'Rejected'." });
     }
 
+    await farmer.save();
     await order.save();
     res.json({ msg: `Bid has been ${response.toLowerCase()}.`, order });
 
@@ -379,11 +381,7 @@ exports.getFarmerNotifications = async (req, res) => {
       const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
       const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
       const vehicle = dealer?.vehicles.id(order.vehicleId);
-      let product = null;
-
-      if (farmer && farmer.crops) {
-        product = farmer.crops.find(crop => crop._id.toString() === order.productId.toString());
-      }
+      let product = farmer?.crops.find(crop => crop._id.toString() === order.productId.toString());
 
       if (dealer && vehicle && product) {
         notifications.push({
