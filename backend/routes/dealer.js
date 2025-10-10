@@ -9,24 +9,46 @@ const {
   deleteVehicle,
   getAllProducts,
   assignVehicle,
-  getDealerOrders
-} = require("../controllers/dealerController");
+  getDealerOrders,
+  submitReview,
+  placeBid,
+  freeVehicle
+} = require("../controllers/dealercontroller");
 
-// Profile routes
+// ===========================
+// PROFILE ROUTES
+// ===========================
 router.get("/profile/:email", getDealerProfile);
 router.put("/profile/:email", updateDealerProfile);
 
-// Vehicle management routes
+// ===========================
+// VEHICLE MANAGEMENT ROUTES
+// ===========================
 router.post("/vehicles/:email", addVehicle);
 router.get("/vehicles/:email", getVehicles);
 router.put("/vehicles/:email/:vehicleId", updateVehicleStatus);
 router.delete("/vehicles/:email/:vehicleId", deleteVehicle);
+router.post("/vehicles/free/:email/:vehicleId", freeVehicle);
 
-// Product browsing routes
+// ===========================
+// PRODUCT BROWSING ROUTES
+// ===========================
 router.get("/all-products", getAllProducts);
 
-// Order management routes
+// ===========================
+// ORDER MANAGEMENT ROUTES
+// ===========================
 router.post("/assign-vehicle", assignVehicle);
 router.get("/orders/:email", getDealerOrders);
+
+// ===========================
+// REVIEW ROUTES
+// ===========================
+router.post("/submit-review", submitReview);
+
+// ===========================
+// BIDDING ROUTES
+// ===========================
+router.post("/place-bid", placeBid);
 
 module.exports = router;

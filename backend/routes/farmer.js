@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { upload } = require("../config/cloudinary"); // Import Cloudinary upload middleware
+const { upload } = require("../config/cloudinary"); // Cloudinary upload middleware
 const { 
   getFarmerProfile, 
   updateFarmerProfile, 
@@ -9,21 +9,32 @@ const {
   updateCrop,
   deleteCrop,
   getFarmerOrders,
-  getFarmerNotifications
+  getFarmerNotifications,
+  acceptBid, 
+  rejectBid
 } = require("../controllers/farmercontroller");
 
-// Profile routes
-router.get("/profile/:email", getFarmerProfile);
-router.put("/profile/:email", updateFarmerProfile);
+// ===========================
+// PROFILE ROUTES
+// ===========================
+router.get("/profile/:email", getFarmerProfile);       // Get farmer profile
+router.put("/profile/:email", updateFarmerProfile);    // Update farmer profile
 
-// Crops routes with updated field structure
-router.post("/crops/:email", upload.single("image"), addCrop); // Add new product
-router.get("/crops/:email", getCrops); // Get all products
-router.put("/crops/:email/:id", upload.single("image"), updateCrop); // Update product
-router.delete("/crops/:email/:id", deleteCrop); // Delete product
+// ===========================
+// CROP/PRODUCT MANAGEMENT ROUTES
+// ===========================
+router.post("/crops/:email", upload.single("image"), addCrop);        // Add new product
+router.get("/crops/:email", getCrops);                                 // Get all products
+router.put("/crops/:email/:id", upload.single("image"), updateCrop);  // Update product
+router.delete("/crops/:email/:id", deleteCrop);                        // Delete product
 
-// Orders and notifications routes
-router.get("/orders/:email", getFarmerOrders); // Get farmer orders
+// ===========================
+// ORDER AND NOTIFICATION ROUTES
+// ===========================
+router.get("/orders/:email", getFarmerOrders);              // Get farmer orders
 router.get("/notifications/:email", getFarmerNotifications); // Get farmer notifications
+
+router.post("/accept-bid/:email", acceptBid);      // Accept bid
+router.post("/reject-bid/:email", rejectBid);      // Reject bid
 
 module.exports = router;

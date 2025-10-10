@@ -4,9 +4,28 @@
   <meta charset="UTF-8">
   <title>Farmer Dashboard</title>
   <link rel="stylesheet" href="../assets/css/farmer.css">
+  <style>
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #farmerReceiptContent, #farmerReceiptContent * {
+        visibility: visible;
+      }
+      #farmerReceiptContent {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .modal-content button {
+        display: none !important;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="sidebar">
+  <div class="sidebar">
     <h2>👨‍🌾 Farmer Panel</h2>
     <button id="inventoryBtn">Inventory</button>
     <button id="ordersBtn">Orders</button>
@@ -57,42 +76,17 @@
         </div>
 
         <div class="form-row">
-          <label>Target Price (₹): <input type="number" id="targetPrice" step="0.01" required></label>
-        </div>
-
-        <div class="form-row">
-          <label>Geotag Location: 
-            <button type="button" id="getLocationBtn" class="location-btn">📍 Get Current Location</button>
-            <input type="text" id="geotagLocation" placeholder="Location will be auto-detected" readonly required>
-          </label>
-        </div>
-
-        <div class="form-row">
-          <label>Origin Latitude: <input type="number" id="originLatitude" step="0.000001" placeholder="e.g., 34.0532" readonly required></label>
-        </div>
-
-        <div class="form-row">
-          <label>Origin Longitude: <input type="number" id="originLongitude" step="0.000001" placeholder="e.g., 74.8308" readonly required></label>
-        </div>
-
-        <div class="form-row">
-          <label>Field Address: 
-            <textarea id="fieldAddress" rows="2" placeholder="Village Name, Nearest Landmark/Road" required></textarea>
+          <label>
+            Target Price (₹):
+            <div style="display: flex; align-items: center; gap: 5px;">
+              <input type="number" id="targetPrice" step="0.01" required>
+              <span id="priceUnitLabel" style="font-weight: 500; color: #555;"></span>
+            </div>
           </label>
         </div>
 
         <div class="form-row">
           <label>Upload Product Image: <input type="file" id="image" accept="image/*" required></label>
-        </div>
-
-        <div class="form-row">
-          <label>Availability Status: 
-            <select id="availabilityStatus" required>
-              <option value="Available">Available</option>
-              <option value="Out of Stock">Out of Stock</option>
-              <option value="Coming Soon">Coming Soon</option>
-            </select>
-          </label>
         </div>
 
         <button type="submit" class="submit-btn">Save Product</button>
@@ -101,9 +95,7 @@
       <p id="cropError" style="color:red;"></p>
       <p id="successMsg" class="message"></p>
 
-      <div id="productsGrid" class="products-grid">
-        <!-- Products will be displayed as cards here -->
-      </div>
+      <div id="productsGrid" class="products-grid"></div>
     </section>
 
     <!-- Orders Section -->
@@ -117,17 +109,51 @@
       </div>
 
       <!-- Orders Grid -->
-      <div id="farmerOrdersGrid" class="orders-grid">
-        <!-- Orders will be loaded here -->
-      </div>
+      <div id="farmerOrdersGrid" class="orders-grid"></div>
     </section>
 
     <!-- Profile Section -->
     <section id="profileSection" style="display:none;">
       <h2>👤 My Profile</h2>
       <div id="profileInfo"></div>
+
+      <!-- Editable Fields -->
+      <form id="editProfileForm" style="display:none; margin-top: 20px;">
+        <h3>Edit Additional Details</h3>
+
+        <label>Farm Location</label>
+        <input type="text" id="editFarmLocation" placeholder="Enter farm location">
+
+        <label>Latitude</label>
+        <input type="text" id="editLatitude" readonly>
+
+        <label>Longitude</label>
+        <input type="text" id="editLongitude" readonly>
+
+        <button type="button" id="getGeoBtn">📍 Get Current Location</button>
+
+        <label>Farm Size</label>
+        <input type="text" id="editFarmSize" placeholder="Enter farm size (e.g. 5 acres)">
+
+        <div style="margin-top: 10px;">
+          <button type="submit" id="saveProfileBtn">💾 Save Changes</button>
+          <button type="button" id="cancelEditBtn">✖ Cancel</button>
+        </div>
+      </form>
     </section>
 
+  </div>
+
+  <!-- Farmer Receipt Modal -->
+  <div id="farmerReceiptModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+      <span class="close" onclick="closeFarmerReceiptModal()">&times;</span>
+      <div id="farmerReceiptContent"></div>
+      <div style="text-align: center; margin-top: 20px;">
+        <button class="btn-primary" onclick="printFarmerReceipt()">🖨️ Print Receipt</button>
+        <button class="btn-secondary" onclick="closeFarmerReceiptModal()" style="margin-left: 10px;">Close</button>
+      </div>
+    </div>
   </div>
 
   <script src="../assets/js/farmer.js"></script>

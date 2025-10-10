@@ -4,20 +4,87 @@
   <meta charset="UTF-8">
   <title>Dealer Dashboard</title>
   <link rel="stylesheet" href="../assets/css/dealer.css">
+  <style>
+    .bid-pending { 
+      background: #fef3c7; 
+      color: #d97706; 
+      padding: 8px 16px; 
+      border-radius: 6px; 
+      font-weight: 500;
+    }
+    .bid-accepted { 
+      background: #d1fae5; 
+      color: #059669; 
+      padding: 8px 16px; 
+      border-radius: 6px; 
+      font-weight: 500;
+    }
+    .bid-rejected { 
+      background: #fee2e2; 
+      color: #dc2626; 
+      padding: 8px 16px; 
+      border-radius: 6px; 
+      font-weight: 500;
+    }
+    .btn-bid {
+      background: #10b981;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-bid:hover {
+      background: #059669;
+    }
+    .btn-receipt {
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    .btn-receipt:hover {
+      background: #2563eb;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #receiptContent, #receiptContent * {
+        visibility: visible;
+      }
+      #receiptContent {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .modal-content button {
+        display: none !important;
+      }
+    }
+  </style>
 </head>
 <body>
+  <!-- Sidebar Navigation -->
   <div class="sidebar">
     <h2>🚛 Dealer Panel</h2>
-    <button id="vehiclesBtn" class="active">🚐 Vehicle Management</button>
-    <button id="browseBtn">🌾 Browse Products</button>
+    <button id="browseBtn" class="active">🌾 Browse Products</button>
+    <button id="cartBtn">🛒 My Cart</button>
     <button id="ordersBtn">📦 My Orders</button>
+    <button id="vehiclesBtn">🚗 Vehicle Management</button>
     <button id="profileBtn">👤 Profile</button>
     <button id="signoutBtn">🚪 Sign Out</button>
   </div>
 
   <div class="content">
     <!-- Vehicle Management Section -->
-    <section id="vehiclesSection" class="section active">
+    <section id="vehiclesSection" class="section">
       <div class="section-header">
         <h1 class="section-title">Vehicle Management</h1>
       </div>
@@ -31,6 +98,7 @@
               <label>Vehicle ID *</label>
               <input type="text" id="vehicleId" placeholder="e.g., DL-14-RE-5678" required>
             </div>
+            
             <div class="form-group">
               <label>Vehicle Type *</label>
               <select id="vehicleType" required>
@@ -41,6 +109,7 @@
                 <option value="Heavy Truck (10 MT)">Heavy Truck (10 MT)</option>
               </select>
             </div>
+            
             <div class="form-group">
               <label>Temperature Capacity *</label>
               <input type="text" id="temperatureCapacity" placeholder="e.g., -18°C to 0°C" required>
@@ -51,20 +120,15 @@
       </div>
 
       <div id="vehicleMessage"></div>
-
-      <!-- Vehicles Grid -->
-      <div id="vehiclesGrid" class="vehicles-grid">
-        <!-- Vehicles will be loaded here -->
-      </div>
+      <div id="vehiclesGrid" class="vehicles-grid"></div>
     </section>
 
     <!-- Browse Products Section -->
-    <section id="browseSection" class="section">
+    <section id="browseSection" class="section active">
       <div class="section-header">
         <h1 class="section-title">Browse Farmer Products</h1>
       </div>
 
-      <!-- Filters -->
       <div class="filters">
         <div class="filters-grid">
           <div class="form-group">
@@ -102,22 +166,23 @@
       </div>
 
       <div id="browseMessage"></div>
-
-      <!-- Products Grid -->
-      <div id="productsGrid" class="products-grid">
-        <!-- Products will be loaded here -->
-      </div>
+      <div id="productsGrid" class="products-grid"></div>
     </section>
 
     <!-- Orders Section -->
     <section id="ordersSection" class="section">
       <div class="section-header">
-        <h1 class="section-title">My Orders</h1>
+        <h1 class="section-title">📦 My Orders</h1>
       </div>
+      <div id="ordersGrid" class="orders-grid"></div>
+    </section>
 
-      <div id="ordersGrid" class="orders-grid">
-        <!-- Orders will be loaded here -->
+    <!-- Cart Section -->
+    <section id="cartSection" class="section">
+      <div class="section-header">
+        <h1 class="section-title">🛒 My Cart</h1>
       </div>
+      <div id="cartGrid" class="orders-grid"></div>
     </section>
 
     <!-- Profile Section -->
@@ -129,26 +194,94 @@
     </section>
   </div>
 
-  <!-- Vehicle Assignment Modal -->
-  <div id="assignModal" class="modal">
+  <!-- Farmer Details Modal -->
+  <div id="farmerModal" class="modal">
     <div class="modal-content">
-      <span class="close">&times;</span>
-      <h3>Assign Vehicle</h3>
-      <div id="assignmentDetails"></div>
-      <div class="form-group">
-        <label>Select Vehicle</label>
-        <select id="vehicleSelect">
-          <option value="">Choose available vehicle...</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Quantity to Purchase (kg)</label>
-        <input type="number" id="purchaseQuantity" placeholder="Enter quantity">
-      </div>
-      <button class="btn-primary" onclick="confirmAssignment()">Confirm Assignment</button>
+      <span id="closeFarmerModal" class="close">&times;</span>
+      <h3>Farmer Profile</h3>
+      <div id="farmerProfileDetails"></div>
     </div>
   </div>
-   <script src="../assets/js/dealer.js"></script>
-  
+
+  <!-- Vehicle Assignment Modal -->
+  <div id="assignVehicleModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeAssignVehicleModal()">&times;</span>
+      <h3>Assign Vehicle to Product</h3>
+      
+      <label>Select Vehicle:</label>
+      <select id="vehicleSelect"></select>
+
+      <label>Enter Tentative Arrival Date:</label>
+      <input type="date" id="tentativeDate" />
+
+      <button onclick="confirmAssignVehicle()">Assign Vehicle</button>
+    </div>
+  </div>
+
+  <!-- Product Review Modal -->
+  <div id="reviewModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeReviewModal()">&times;</span>
+      <h3 id="reviewModalTitle">Submit Product Review</h3>
+      
+      <form id="reviewForm">
+        <label>Product Quality *</label>
+        <select id="reviewQuality" required>
+          <option value="">-- Select Quality --</option>
+          <option value="Excellent">Excellent</option>
+          <option value="Good">Good</option>
+          <option value="Average">Average</option>
+          <option value="Poor">Poor</option>
+        </select>
+
+        <label>Comments *</label>
+        <textarea id="reviewComments" placeholder="Describe product quality, packaging, freshness..." required rows="4"></textarea>
+
+        <label>Rating (1-5) *</label>
+        <input type="number" id="reviewRating" min="1" max="5" required />
+
+        <button type="submit" class="btn-primary">Submit Review</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bid Modal -->
+  <div id="bidModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeBidModal()">&times;</span>
+      <h3>Place Your Bid</h3>
+      
+      <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <p><strong>Product:</strong> <span id="bidProductName"></span></p>
+        <p><strong>Original Price:</strong> <span id="bidOriginalPrice"></span></p>
+      </div>
+      
+      <form id="bidForm">
+        <label>Your Bid Price (per <span id="bidUnitOfSale"></span>) *</label>
+        <input type="number" id="bidPrice" step="0.01" placeholder="Enter your bid price" required />
+        
+        <p style="color: #6b7280; font-size: 14px; margin-top: 10px;">
+          💡 The farmer will review your bid and can accept or reject it.
+        </p>
+
+        <button type="submit" class="btn-primary">Submit Bid</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div id="receiptModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+      <span class="close" onclick="closeReceiptModal()">&times;</span>
+      <div id="receiptContent"></div>
+      <div style="text-align: center; margin-top: 20px;">
+        <button class="btn-primary" onclick="printReceipt()">🖨️ Print Receipt</button>
+        <button class="btn-secondary" onclick="closeReceiptModal()" style="margin-left: 10px;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/dealer.js"></script>
 </body>
 </html>

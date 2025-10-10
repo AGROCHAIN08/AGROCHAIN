@@ -238,18 +238,23 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
   if (role === "farmer") {
     const aadhaar = document.getElementById("aadhaar").value.trim();
     const farmLocation = document.getElementById("farmLocation").value.trim();
-    const geoTag = document.getElementById("geoTag").value.trim();
+    const latitude = document.getElementById("latitude").value.trim();
+    const longitude = document.getElementById("longitude").value.trim();
     const farmSize = document.getElementById("farmSize").value.trim();
-    const cropsGrown = document.getElementById("cropsGrown").value.trim();
-
+ 
+    if (!farmLocation || !farmSize) {
+      alert("Please fill all farmer details.");
+      return;
+    }
+    if (!latitude || !longitude) {
+      alert("Please fetch your farm location using the 'Get Geotag Location' button.");
+      return;
+    }
     if (!/^\d{12}$/.test(aadhaar)) {
       alert("Aadhaar must be exactly 12 digits.");
       return;
     }
-    if (!farmLocation || !geoTag || !farmSize || !cropsGrown) {
-      alert("Please fill all farmer details.");
-      return;
-    }
+    
   }
 
   if (role === "dealer") {
@@ -302,16 +307,46 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
     }
     
     result = await response.json();
-    
     if (response.ok) {
-      document.getElementById("message").innerHTML = `<p style="color:green">${result.msg}</p>`;
-      // Optionally redirect to login page
-      // window.location.href = '/login.html';
+  document.getElementById("message").innerHTML = `<p style="color:green">${result.msg}</p>`;
+  
+  // Redirect logic after successful signup
+  setTimeout(() => {
+    if (googleVerified) {
+      // Redirect to farmer dashboard (or role-based dashboard)
+      window.location.href = "/frontend/pages/login.html";
     } else {
-      document.getElementById("message").innerHTML = `<p style="color:red">${result.msg}</p>`;
+      // Redirect to sign-in page for OTP-based signup
+      window.location.href = "/frontend/pages/login.html";
     }
+  }, 1500); // short delay to show success message
+} else {
+  document.getElementById("message").innerHTML = `<p style="color:red">${result.msg}</p>`;
+}
+
   } catch (err) {
     console.error(err);
     document.getElementById("message").innerHTML = "<p style='color:red'>Error submitting form</p>";
+  }
+});
+
+// Get Geolocation
+document.getElementById("getLocationBtn").addEventListener("click", () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude.toFixed(6);
+        const lon = position.coords.longitude.toFixed(6);
+        document.getElementById("latitude").value = lat;
+        document.getElementById("longitude").value = lon;
+        alert(`Location fetched successfully! Latitude: ${lat}, Longitude: ${lon}`);
+      },
+      (error) => {
+        console.error(error);
+        alert("Unable to fetch location. Please allow location access.");
+      }
+    );
+  } else {
+    alert("Geolocation is not supported by your browser.");
   }
 });

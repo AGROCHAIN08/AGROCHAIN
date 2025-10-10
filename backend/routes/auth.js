@@ -8,8 +8,10 @@ const {
   signupWithGoogle,
   sendLoginOTP,
   verifyLoginOTP,
-  verifyGoogleLogin
+  verifyGoogleLogin,
+  updateFarmerProfile  // 👈 ADD THIS LINE
 } = require("../controllers/authcontroller");
+
 
 // Signup routes
 router.post("/signup", signup);
@@ -17,6 +19,7 @@ router.post("/send-otp", sendOTP);
 router.post("/verify-otp", verifyOTP);
 router.post("/verify-google", verifyGoogleToken);
 router.post("/signup-google", signupWithGoogle);
+router.put("/farmer/update/:email", updateFarmerProfile);
 
 // Login routes
 router.post("/send-login-otp", sendLoginOTP);

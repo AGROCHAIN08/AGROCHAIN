@@ -419,3 +419,18 @@ exports.signupWithGoogle = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
+exports.updateFarmerProfile = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const updates = req.body;
+
+    const user = await User.findOneAndUpdate({ email }, updates, { new: true });
+    if (!user) return res.status(404).json({ msg: "Farmer not found" });
+
+    res.json({ msg: "Profile updated successfully", user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};

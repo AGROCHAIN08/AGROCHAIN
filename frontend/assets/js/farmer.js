@@ -1,101 +1,58 @@
-// ---------------- Farmer Dashboard JS ----------------
-// Updated with new field structure
-
+// ===========================
+// GLOBAL VARIABLES & AUTH CHECK
+// ===========================
 const storedUser = JSON.parse(localStorage.getItem("agroChainUser"));
 const userEmail = storedUser?.email;
 
-// Redirect to login if not found
 if (!userEmail) {
   alert("Session expired. Please login again.");
   window.location.href = "login.html";
 }
 
-// Sidebar buttons
+// ===========================
+// DOM ELEMENTS
+// ===========================
 const inventoryBtn = document.getElementById("inventoryBtn");
 const ordersBtn = document.getElementById("ordersBtn");
 const profileBtn = document.getElementById("profileBtn");
 const signoutBtn = document.getElementById("signoutBtn");
 
-// Sections
 const inventorySection = document.getElementById("inventorySection");
 const ordersSection = document.getElementById("ordersSection");
 const profileSection = document.getElementById("profileSection");
 
-// Crop Form Elements
 const cropForm = document.getElementById("cropForm");
 const productsGrid = document.getElementById("productsGrid");
 const cropError = document.getElementById("cropError");
 const successMsg = document.getElementById("successMsg");
 const addCropToggleBtn = document.getElementById("addCropToggleBtn");
-const getLocationBtn = document.getElementById("getLocationBtn");
 
-// Profile Info
 const profileInfo = document.getElementById("profileInfo");
-
-// Orders Elements
 const notificationsList = document.getElementById("notificationsList");
 const farmerOrdersGrid = document.getElementById("farmerOrdersGrid");
 
-// ---------------- Sidebar Navigation ----------------
+// ===========================
+// SIDEBAR NAVIGATION
+// ===========================
 inventoryBtn.onclick = () => showSection(inventorySection);
 ordersBtn.onclick = () => {
   showSection(ordersSection);
   loadFarmerOrders();
   loadNotifications();
 };
-profileBtn.onclick = () => showSection(profileSection);
+profileBtn.onclick = () => {
+  showSection(profileSection);
+  loadProfile();
+};
 
 function showSection(section) {
   [inventorySection, ordersSection, profileSection].forEach(sec => sec.style.display = "none");
   section.style.display = "block";
 }
 
-// ---------------- Geolocation Handler ----------------
-getLocationBtn.onclick = () => {
-  if (navigator.geolocation) {
-    getLocationBtn.textContent = "📍 Getting Location...";
-    getLocationBtn.disabled = true;
-    
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        
-        // Update coordinate fields
-        document.getElementById("originLatitude").value = lat.toFixed(6);
-        document.getElementById("originLongitude").value = lng.toFixed(6);
-        
-        // Try to get address using reverse geocoding
-        try {
-          const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=YOUR_API_KEY`);
-          const data = await response.json();
-          
-          if (data.results && data.results[0]) {
-            const address = data.results[0].formatted;
-            document.getElementById("geotagLocation").value = address;
-          } else {
-            document.getElementById("geotagLocation").value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-          }
-        } catch (error) {
-          // Fallback to coordinates if reverse geocoding fails
-          document.getElementById("geotagLocation").value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-        }
-        
-        getLocationBtn.textContent = "📍 Location Retrieved";
-        getLocationBtn.disabled = false;
-      },
-      (error) => {
-        alert("Unable to retrieve location. Please enter manually.");
-        getLocationBtn.textContent = "📍 Get Current Location";
-        getLocationBtn.disabled = false;
-      }
-    );
-  } else {
-    alert("Geolocation is not supported by this browser.");
-  }
-};
-
-// ---------------- Load Farmer Profile ----------------
+// ===========================
+// PROFILE MANAGEMENT
+// ===========================
 async function loadProfile() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/profile/${userEmail}`);
@@ -103,14 +60,18 @@ async function loadProfile() {
 
     if (res.ok) {
       profileInfo.innerHTML = `
-        <p><b>Name:</b> ${data.firstName} ${data.lastName}</p>
+        <p><b>Name:</b> ${data.firstName} ${data.lastName || ''}</p>
         <p><b>Email:</b> ${data.email}</p>
         <p><b>Mobile:</b> ${data.mobile}</p>
-        <p><b>Aadhaar:</b> ${data.aadhaar}</p>
-        <p><b>Farm Location:</b> ${data.farmLocation}</p>
-        <p><b>Farm Size:</b> ${data.farmSize}</p>
-        <p><b>Crops Grown:</b> ${data.cropsGrown || "N/A"}</p>
+        <p><b>Aadhaar:</b> ${data.aadhaar || 'N/A'}</p>
+        <p><b>Farm Location:</b> ${data.farmLocation || "N/A"}</p>
+        <p><b>Latitude:</b> ${data.latitude || "N/A"}</p>
+        <p><b>Longitude:</b> ${data.longitude || "N/A"}</p>
+        <p><b>Farm Size:</b> ${data.farmSize || "N/A"}</p>
+        <button id="editProfileBtn" class="edit-btn">✏️ Edit Additional Details</button>
       `;
+
+      document.getElementById("editProfileBtn").onclick = () => enableProfileEdit(data);
     } else {
       profileInfo.innerHTML = `<p style="color:red">${data.msg}</p>`;
     }
@@ -119,7 +80,68 @@ async function loadProfile() {
   }
 }
 
-// ---------------- Load Crops ----------------
+function enableProfileEdit(data) {
+  document.getElementById("editProfileForm").style.display = "block";
+  document.getElementById("editFarmLocation").value = data.farmLocation || "";
+  document.getElementById("editLatitude").value = data.latitude || "";
+  document.getElementById("editLongitude").value = data.longitude || "";
+  document.getElementById("editFarmSize").value = data.farmSize || "";
+}
+
+document.getElementById("cancelEditBtn").onclick = () => {
+  document.getElementById("editProfileForm").style.display = "none";
+};
+
+document.getElementById("getGeoBtn").onclick = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        document.getElementById("editLatitude").value = position.coords.latitude.toFixed(6);
+        document.getElementById("editLongitude").value = position.coords.longitude.toFixed(6);
+        alert("📍 Location updated successfully!");
+      },
+      () => alert("Unable to fetch location. Please allow access.")
+    );
+  } else {
+    alert("Geolocation not supported in this browser.");
+  }
+};
+
+document.getElementById("editProfileForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const updatedDetails = {
+    farmLocation: document.getElementById("editFarmLocation").value.trim(),
+    latitude: document.getElementById("editLatitude").value.trim(),
+    longitude: document.getElementById("editLongitude").value.trim(),
+    farmSize: document.getElementById("editFarmSize").value.trim(),
+  };
+
+  try {
+    const res = await fetch(`http://localhost:3000/api/farmer/profile/${userEmail}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedDetails),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("✅ Profile updated successfully!");
+      document.getElementById("editProfileForm").style.display = "none";
+      loadProfile();
+    } else {
+      alert(`❌ ${data.msg || "Failed to update profile"}`);
+    }
+  } catch (err) {
+    alert("Network error. Please try again.");
+  }
+});
+
+// ===========================
+// PRODUCT/CROP MANAGEMENT
+// ===========================
+
 async function loadCrops() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}`);
@@ -127,8 +149,21 @@ async function loadCrops() {
 
     productsGrid.innerHTML = "";
     if (res.ok && crops.length > 0) {
-      crops.forEach((crop, i) => addCropToGrid(crop, i));
-    } else {
+  // Only show crops that still have stock
+  const availableCrops = crops.filter(c => c.harvestQuantity > 0);
+  if (availableCrops.length > 0) {
+    availableCrops.forEach((crop, i) => addCropToGrid(crop, i));
+  } else {
+    productsGrid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🌾</div>
+        <h3>All products sold out!</h3>
+        <p>Add a new product to continue selling.</p>
+      </div>
+    `;
+  }
+}
+ else {
       productsGrid.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">🌱</div>
@@ -151,11 +186,9 @@ async function loadCrops() {
   }
 }
 
-// ---------------- Add Crop ----------------
 cropForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   
-  // Clear previous messages
   cropError.textContent = "";
   successMsg.textContent = "";
 
@@ -165,11 +198,6 @@ cropForm.addEventListener("submit", async (e) => {
   formData.append("harvestQuantity", document.getElementById("harvestQuantity").value);
   formData.append("unitOfSale", document.getElementById("unitOfSale").value);
   formData.append("targetPrice", document.getElementById("targetPrice").value);
-  formData.append("geotagLocation", document.getElementById("geotagLocation").value);
-  formData.append("originLatitude", document.getElementById("originLatitude").value);
-  formData.append("originLongitude", document.getElementById("originLongitude").value);
-  formData.append("fieldAddress", document.getElementById("fieldAddress").value);
-  formData.append("availabilityStatus", document.getElementById("availabilityStatus").value);
   formData.append("image", document.getElementById("image").files[0]);
 
   try {
@@ -194,12 +222,52 @@ cropForm.addEventListener("submit", async (e) => {
   }
 });
 
-// ---------------- Helper: Add Crop to Grid ----------------
+const unitSelect = document.getElementById("unitOfSale");
+const priceUnitLabel = document.getElementById("priceUnitLabel");
+
+unitSelect.addEventListener("change", () => {
+  const unit = unitSelect.value;
+  priceUnitLabel.textContent = unit ? `per ${unit}` : "";
+});
+
 function addCropToGrid(crop, index) {
-  const statusClass = getStatusClass(crop.availabilityStatus);
-  
+  // 🧩 If the crop quantity is 0, remove its card and stop rendering it
+  if (crop.harvestQuantity <= 0) {
+    removeCropCardIfOutOfStock(crop._id);
+    return; // Skip creating a card for out-of-stock crop
+  }
+
+  let reviewsHTML = '';
+  if (crop.reviews && crop.reviews.length > 0) {
+    const avgRating = (crop.reviews.reduce((sum, r) => sum + r.rating, 0) / crop.reviews.length).toFixed(1);
+    reviewsHTML = `
+      <div class="product-reviews-section">
+        <h4 class="reviews-header">⭐ Reviews (${crop.reviews.length}) - Avg: ${avgRating}/5</h4>
+        <div class="reviews-list">
+          ${crop.reviews.slice(0, 2).map(review => `
+            <div class="review-card">
+              <div class="review-header-row">
+                <span class="review-quality-badge">${review.quality}</span>
+                <span class="review-rating-stars">${'⭐'.repeat(review.rating)}</span>
+              </div>
+              <p class="review-text">${review.comments}</p>
+              <div class="review-footer">
+                <small>By: ${review.dealerEmail}</small>
+                <small>${new Date(review.date).toLocaleDateString()}</small>
+              </div>
+            </div>
+          `).join('')}
+          ${crop.reviews.length > 2 ? `<small class="more-reviews">+${crop.reviews.length - 2} more reviews</small>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // 🧩 Create card container and attach crop ID for DOM removal
   const card = document.createElement("div");
   card.className = "product-card";
+  card.setAttribute("data-crop-id", crop._id);
+
   card.innerHTML = `
     <img src="${crop.imageUrl}" alt="${crop.varietySpecies}" class="product-card-image">
     
@@ -209,7 +277,6 @@ function addCropToGrid(crop, index) {
           <h3>${crop.varietySpecies}</h3>
           <span class="product-type">${crop.productType}</span>
         </div>
-        <span class="availability-tag ${statusClass}">${crop.availabilityStatus}</span>
       </div>
       
       <div class="product-details">
@@ -219,18 +286,11 @@ function addCropToGrid(crop, index) {
         </div>
         <div class="product-detail-item price-highlight">
           <div class="product-detail-label">Target Price</div>
-          <div class="product-detail-value">₹${crop.targetPrice}</div>
+          <div class="product-detail-value">₹${crop.targetPrice} per ${crop.unitOfSale}</div>
         </div>
       </div>
-      
-      <div class="product-location">
-        <div class="product-location-label">Farm Location</div>
-        <div class="product-location-value">${crop.geotagLocation}</div>
-        <div class="product-location-value">${crop.fieldAddress}</div>
-        <div class="product-coordinates">
-          📍 ${crop.originLatitude?.toFixed(4)}, ${crop.originLongitude?.toFixed(4)}
-        </div>
-      </div>
+
+      ${reviewsHTML}
       
       <div class="product-actions">
         <button class="action-btn edit-btn" onclick="editCrop('${index}')">
@@ -242,25 +302,33 @@ function addCropToGrid(crop, index) {
       </div>
     </div>
   `;
+
   productsGrid.appendChild(card);
 }
 
-// Helper function to get status CSS class
+
+function removeCropCardIfOutOfStock(cropId) {
+  const card = document.querySelector(`.product-card[data-crop-id='${cropId}']`);
+  if (card) {
+    card.remove();
+  }
+}
+
+
 function getStatusClass(status) {
   switch(status) {
     case 'Available': return 'status-available';
     case 'Out of Stock': return 'status-out-of-stock';
     case 'Coming Soon': return 'status-coming-soon';
+    case 'Inspection Initiated': return 'status-inspection-initiated';
     default: return 'status-available';
   }
 }
 
-// ---------------- Edit Crop (Placeholder) ----------------
 function editCrop(id) {
   alert("Edit functionality coming soon!");
 }
 
-// ---------------- Delete Crop ----------------
 async function deleteCrop(id) {
   if (!confirm("Are you sure you want to delete this product?")) return;
   
@@ -282,37 +350,18 @@ async function deleteCrop(id) {
   }
 }
 
-// ---------------- Toggle Add Crop Form ----------------
 addCropToggleBtn.onclick = () => {
   const isHidden = cropForm.style.display === "none";
   cropForm.style.display = isHidden ? "block" : "none";
   addCropToggleBtn.textContent = isHidden ? "Cancel" : "Add New Product";
   
   if (!isHidden) {
-    // Clear form and messages when hiding
     cropForm.reset();
     cropError.textContent = "";
     successMsg.textContent = "";
   }
 };
 
-// ---------------- Sign Out ----------------
-signoutBtn.onclick = () => {
-  const confirmLogout = confirm("Are you sure you want to sign out?");
-  if (confirmLogout) {
-    localStorage.clear();
-    window.location.href = "login.html";
-  }
-};
-
-// ---------------- Initialize ----------------
-document.addEventListener('DOMContentLoaded', () => {
-  showSection(inventorySection);
-  loadProfile();
-  loadCrops();
-});
-
-// Clear messages when form values change
 document.querySelectorAll('#cropForm input, #cropForm select, #cropForm textarea').forEach(field => {
   field.addEventListener('input', () => {
     cropError.textContent = "";
@@ -320,7 +369,10 @@ document.querySelectorAll('#cropForm input, #cropForm select, #cropForm textarea
   });
 });
 
-// ---------------- Load Farmer Orders ----------------
+// ===========================
+// ORDERS & NOTIFICATIONS
+// ===========================
+
 async function loadFarmerOrders() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/orders/${userEmail}`);
@@ -351,6 +403,50 @@ async function loadFarmerOrders() {
 function createFarmerOrderCard(order) {
   const statusClass = order.status.toLowerCase().replace(/\s+/g, '-');
   const statusBadgeClass = `status-${statusClass}`;
+  
+  // Check if there's a pending bid
+  let bidSection = '';
+  if (order.status === 'Bid Placed' && order.bidStatus === 'Pending') {
+    bidSection = `
+      <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 15px; margin-top: 15px;">
+        <h4 style="margin-top: 0; color: #d97706;">💰 New Bid Received</h4>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div>
+            <p style="margin: 5px 0;"><strong>Original Price:</strong> ₹${order.originalPrice} per ${order.productDetails.unitOfSale}</p>
+            <p style="margin: 5px 0;"><strong>Bid Price:</strong> ₹${order.bidPrice} per ${order.productDetails.unitOfSale}</p>
+            <p style="margin: 5px 0;"><strong>Total Amount:</strong> ₹${order.totalAmount.toFixed(2)}</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button onclick="acceptBid('${order._id}')" style="flex: 1; background: #10b981; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+            ✓ Accept Bid
+          </button>
+          <button onclick="rejectBid('${order._id}')" style="flex: 1; background: #ef4444; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+            ✗ Reject Bid
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (order.status === 'Bid Accepted' && order.receiptNumber) {
+    bidSection = `
+      <div style="background: #d1fae5; border: 2px solid #10b981; border-radius: 8px; padding: 15px; margin-top: 15px;">
+        <h4 style="margin-top: 0; color: #059669;">✓ Bid Accepted</h4>
+        <p style="margin: 5px 0;"><strong>Final Price:</strong> ₹${order.bidPrice} per ${order.productDetails.unitOfSale}</p>
+        <p style="margin: 5px 0;"><strong>Total Amount:</strong> ₹${order.totalAmount.toFixed(2)}</p>
+        <p style="margin: 5px 0;"><strong>Receipt Number:</strong> ${order.receiptNumber}</p>
+        <button onclick="viewFarmerReceipt('${order._id}')" style="background: #3b82f6; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+          📄 View Receipt
+        </button>
+      </div>
+    `;
+  } else if (order.status === 'Bid Rejected') {
+    bidSection = `
+      <div style="background: #fee2e2; border: 2px solid #ef4444; border-radius: 8px; padding: 15px; margin-top: 15px;">
+        <h4 style="margin-top: 0; color: #dc2626;">✗ Bid Rejected</h4>
+        <p style="margin: 5px 0;">You rejected the dealer's bid of ₹${order.bidPrice}</p>
+      </div>
+    `;
+  }
   
   return `
     <div class="farmer-order-card ${statusClass}">
@@ -388,11 +484,142 @@ function createFarmerOrderCard(order) {
           <span><strong>Email:</strong> ${order.dealerDetails.email}</span>
         </div>
       </div>
+
+      ${bidSection}
     </div>
   `;
 }
 
-// ---------------- Load Notifications ----------------
+// ===========================
+// BID ACCEPTANCE/REJECTION
+// ===========================
+
+async function acceptBid(orderId) {
+  if (!confirm('Are you sure you want to accept this bid?')) return;
+  
+  try {
+    const res = await fetch(`http://localhost:3000/api/farmer/accept-bid/${userEmail}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(`✅ Bid accepted! Receipt Number: ${data.receiptNumber}`);
+      loadFarmerOrders();
+      loadCrops(); // Reload to update quantity
+    } else {
+      alert(`❌ ${data.msg || 'Error accepting bid'}`);
+    }
+  } catch (err) {
+    alert('Network error. Please try again.');
+  }
+}
+
+async function rejectBid(orderId) {
+  if (!confirm('Are you sure you want to reject this bid? The product will become available again.')) return;
+  
+  try {
+    const res = await fetch(`http://localhost:3000/api/farmer/reject-bid/${userEmail}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert('✅ Bid rejected successfully.');
+      loadFarmerOrders();
+      loadCrops(); // Reload to update status
+    } else {
+      alert(`❌ ${data.msg || 'Error rejecting bid'}`);
+    }
+  } catch (err) {
+    alert('Network error. Please try again.');
+  }
+}
+
+// ===========================
+// RECEIPT VIEWING
+// ===========================
+
+async function viewFarmerReceipt(orderId) {
+  try {
+    const res = await fetch(`http://localhost:3000/api/farmer/orders/${userEmail}`);
+    const orders = await res.json();
+    
+    const order = orders.find(o => o._id === orderId);
+    
+    if (!order || !order.receiptNumber) {
+      alert('Receipt not available');
+      return;
+    }
+    
+    const modal = document.getElementById('farmerReceiptModal');
+    const receiptContent = document.getElementById('farmerReceiptContent');
+    
+    receiptContent.innerHTML = `
+      <div style="text-align: center; border-bottom: 2px solid #1f2937; padding-bottom: 20px; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #1f2937;">ORDER RECEIPT</h2>
+        <p style="margin: 5px 0; color: #6b7280;">AgroChain Platform</p>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <p><strong>Receipt Number:</strong> ${order.receiptNumber}</p>
+        <p><strong>Date:</strong> ${new Date(order.receiptGeneratedAt).toLocaleDateString()}</p>
+      </div>
+      
+      <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #1f2937;">Product Details</h3>
+        <p><strong>Product:</strong> ${order.productDetails.varietySpecies}</p>
+        <p><strong>Type:</strong> ${order.productDetails.productType}</p>
+        <p><strong>Quantity:</strong> ${order.quantity} ${order.productDetails.unitOfSale}</p>
+        <p><strong>Original Price:</strong> ₹${order.originalPrice} per ${order.productDetails.unitOfSale}</p>
+        <p><strong>Agreed Price:</strong> ₹${order.bidPrice} per ${order.productDetails.unitOfSale}</p>
+        <p style="font-size: 18px; font-weight: bold; color: #059669;"><strong>Total Amount:</strong> ₹${order.totalAmount.toFixed(2)}</p>
+      </div>
+      
+      <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #1f2937;">Dealer Details</h3>
+        <p><strong>Name:</strong> ${order.dealerDetails.businessName || `${order.dealerDetails.firstName} ${order.dealerDetails.lastName}`}</p>
+        <p><strong>Email:</strong> ${order.dealerDetails.email}</p>
+        <p><strong>Mobile:</strong> ${order.dealerDetails.mobile}</p>
+      </div>
+      
+      <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;">
+        <h3 style="margin-top: 0; color: #1f2937;">Farmer Details</h3>
+        <p><strong>Name:</strong> ${storedUser.firstName} ${storedUser.lastName || ''}</p>
+        <p><strong>Email:</strong> ${storedUser.email}</p>
+        <p><strong>Mobile:</strong> ${storedUser.mobile}</p>
+      </div>
+      
+      <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #1f2937;">
+        <p style="color: #6b7280; font-size: 14px;">Thank you for your business!</p>
+        <p style="color: #6b7280; font-size: 12px;">This is a computer-generated receipt</p>
+      </div>
+    `;
+    
+    modal.style.display = 'block';
+  } catch (error) {
+    alert('Error loading receipt');
+  }
+}
+
+function closeFarmerReceiptModal() {
+  document.getElementById('farmerReceiptModal').style.display = 'none';
+}
+
+function printFarmerReceipt() {
+  window.print();
+}
+
+// ===========================
+// NOTIFICATIONS
+// ===========================
+
 async function loadNotifications() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}`);
@@ -444,3 +671,23 @@ function getTimeAgo(date) {
   if (diffDays < 7) return `${diffDays} days ago`;
   return date.toLocaleDateString();
 }
+
+// ===========================
+// SIGN OUT
+// ===========================
+signoutBtn.onclick = () => {
+  const confirmLogout = confirm("Are you sure you want to sign out?");
+  if (confirmLogout) {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+};
+
+// ===========================
+// INITIALIZATION
+// ===========================
+document.addEventListener('DOMContentLoaded', () => {
+  showSection(inventorySection);
+  loadProfile();
+  loadCrops();
+});

@@ -112,50 +112,57 @@
       </div>
 
       <!-- Step 4: Additional Details -->
-      <div class="form-step" id="step4">
-        <!-- Farmer fields -->
-        <div id="farmerFields" style="display:none">
-          <label>Aadhaar (12 digits) <span class="required">*</span></label>
-          <input type="text" id="aadhaar" name="aadhaar">
-          <label>Farm Location <span class="required">*</span></label>
-          <input type="text" id="farmLocation" name="farmLocation">
-          <label>Geo Tag <span class="required">*</span></label>
-          <input type="text" id="geoTag" name="geoTag">
-          <label>Farm Size <span class="required">*</span></label>
-          <input type="text" id="farmSize" name="farmSize">
-          <label>Crops Grown <span class="required">*</span></label>
-          <input type="text" id="cropsGrown" name="cropsGrown">
-        </div>
+<div class="form-step" id="step4">
+  <!-- Farmer fields -->
+  <div id="farmerFields" style="display:none">
+    <label>Aadhaar (12 digits) <span class="required">*</span></label>
+    <input type="text" id="aadhaar" name="aadhaar">
 
-        <!-- Dealer fields -->
-        <div id="dealerFields" style="display:none">
-          <label>Business Name <span class="required">*</span></label>
-          <input type="text" id="businessName" name="businessName">
-          <label>GSTIN <span class="required">*</span></label>
-          <input type="text" id="gstin" name="gstin">
-          <label>Warehouse Address <span class="required">*</span></label>
-          <input type="text" id="warehouseAddress" name="warehouseAddress">
-          <label>Preferred Commodities</label>
-          <input type="text" id="preferredCommodities" name="preferredCommodities">
-        </div>
+    <label>Farm Location <span class="required">*</span></label>
+    <input type="text" id="farmLocation" name="farmLocation" placeholder="Village or area name">
 
-        <!-- Retailer fields -->
-        <div id="retailerFields" style="display:none">
-          <label>Shop Name <span class="required">*</span></label>
-          <input type="text" id="shopName" name="shopName">
-          <label>Shop Address <span class="required">*</span></label>
-          <input type="text" id="shopAddress" name="shopAddress">
-          <label>Shop Type <span class="required">*</span></label>
-          <input type="text" id="shopType" name="shopType">
-          <label>Monthly Purchase Volume</label>
-          <input type="text" id="monthlyPurchaseVolume" name="monthlyPurchaseVolume">
-        </div>
+    <label>Latitude</label>
+    <input type="text" id="latitude" name="latitude" readonly>
 
-        <div class="buttons">
-          <button type="button" id="back3">Back</button>
-          <button type="submit">Signup</button>
-        </div>
-      </div>
+    <label>Longitude</label>
+    <input type="text" id="longitude" name="longitude" readonly>
+
+    <button type="button" id="getLocationBtn" class="otp-btn">📍 Get Geotag Location</button>
+
+    <label>Farm Size <span class="required">*</span></label>
+    <input type="text" id="farmSize" name="farmSize" placeholder="e.g. 5 acres">
+  </div>
+
+  <!-- Dealer fields -->
+  <div id="dealerFields" style="display:none">
+    <label>Business Name <span class="required">*</span></label>
+    <input type="text" id="businessName" name="businessName">
+    <label>GSTIN <span class="required">*</span></label>
+    <input type="text" id="gstin" name="gstin">
+    <label>Warehouse Address <span class="required">*</span></label>
+    <input type="text" id="warehouseAddress" name="warehouseAddress">
+    <label>Preferred Commodities</label>
+    <input type="text" id="preferredCommodities" name="preferredCommodities">
+  </div>
+
+  <!-- Retailer fields -->
+  <div id="retailerFields" style="display:none">
+    <label>Shop Name <span class="required">*</span></label>
+    <input type="text" id="shopName" name="shopName">
+    <label>Shop Address <span class="required">*</span></label>
+    <input type="text" id="shopAddress" name="shopAddress">
+    <label>Shop Type <span class="required">*</span></label>
+    <input type="text" id="shopType" name="shopType">
+    <label>Monthly Purchase Volume</label>
+    <input type="text" id="monthlyPurchaseVolume" name="monthlyPurchaseVolume">
+  </div>
+
+  <div class="buttons">
+    <button type="button" id="back3">Back</button>
+    <button type="submit">Signup</button>
+  </div>
+</div>
+
     </form>
     <div id="message"></div>
   </div>
