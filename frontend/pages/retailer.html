@@ -1,24 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retailer Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Retailer Dashboard</title>
+  <link rel="stylesheet" href="../assets/css/retailer.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f9fafb; }
+    .sidebar { width: 240px; background: #1f2937; color: #fff; height: 100vh; position: fixed; padding: 20px; }
+    .sidebar h2 { margin-top: 0; }
+    .sidebar button { width: 100%; padding: 10px; background: transparent; color: #fff; border: none; text-align: left; margin: 5px 0; cursor: pointer; border-radius: 6px; }
+    .sidebar button.active, .sidebar button:hover { background: #374151; }
+    .content { margin-left: 260px; padding: 20px; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .products-grid, .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px; }
+    .product-card, .order-item { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .product-image { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; }
+    .btn-primary { background: #10b981; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+    .btn-primary:hover { background: #059669; }
+    .btn-remove { background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+    .btn-remove:hover { background: #dc2626; }
+  </style>
 </head>
 <body>
-    <h2>Welcome Retailer Dashboard</h2>
 
-<!-- Sign Out button -->
-<button id="signoutBtn" style="margin-top:20px;">Sign Out</button>
+  <div class="sidebar">
+    <h2>🛍️ Retailer Panel</h2>
+    <button id="browseBtn" class="active">🛒 Browse Products</button>
+    <button id="cartBtn">🧺 My Cart</button>
+    <button id="ordersBtn">📦 My Orders</button>
+    <button id="profileBtn">👤 Profile</button>
+    <button id="signoutBtn">🚪 Sign Out</button>
+  </div>
 
-<script>
-  document.getElementById("signoutBtn").addEventListener("click", () => {
-    // If you later store token in localStorage/sessionStorage, clear it here
-    // localStorage.removeItem("authToken");
+  <div class="content">
+    <!-- Browse Products -->
+    <section id="browseSection" class="section active">
+      <h1>Browse Dealer Products</h1>
+      <div class="filters">
+        <label>Product Type:</label>
+        <select id="filterProductType">
+          <option value="">All</option>
+          <option value="Fruit">Fruit</option>
+          <option value="Vegetable">Vegetable</option>
+          <option value="Cereal">Cereal</option>
+          <option value="Spices">Spices</option>
+          <option value="Pulses">Pulses</option>
+        </select>
+        <input type="text" id="filterVariety" placeholder="Search variety">
+        <input type="number" id="filterPrice" placeholder="Max Price ₹">
+        <button class="btn-primary" onclick="applyFilters()">Filter</button>
+      </div>
+      <div id="productsGrid" class="products-grid"></div>
+    </section>
 
-    // Redirect to login page
-    window.location.href = "login.html";
-  });
-</script>
+    <!-- Cart -->
+    <section id="cartSection" class="section">
+      <h1>My Cart</h1>
+      <div id="cartGrid" class="orders-grid"></div>
+    </section>
+
+    <!-- Orders -->
+    <section id="ordersSection" class="section">
+      <h1>My Orders</h1>
+      <div id="ordersGrid" class="orders-grid"></div>
+    </section>
+
+    <!-- Profile -->
+    <section id="profileSection" class="section">
+      <h1>My Profile</h1>
+      <div id="profileInfo"></div>
+    </section>
+  </div>
+
+  <script src="../assets/js/retailer.js"></script>
 </body>
 </html>
