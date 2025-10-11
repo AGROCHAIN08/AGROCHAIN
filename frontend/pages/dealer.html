@@ -77,6 +77,7 @@
     <button id="browseBtn" class="active">🌾 Browse Products</button>
     <button id="cartBtn">🛒 My Cart</button>
     <button id="ordersBtn">📦 My Orders</button>
+    <button id="inventoryBtn">📦 Inventory Management</button>
     <button id="vehiclesBtn">🚗 Vehicle Management</button>
     <button id="profileBtn">👤 Profile</button>
     <button id="signoutBtn">🚪 Sign Out</button>
@@ -185,6 +186,15 @@
       <div id="cartGrid" class="orders-grid"></div>
     </section>
 
+    <!-- Inventory Management Section -->
+    <section id="inventorySection" class="section">
+      <div class="section-header">
+        <h1 class="section-title">📦 Inventory Management</h1>
+      </div>
+      <div id="inventoryGrid" class="inventory-grid"></div>
+    </section>
+
+
     <!-- Profile Section -->
     <section id="profileSection" class="section">
       <div class="section-header">
@@ -218,6 +228,30 @@
       <button onclick="confirmAssignVehicle()">Assign Vehicle</button>
     </div>
   </div>
+
+  <section id="inventorySection" class="section">
+  <div class="section-header">
+    <h1 class="section-title">📦 Inventory Management</h1>
+  </div>
+
+  <div class="inventory-stats">
+    <div class="stat-card">
+      <div class="stat-label">Total Items</div>
+      <div class="stat-value" id="totalItems">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Value</div>
+      <div class="stat-value" id="totalValue">₹0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Product Types</div>
+      <div class="stat-value" id="productTypes">0</div>
+    </div>
+  </div>
+
+  <div id="inventoryMessage"></div>
+  <div id="inventoryGrid" class="inventory-grid"></div>
+</section>
 
   <!-- Product Review Modal -->
   <div id="reviewModal" class="modal">

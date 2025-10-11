@@ -116,6 +116,27 @@ const userSchema = new mongoose.Schema({
   ],
 
   // ===========================
+// DEALER INVENTORY SECTION
+// ===========================
+inventory: [
+  {
+    productId: { type: String, required: true },
+    productName: { type: String, required: true },
+    productType: { type: String },
+    quantity: { type: Number, required: true },
+    unitPrice: { type: Number, required: true },
+    totalValue: { type: Number },
+    unitOfSale: { type: String },
+    imageUrl: { type: String },
+    farmerName: { type: String },
+    farmerEmail: { type: String },
+    receiptNumber: { type: String },
+    addedDate: { type: Date, default: Date.now }
+  }
+],
+
+
+  // ===========================
   // RETAILER-SPECIFIC FIELDS
   // ===========================
   shopName: { type: String },
