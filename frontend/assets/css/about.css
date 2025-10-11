@@ -1,0 +1,575 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Poppins", Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Navbar Styling (Modified for color change) */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: whitesmoke;
+    color: white;
+    padding: 15px 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* NEW CSS ADDITION FOR FUNCTIONALITY WITHOUT STYLE CHANGE */
+/* Targets the new anchor tag to remove default link styles (underline, blue color) */
+.nav-left .brand-link {
+    text-decoration: none;
+    display: flex; /* Keeps the logo and text aligned */
+    align-items: center;
+    cursor: pointer;
+    /* Prevent the anchor tag from overriding the colors defined in .brand-name */
+    color: inherit; 
+}
+/* ------------------------------------------------------------------ */
+
+.logo {
+    width: 45px;
+    height: 45px;
+    margin-left: 12px;
+}
+
+/* MODIFIED: brand-name to use a span for 'Chain' for split color */
+.brand-name {
+    font-size: 1.6em;
+    font-weight: 700;
+    color: #FFD700; /* Default color for the first part (Agro) */
+}
+/* ADDED: Style for the 'Chain' part of the brand name */
+.brand-name .chain-text {
+    color: #81c784; 
+}
+
+
+.nav-center {
+    display: flex;
+    gap: 30px;
+}
+
+.nav-center .nav-link {
+    color: #FFD700; /* MODIFIED: Set link color to yellow */
+    text-decoration: none;
+    font-size: 1.05em;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    position: relative;
+}
+
+.nav-center .nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -5px;
+    left: 0;
+    background-color: #81c784;
+    transition: width 0.3s ease;
+}
+
+.nav-center .nav-link:hover::after {
+    width: 100%;
+}
+
+.nav-right {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-right .btn {
+    background-color: white;
+    color: #1b5e20;
+    border: 2px solid white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.nav-right .btn:hover {
+    background-color: transparent;
+    color: white;
+}
+
+.nav-right .btn-signup {
+    background-color: #4caf50;
+    color: white;
+    border: 2px solid #4caf50;
+}
+
+.nav-right .btn-signup:hover {
+    background-color: #66bb6a;
+    border-color: #66bb6a;
+}
+
+
+/* Header Section */
+.about-header {
+    background: linear-gradient(90deg, #2e7d32, #4caf50);
+    color: white;
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.about-header h1 {
+    font-size: 2.5em;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.about-header p {
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+/* Story Section */
+.story-section {
+    display: flex;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.story-card {
+    background: white;
+    border-radius: 10px;
+    padding: 40px;
+    max-width: 850px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.story-card h2 {
+    color: #2e7d32;
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+.underline {
+    width: 80px;
+    height: 4px;
+    background-color: #4caf50;
+    border-radius: 2px;
+    margin-bottom: 20px;
+}
+
+.story-card p {
+    line-height: 1.8;
+    font-size: 1.05em;
+    margin-bottom: 15px;
+}
+
+/* Mission and Vision Section */
+.mission-vision-section {
+    padding: 60px 20px;
+    background-color: #f8f9fa;
+}
+
+.mission-vision-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.mission-card,
+.vision-card {
+    background: white;
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mission-card {
+    border-top: 4px solid #2e7d32;
+}
+
+.vision-card {
+    border-top: 4px solid #4caf50;
+}
+
+.mission-card:hover,
+.vision-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #2e7d32, #4caf50);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.card-icon i {
+    font-size: 1.8em;
+    color: white;
+}
+
+.mission-card h2,
+.vision-card h2 {
+    color: #333;
+    font-size: 1.6em;
+    margin-bottom: 15px;
+}
+
+.mission-card p,
+.vision-card p {
+    line-height: 1.8;
+    font-size: 1.05em;
+    color: #555;
+}
+
+/* Team Section */
+.team-section {
+    padding: 60px 20px 80px;
+    background-color: white;
+}
+
+.team-title {
+    text-align: center;
+    font-size: 2.5em;
+    color: green;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.team-underline {
+    width: 120px;
+    height: 4px;
+    background-color: green;
+    border-radius: 2px;
+    margin: 0 auto 50px;
+}
+
+/* Structure for 3 on top, 2 on bottom */
+.team-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+    gap: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+@media (min-width: 1201px) {
+    .team-container {
+        /* Reset general container display for 3/2 split */
+        display: block; 
+    }
+
+    .team-row-top {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+        max-width: 1400px;
+        margin: 0 auto 40px;
+    }
+
+    .team-row-bottom {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+        max-width: 800px; /* Constrain for centering 2 cards nicely */
+        margin: 0 auto;
+    }
+}
+
+
+.team-card {
+    background: white;
+    border-radius: 10px;
+    /* DECREASED SIZE */
+    padding: 25px; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-top-color 0.3s ease;
+    border-top: 4px solid green;
+}
+
+.team-card:hover {
+    /* DECREASED ANIMATION LIFT */
+    transform: translateY(-8px); 
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-top-color: green;
+}
+
+/* -------------------------------------------------------------------------------- */
+/* MODIFIED: Updated transform transition for a stronger pop */
+.team-image {
+    /* DECREASED SIZE */
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 20px;
+    border: 5px solid green;
+    
+    /* MODIFIED: Swapped transition timing function to a stronger spring-like curve */
+    transition: 
+        border-radius 0.3s ease-out, 
+        border-color 0.3s ease,
+        /* Use a custom cubic-bezier for a strong bounce effect */
+        transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
+}
+/* -------------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------------- */
+/* MODIFIED: Increased scale and rotation for a stronger 'pop outside' effect */
+.team-card:hover .team-image {
+    border-color: green;
+    border-radius: 10px; 
+    /* Increased scale to 1.1 (10% larger) for a clear "pop" */
+    transform: scale(1.1) rotate(2deg); 
+}
+/* -------------------------------------------------------------------------------- */
+
+.team-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.team-card h3 {
+    font-size: 1.4em;
+    color: #333;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.team-role {
+    color: yellowgreen;
+    font-weight: 600;
+    font-size: 1.05em;
+    margin-bottom: 15px;
+}
+
+.team-description {
+    color: #666;
+    line-height: 1.6;
+    font-size: 0.95em;
+    margin-bottom: 20px;
+    min-height: 80px;
+}
+
+.team-social {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.team-social a {
+    width: 40px;
+    height: 40px;
+    background-color: #f0f0f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.team-social a:hover {
+    background-color: #4caf50;
+    color: white;
+    transform: translateY(-3px);
+}
+
+/* Footer Styling */
+.footer {
+    background-color: #1b5e20;
+    color: white;
+    margin-top: auto;
+    padding: 50px 20px 20px;
+}
+
+.footer-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.footer-column h3 {
+    color: #81c784;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.footer-column p {
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+.footer-column ul {
+    list-style: none;
+}
+
+.footer-column ul li {
+    margin-bottom: 8px;
+}
+
+.footer-column ul li a {
+    color: #f5f5f5;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.footer-column ul li a:hover {
+    color: #81c784;
+}
+
+.social-icons a {
+    color: #f5f5f5;
+    font-size: 1.2em;
+    margin-right: 15px;
+    transition: 0.3s;
+    text-decoration: none;
+}
+
+.social-icons a:hover {
+    color: #81c784;
+}
+
+.footer-bottom {
+    border-top: 1px solid #2e7d32;
+    text-align: center;
+    padding-top: 15px;
+    font-size: 0.9em;
+    color: #ccc;
+    max-width: 1400px;
+    margin: 30px auto 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .team-container,
+    .team-row-top,
+    .team-row-bottom {
+        /* Fallback for medium screens */
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        margin: 0 auto 40px;
+        max-width: 1000px;
+    }
+}
+
+@media (max-width: 900px) {
+    /* Responsive nav bar for smaller screens */
+    .navbar {
+        padding: 10px 20px;
+    }
+    .navbar-links {
+        display: none; 
+    }
+    .navbar-logo {
+        font-size: 1.5em;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .about-header h1 {
+        font-size: 2em;
+    }
+
+    .about-header p {
+        font-size: 1em;
+    }
+
+    .mission-vision-container {
+        grid-template-columns: 1fr;
+    }
+
+    .team-container,
+    .team-row-top,
+    .team-row-bottom {
+        /* Force single column layout on small screens */
+        grid-template-columns: 1fr;
+        gap: 30px;
+        max-width: 400px;
+        margin: 0 auto 30px;
+    }
+
+    .team-title {
+        font-size: 2em;
+    }
+
+    /* Adjusted size for small screens to prevent overflow */
+    .team-image {
+        width: 130px;
+        height: 130px;
+    }
+
+    /* Adjusted padding for small screens */
+    .team-card {
+        padding: 20px;
+    }
+
+    .team-card h3 {
+        font-size: 1.3em;
+    }
+
+    .team-description {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-header {
+        padding: 60px 15px;
+    }
+
+    .about-header h1 {
+        font-size: 1.8em;
+    }
+    
+    .navbar-buttons {
+        gap: 5px;
+    }
+    .navbar-buttons a {
+        padding: 8px 12px;
+        font-size: 0.9em;
+        margin-left: 0;
+    }
+    .story-card {
+        padding: 30px 20px;
+    }
+
+    .mission-card,
+    .vision-card {
+        padding: 30px 20px;
+    }
+}

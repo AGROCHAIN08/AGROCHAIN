@@ -3,36 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <title>AgroChain Login</title>
-  <link rel="stylesheet" href="../assets/css/signup.css">
+  <link rel="stylesheet" href="../assets/css/login.css"> 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+    
+  <nav class="navbar">
+    <div class="nav-left">
+      <img src="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh" alt="AgroChain Logo" class="logo">
+      <span class="brand-name">Agro<span class="chain-text">Chain</span></span>
+    </div>
+    <div class="nav-center">
+      <a href="home.html" class="nav-link">Home</a>
+      <a href="about.html" class="nav-link">About</a>
+      <a href="home.html#features" class="nav-link">Features</a> 
+      <a href="home.html#roles" class="nav-link">User Roles</a> 
+    </div>
+    <div class="nav-right">
+      <a href="login.html"><button class="btn">Log In</button></a>
+      <a href="signup.html"><button class="btn btn-signup">Sign Up</button></a>
+    </div>
+  </nav>
+
   <div class="signup-container">
     <h2>Login to AgroChain</h2>
 
-    <!-- Google Login -->
     <div class="google-signin-section">
       <h4>Option 1: Sign in with Google</h4>
       <div id="g_id_onload"
-           data-client_id="262898642473-niisbi298nfo33a175rju6acmpkatrs4.apps.googleusercontent.com"
-           data-context="signin"
-           data-ux_mode="popup"
-           data-callback="handleGoogleLogin"
-           data-auto_prompt="false">
+        data-client_id="262898642473-niisbi298nfo33a175rju6acmpkatrs4.apps.googleusercontent.com"
+        data-context="signin"
+        data-ux_mode="popup"
+        data-callback="handleGoogleLogin"
+        data-auto_prompt="false">
       </div>
       <div class="g_id_signin" 
-           data-type="standard"
-           data-shape="rectangular"
-           data-theme="outline"
-           data-text="signin_with"
-           data-size="large"
-           data-logo_alignment="left">
+        data-type="standard"
+        data-shape="rectangular"
+        data-theme="outline"
+        data-text="signin_with"
+        data-size="large"
+        data-logo_alignment="left">
       </div>
     </div>
 
     <div class="divider"><span>OR</span></div>
 
-    <!-- Email OTP Login -->
     <div class="email-otp-section">
       <h4>Option 2: Login with Email + OTP</h4>
       <label>Email</label>
@@ -46,14 +62,9 @@
         <p class="otp-timer" id="otpTimer"></p>
         <button type="button" id="resendOtpBtn" style="display:none;">Resend Code</button>
       </div>
+
+      <div class="message-error" id="loginStatus" style="display:none;"></div>
     </div>
-
-    <div id="loginStatus"></div>
-
-    <!-- Signup Link -->
-    <p style="margin-top:20px;">Don’t have an account? 
-      <a href="signup.html">Signup here</a>
-    </p>
   </div>
 
   <script src="../assets/js/login.js"></script>
