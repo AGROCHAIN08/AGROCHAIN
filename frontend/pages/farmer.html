@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Farmer Dashboard</title>
+  <title>Farmer Dashboard - AgroChain</title>
   <link rel="stylesheet" href="../assets/css/farmer.css">
   <style>
     @media print {
@@ -25,21 +25,50 @@
   </style>
 </head>
 <body>
-  <div class="sidebar">
-    <h2>👨‍🌾 Farmer Panel</h2>
-    <button id="inventoryBtn">Inventory</button>
-    <button id="ordersBtn">Orders</button>
-    <button id="profileBtn">Profile</button>
-    <button id="signoutBtn">Sign Out</button>
-  </div>
+  <nav class="navbar">
+    <div class="nav-left">
+      <img src="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh" alt="AgroChain Logo" class="logo">
+      <span class="brand-name">Agro<span class="chain-text">Chain</span></span>
+    </div>
+    
+    <div class="nav-center">
+      <a href="#" class="nav-link active" id="navHomeBtn">
+        <span class="nav-icon">🌾</span> Inventory
+      </a>
+      <a href="#" class="nav-link" id="navOrdersBtn">
+        <span class="nav-icon">📦</span> Orders
+      </a>
+    </div>
+    
+    <div class="nav-right">
+      <a href="#" class="nav-link" id="navNotificationBtn">
+        <span class="nav-icon">🔔</span>
+        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+      </a>
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileDropdownBtn">
+          <span class="profile-icon">👤</span>
+          <span id="farmerNameDisplay">Farmer</span>
+          <span class="dropdown-arrow">▼</span>
+        </button>
+        <div class="profile-dropdown-menu" id="profileDropdownMenu">
+          <a href="#" class="dropdown-item" id="viewProfileBtn">
+            <span class="dropdown-icon">👤</span> My Profile
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item logout-item" id="navSignoutBtn">
+            <span class="dropdown-icon">🚪</span> Sign Out
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
 
-  <!-- Main Content -->
   <div class="content">
-
-    <!-- Inventory Section -->
     <section id="inventorySection">
-      <h2>🌾 My Inventory</h2>
-      <button class="add-btn" id="addCropToggleBtn">Add New Product</button>
+      <div class="section-header">
+        <button class="add-btn" id="addCropToggleBtn">+ Add New Product</button>
+      </div>
 
       <form id="cropForm" style="display:none;" enctype="multipart/form-data">
         <div class="form-row">
@@ -93,58 +122,62 @@
       </form>
 
       <p id="cropError" style="color:red;"></p>
-      <p id="successMsg" class="message"></p>
 
       <div id="productsGrid" class="products-grid"></div>
     </section>
 
-    <!-- Orders Section -->
-    <section id="ordersSection" style="display:none;">
-      <h2>📦 My Orders</h2>
+    <section id="notificationsSection" style="display:none;">
+      <div class="section-header">
+        <h2>🔔 Notifications</h2>
+        </div>
       
-      <!-- Notifications Panel -->
       <div class="notifications-panel">
-        <h3>🔔 Recent Notifications</h3>
         <div id="notificationsList"></div>
       </div>
+    </section>
 
-      <!-- Orders Grid -->
+    <section id="ordersSection" style="display:none;">
+      <div class="section-header">
+        <h2>📦 My Orders</h2>
+      </div>
+      
       <div id="farmerOrdersGrid" class="orders-grid"></div>
     </section>
 
-    <!-- Profile Section -->
     <section id="profileSection" style="display:none;">
-      <h2>👤 My Profile</h2>
-      <div id="profileInfo"></div>
+      <div class="section-header">
+        <h2>👤 My Profile</h2>
+      </div>
+      
+      <div class="profile-container">
+        <div id="profileInfo" class="profile-card"></div>
 
-      <!-- Editable Fields -->
-      <form id="editProfileForm" style="display:none; margin-top: 20px;">
-        <h3>Edit Additional Details</h3>
+        <form id="editProfileForm" style="display:none;" class="edit-profile-form">
+          <h3>Edit Additional Details</h3>
 
-        <label>Farm Location</label>
-        <input type="text" id="editFarmLocation" placeholder="Enter farm location">
+          <label>Farm Location</label>
+          <input type="text" id="editFarmLocation" placeholder="Enter farm location">
 
-        <label>Latitude</label>
-        <input type="text" id="editLatitude" readonly>
+          <label>Latitude</label>
+          <input type="text" id="editLatitude" readonly>
 
-        <label>Longitude</label>
-        <input type="text" id="editLongitude" readonly>
+          <label>Longitude</label>
+          <input type="text" id="editLongitude" readonly>
 
-        <button type="button" id="getGeoBtn">📍 Get Current Location</button>
+          <button type="button" id="getGeoBtn" class="geo-btn">📍 Get Current Location</button>
 
-        <label>Farm Size</label>
-        <input type="text" id="editFarmSize" placeholder="Enter farm size (e.g. 5 acres)">
+          <label>Farm Size</label>
+          <input type="text" id="editFarmSize" placeholder="Enter farm size (e.g. 5 acres)">
 
-        <div style="margin-top: 10px;">
-          <button type="submit" id="saveProfileBtn">💾 Save Changes</button>
-          <button type="button" id="cancelEditBtn">✖ Cancel</button>
-        </div>
-      </form>
+          <div class="form-actions">
+            <button type="submit" id="saveProfileBtn" class="save-btn">💾 Save Changes</button>
+            <button type="button" id="cancelEditBtn" class="cancel-btn">✖ Cancel</button>
+          </div>
+        </form>
+      </div>
     </section>
-
   </div>
 
-  <!-- Farmer Receipt Modal -->
   <div id="farmerReceiptModal" class="modal">
     <div class="modal-content" style="max-width: 700px;">
       <span class="close" onclick="closeFarmerReceiptModal()">&times;</span>

@@ -12,15 +12,24 @@ if (!userEmail) {
 // ===========================
 // DOM ELEMENTS
 // ===========================
-const inventoryBtn = document.getElementById("inventoryBtn");
-const ordersBtn = document.getElementById("ordersBtn");
-const profileBtn = document.getElementById("profileBtn");
-const signoutBtn = document.getElementById("signoutBtn");
+// Navbar elements
+const navHomeBtn = document.getElementById("navHomeBtn");
+const navNotificationBtn = document.getElementById("navNotificationBtn");
+const navOrdersBtn = document.getElementById("navOrdersBtn");
+const navSignoutBtn = document.getElementById("navSignoutBtn");
+const viewProfileBtn = document.getElementById("viewProfileBtn");
+const profileDropdownBtn = document.getElementById("profileDropdownBtn");
+const profileDropdownMenu = document.getElementById("profileDropdownMenu");
+const farmerNameDisplay = document.getElementById("farmerNameDisplay");
+const notificationBadge = document.getElementById("notificationBadge");
 
+// Sections
 const inventorySection = document.getElementById("inventorySection");
+const notificationsSection = document.getElementById("notificationsSection");
 const ordersSection = document.getElementById("ordersSection");
 const profileSection = document.getElementById("profileSection");
 
+// Other elements
 const cropForm = document.getElementById("cropForm");
 const productsGrid = document.getElementById("productsGrid");
 const cropError = document.getElementById("cropError");
@@ -30,23 +39,96 @@ const addCropToggleBtn = document.getElementById("addCropToggleBtn");
 const profileInfo = document.getElementById("profileInfo");
 const notificationsList = document.getElementById("notificationsList");
 const farmerOrdersGrid = document.getElementById("farmerOrdersGrid");
+// markAllReadBtn is no longer needed
 
 // ===========================
-// SIDEBAR NAVIGATION
+// NAVBAR FUNCTIONALITY
 // ===========================
-inventoryBtn.onclick = () => showSection(inventorySection);
-ordersBtn.onclick = () => {
-  showSection(ordersSection);
-  loadFarmerOrders();
+
+// Update farmer name in navbar
+if (storedUser && storedUser.firstName) {
+  farmerNameDisplay.textContent = storedUser.firstName;
+}
+
+// Profile dropdown toggle
+profileDropdownBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  profileDropdownMenu.classList.toggle('show');
+  profileDropdownBtn.classList.toggle('active');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.profile-dropdown')) {
+    profileDropdownMenu.classList.remove('show');
+    profileDropdownBtn.classList.remove('active');
+  }
+});
+
+// Navigation functions
+function setActiveNavLink(activeLink) {
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.classList.remove('active');
+  });
+  if (activeLink) {
+    activeLink.classList.add('active');
+  }
+}
+
+navHomeBtn.onclick = (e) => {
+  e.preventDefault();
+  showSection(inventorySection);
+  setActiveNavLink(navHomeBtn);
+};
+
+// ** MODIFIED CODE BLOCK **
+// This function now handles marking notifications as read automatically.
+navNotificationBtn.onclick = async (e) => {
+  e.preventDefault();
+  showSection(notificationsSection);
+  setActiveNavLink(navNotificationBtn);
+
+  // Automatically mark notifications as read when the panel is opened
+  try {
+    const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}/mark-read`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!res.ok) {
+      console.error("Backend failed to mark notifications as read.");
+    }
+  } catch (error) {
+    console.error("Network error while marking notifications as read:", error);
+  }
+
+  // Reload notifications, which will now be read and hide the badge
   loadNotifications();
 };
-profileBtn.onclick = () => {
+// ** END OF MODIFIED CODE BLOCK **
+
+navOrdersBtn.onclick = (e) => {
+  e.preventDefault();
+  showSection(ordersSection);
+  setActiveNavLink(navOrdersBtn);
+  loadFarmerOrders();
+};
+
+viewProfileBtn.onclick = (e) => {
+  e.preventDefault();
   showSection(profileSection);
+  setActiveNavLink(null);
+  profileDropdownMenu.classList.remove('show');
+  profileDropdownBtn.classList.remove('active');
   loadProfile();
 };
 
 function showSection(section) {
-  [inventorySection, ordersSection, profileSection].forEach(sec => sec.style.display = "none");
+  [inventorySection, notificationsSection, ordersSection, profileSection].forEach(sec => {
+    sec.style.display = "none";
+  });
   section.style.display = "block";
 }
 
@@ -68,10 +150,10 @@ async function loadProfile() {
         <p><b>Latitude:</b> ${data.latitude || "N/A"}</p>
         <p><b>Longitude:</b> ${data.longitude || "N/A"}</p>
         <p><b>Farm Size:</b> ${data.farmSize || "N/A"}</p>
-        <button id="editProfileBtn" class="edit-btn">✏️ Edit Additional Details</button>
+        <button id="editProfileBtnInCard" class="add-btn" style="margin-top: 20px;">✏️ Edit Additional Details</button>
       `;
 
-      document.getElementById("editProfileBtn").onclick = () => enableProfileEdit(data);
+      document.getElementById("editProfileBtnInCard").onclick = () => enableProfileEdit(data);
     } else {
       profileInfo.innerHTML = `<p style="color:red">${data.msg}</p>`;
     }
@@ -149,21 +231,19 @@ async function loadCrops() {
 
     productsGrid.innerHTML = "";
     if (res.ok && crops.length > 0) {
-  // Only show crops that still have stock
-  const availableCrops = crops.filter(c => c.harvestQuantity > 0);
-  if (availableCrops.length > 0) {
-    availableCrops.forEach((crop, i) => addCropToGrid(crop, i));
-  } else {
-    productsGrid.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🌾</div>
-        <h3>All products sold out!</h3>
-        <p>Add a new product to continue selling.</p>
-      </div>
-    `;
-  }
-}
- else {
+      const availableCrops = crops.filter(c => c.harvestQuantity > 0);
+      if (availableCrops.length > 0) {
+        availableCrops.forEach((crop, i) => addCropToGrid(crop, i));
+      } else {
+        productsGrid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🌾</div>
+            <h3>All products sold out!</h3>
+            <p>Add a new product to continue selling.</p>
+          </div>
+        `;
+      }
+    } else {
       productsGrid.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">🌱</div>
@@ -212,7 +292,7 @@ cropForm.addEventListener("submit", async (e) => {
       successMsg.textContent = "✅ Product added successfully!";
       cropForm.reset();
       cropForm.style.display = "none";
-      addCropToggleBtn.textContent = "Add New Product";
+      addCropToggleBtn.textContent = "+ Add New Product";
       loadCrops();
     } else {
       cropError.textContent = data.msg || "Error adding product";
@@ -231,10 +311,9 @@ unitSelect.addEventListener("change", () => {
 });
 
 function addCropToGrid(crop, index) {
-  // 🧩 If the crop quantity is 0, remove its card and stop rendering it
   if (crop.harvestQuantity <= 0) {
     removeCropCardIfOutOfStock(crop._id);
-    return; // Skip creating a card for out-of-stock crop
+    return;
   }
 
   let reviewsHTML = '';
@@ -263,7 +342,6 @@ function addCropToGrid(crop, index) {
     `;
   }
 
-  // 🧩 Create card container and attach crop ID for DOM removal
   const card = document.createElement("div");
   card.className = "product-card";
   card.setAttribute("data-crop-id", crop._id);
@@ -313,17 +391,6 @@ function removeCropCardIfOutOfStock(cropId) {
   }
 }
 
-
-function getStatusClass(status) {
-  switch(status) {
-    case 'Available': return 'status-available';
-    case 'Out of Stock': return 'status-out-of-stock';
-    case 'Coming Soon': return 'status-coming-soon';
-    case 'Inspection Initiated': return 'status-inspection-initiated';
-    default: return 'status-available';
-  }
-}
-
 function editCrop(id) {
   alert("Edit functionality coming soon!");
 }
@@ -352,7 +419,7 @@ async function deleteCrop(id) {
 addCropToggleBtn.onclick = () => {
   const isHidden = cropForm.style.display === "none";
   cropForm.style.display = isHidden ? "block" : "none";
-  addCropToggleBtn.textContent = isHidden ? "Cancel" : "Add New Product";
+  addCropToggleBtn.textContent = isHidden ? "Cancel" : "+ Add New Product";
   
   if (!isHidden) {
     cropForm.reset();
@@ -403,7 +470,6 @@ function createFarmerOrderCard(order) {
   const statusClass = order.status.toLowerCase().replace(/\s+/g, '-');
   const statusBadgeClass = `status-${statusClass}`;
   
-  // Check if there's a pending bid
   let bidSection = '';
   if (order.status === 'Bid Placed' && order.bidStatus === 'Pending') {
     bidSection = `
@@ -508,7 +574,8 @@ async function acceptBid(orderId) {
     if (res.ok) {
       alert(`✅ Bid accepted! Receipt Number: ${data.receiptNumber}`);
       loadFarmerOrders();
-      loadCrops(); // Reload to update quantity
+      loadCrops();
+      loadNotifications();
     } else {
       alert(`❌ ${data.msg || 'Error accepting bid'}`);
     }
@@ -532,7 +599,7 @@ async function rejectBid(orderId) {
     if (res.ok) {
       alert('✅ Bid rejected successfully.');
       loadFarmerOrders();
-      loadCrops(); // Reload to update status
+      loadCrops();
     } else {
       alert(`❌ ${data.msg || 'Error rejecting bid'}`);
     }
@@ -625,21 +692,37 @@ async function loadNotifications() {
     const notifications = await res.json();
 
     if (res.ok && notifications.length > 0) {
+      const unreadCount = notifications.filter(n => !n.isRead).length;
+      updateNotificationBadge(unreadCount);
+      
       notificationsList.innerHTML = notifications.map(notification => createNotificationItem(notification)).join('');
     } else {
+      updateNotificationBadge(0);
       notificationsList.innerHTML = `
-        <div style="text-align: center; color: #6b7280; padding: 20px;">
-          <div style="font-size: 24px; margin-bottom: 10px;">🔔</div>
-          <p>No new notifications</p>
+        <div style="text-align: center; color: #6b7280; padding: 60px 20px;">
+          <div style="font-size: 48px; margin-bottom: 20px;">🔔</div>
+          <h3 style="color: #1f2937; margin-bottom: 10px;">No Notifications</h3>
+          <p>You're all caught up! New notifications will appear here.</p>
         </div>
       `;
     }
   } catch (error) {
     notificationsList.innerHTML = `
-      <div style="text-align: center; color: #ef4444; padding: 20px;">
-        <p>Error loading notifications</p>
+      <div style="text-align: center; color: #ef4444; padding: 60px 20px;">
+        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+        <h3 style="color: #1f2937; margin-bottom: 10px;">Error Loading Notifications</h3>
+        <p>Please try again later</p>
       </div>
     `;
+  }
+}
+
+function updateNotificationBadge(count) {
+  if (count > 0) {
+    notificationBadge.textContent = count > 99 ? '99+' : count;
+    notificationBadge.style.display = 'block';
+  } else {
+    notificationBadge.style.display = 'none';
   }
 }
 
@@ -664,17 +747,24 @@ function createNotificationItem(notification) {
 function getTimeAgo(date) {
   const now = new Date();
   const diffTime = Math.abs(now - date);
+  const diffMinutes = Math.ceil(diffTime / (1000 * 60));
+  const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
+  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
   if (diffDays === 1) return '1 day ago';
   if (diffDays < 7) return `${diffDays} days ago`;
   return date.toLocaleDateString();
 }
 
+// ** REMOVED "Mark all as read" button logic **
+
 // ===========================
 // SIGN OUT
 // ===========================
-signoutBtn.onclick = () => {
+navSignoutBtn.onclick = (e) => {
+  e.preventDefault();
   const confirmLogout = confirm("Are you sure you want to sign out?");
   if (confirmLogout) {
     localStorage.clear();
@@ -683,10 +773,20 @@ signoutBtn.onclick = () => {
 };
 
 // ===========================
-// INITIALIZATION
+// INITIALIZATION & AUTO-REFRESH
 // ===========================
 document.addEventListener('DOMContentLoaded', () => {
   showSection(inventorySection);
+  setActiveNavLink(navHomeBtn);
   loadProfile();
   loadCrops();
+  loadNotifications(); // Load initial notification count
+  
+  // Auto-refresh notifications every 30 seconds
+  setInterval(() => {
+    // Only refresh if the notification section isn't currently displayed
+    if (notificationsSection.style.display === "none") {
+      loadNotifications();
+    }
+  }, 30000);
 });
