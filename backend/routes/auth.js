@@ -13,6 +13,23 @@ const {
 } = require("../controllers/authcontroller");
 
 
+// ===========================
+// PROFILE ROUTE (COMMON FOR ALL USERS)
+// ===========================
+const User = require("../models/user");
+
+router.get("/profile/:email", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) return res.status(404).json({ msg: "User not found" });
+    res.json(user);
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+    res.status(500).json({ msg: "Error fetching user profile" });
+  }
+});
+
+
 // Signup routes
 router.post("/signup", signup);
 router.post("/send-otp", sendOTP);

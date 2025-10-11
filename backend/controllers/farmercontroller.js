@@ -210,68 +210,99 @@ exports.deleteCrop = async (req, res) => {
 exports.acceptBid = async (req, res) => {
   try {
     const { orderId } = req.body;
-    const { email } = req.params;
+    const { email } = req.params; // farmer email
 
     if (!orderId) {
       return res.status(400).json({ msg: "Order ID is required" });
     }
 
     const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ msg: "Order not found" });
-    }
-
-    if (order.farmerEmail !== email) {
+    if (!order) return res.status(404).json({ msg: "Order not found" });
+    if (order.farmerEmail !== email)
       return res.status(403).json({ msg: "Unauthorized" });
-    }
 
-    if (order.bidStatus !== 'Pending') {
+    if (order.bidStatus !== "Pending") {
       return res.status(400).json({ msg: "Bid already processed" });
     }
 
-    // Update order
-    order.bidStatus = 'Accepted';
+    // Update order to accepted
+    order.bidStatus = "Accepted";
+    order.status = "Bid Accepted";
     order.bidResponseDate = new Date();
-    order.status = 'Bid Accepted';
-    order.receiptNumber = generateReceiptNumber();
+
+    // Generate receipt
+    const date = new Date();
+    const receiptNumber = `RCP-${date.getFullYear()}${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}-${Math.floor(
+      Math.random() * 10000
+    )
+      .toString()
+      .padStart(4, "0")}`;
+
+    order.receiptNumber = receiptNumber;
     order.receiptGeneratedAt = new Date();
     
     await order.save();
 
-    // Update product quantity
-    const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
-    if (farmer && farmer.crops) {
-      const productIndex = farmer.crops.findIndex(c => c._id.toString() === order.productId.toString());
-      if (productIndex !== -1) {
-        const currentQty = parseFloat(farmer.crops[productIndex].harvestQuantity);
-        const orderedQty = parseFloat(order.quantity);
-        farmer.crops[productIndex].harvestQuantity = currentQty - orderedQty;
-        
-        // Update status if out of stock
-        if (farmer.crops[productIndex].harvestQuantity <= 0) {
-          farmer.crops[productIndex].availabilityStatus = 'Out of Stock';
-        }
-        
-        await farmer.save();
-      }
+    // ========== NEW: Add to Dealer Inventory ==========
+    const dealer = await User.findOne({
+      email: order.dealerEmail,
+      role: "dealer",
+    });
+    const farmer = await User.findOne({
+      email: order.farmerEmail,
+      role: "farmer",
+    });
+
+    if (!dealer) {
+      return res.status(404).json({ msg: "Dealer not found" });
     }
 
-    // Notify dealer
-    const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
-    if (dealer) {
-      if (!dealer.notifications) dealer.notifications = [];
-      dealer.notifications.push({
-        title: "Bid Accepted!",
-        message: `Farmer has accepted your bid of ₹${order.bidPrice} per unit. Receipt: ${order.receiptNumber}`,
-        createdAt: new Date()
-      });
+    const productIndex = farmer?.crops?.findIndex(
+      (c) => c._id.toString() === order.productId.toString()
+    );
+
+    if (farmer && productIndex !== -1) {
+      const product = farmer.crops[productIndex];
+      // Decrease farmer's stock
+      product.harvestQuantity -= order.quantity;
+
+      const inventoryItem = {
+        productId: order.productId,
+        productName: product.varietySpecies,
+        productType: product.productType,
+        quantity: order.quantity,
+        unitPrice: order.bidPrice,
+        totalValue: order.bidPrice * order.quantity,
+        farmerName: `${farmer.firstName} ${farmer.lastName || ""}`,
+        farmerEmail: farmer.email,
+        imageUrl: product.imageUrl,
+        addedDate: new Date(),
+        receiptNumber,
+      };
+
+      if (!Array.isArray(dealer.inventory)) dealer.inventory = [];
+      dealer.inventory.push(inventoryItem);
+      
       await dealer.save();
+      await farmer.save(); 
+
+      console.log("✅ Product added to dealer inventory and farmer stock updated:", inventoryItem);
     }
 
-    res.json({ 
-      msg: "Bid accepted successfully",
-      order,
-      receiptNumber: order.receiptNumber
+    // ========== Notify dealer ==========
+    if (!dealer.notifications) dealer.notifications = [];
+    dealer.notifications.push({
+      title: "Bid Accepted!",
+      message: `Farmer has accepted your bid of ₹${order.bidPrice} per unit. Receipt: ${receiptNumber}`,
+      createdAt: new Date(),
+    });
+    await dealer.save();
+
+    res.json({
+      msg: "Bid accepted successfully, product moved to dealer inventory",
+      receiptNumber,
     });
 
   } catch (err) {

@@ -22,6 +22,7 @@ app.use("/api/farmer", require("./routes/farmer"));
 app.use("/api/dealer", require("./routes/dealer"));
 
 
+
 // Health check route
 app.get("/", (req, res) => {
   res.json({ 

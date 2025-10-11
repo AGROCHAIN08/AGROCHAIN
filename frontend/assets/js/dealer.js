@@ -12,6 +12,7 @@ let selectedFarmerEmail = null;
 let currentBidOrderId = null;
 let currentReviewProductId = null;
 let currentReviewOrderId = null;
+let inventory = JSON.parse(localStorage.getItem("dealerInventory")) || [];
 
 // ===========================
 // AUTHENTICATION CHECK
@@ -43,12 +44,14 @@ const vehiclesBtn = document.getElementById("vehiclesBtn");
 const browseBtn = document.getElementById("browseBtn");
 const cartBtn = document.getElementById("cartBtn");
 const ordersBtn = document.getElementById("ordersBtn");
+const inventoryBtn = document.getElementById("inventoryBtn");
 const profileBtn = document.getElementById("profileBtn");
 const signoutBtn = document.getElementById("signoutBtn");
 
 const vehiclesSection = document.getElementById("vehiclesSection");
 const browseSection = document.getElementById("browseSection");
 const cartSection = document.getElementById("cartSection");
+const inventorySection = document.getElementById("inventorySection");
 const ordersSection = document.getElementById("ordersSection");
 const profileSection = document.getElementById("profileSection");
 
@@ -68,6 +71,10 @@ ordersBtn.onclick = () => {
 profileBtn.onclick = () => { 
   showSection(profileSection, profileBtn); 
   loadProfile();
+};
+inventoryBtn.onclick = () => {
+  showSection(inventorySection, inventoryBtn);
+  loadInventory();
 };
 
 // ===========================
@@ -1006,6 +1013,239 @@ function printReceipt() {
 }
 
 // ===========================
+// INVENTORY MANAGEMENT
+// ===========================
+
+function addToInventory(order) {
+  // Check if product already exists in inventory
+  const existingItem = inventory.find(item =>
+    item.productId === order._id && item.farmerEmail === order.farmerEmail
+  );
+
+  if (existingItem) {
+    // Update quantity if product already exists
+    existingItem.quantity += order.quantity;
+    existingItem.totalValue = existingItem.quantity * existingItem.unitPrice;
+    existingItem.lastUpdated = new Date().toISOString();
+  } else {
+    // Add new inventory item
+    const inventoryItem = {
+      inventoryId: 'INV-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      productId: order._id,
+      productName: order.varietySpecies,
+      productType: order.productType,
+      farmerEmail: order.farmerEmail,
+      farmerName: order.farmerName || 'Unknown Farmer',
+      quantity: order.quantity,
+      unitOfSale: order.unitOfSale,
+      unitPrice: order.bidPrice || order.targetPrice,
+      totalValue: order.quantity * (order.bidPrice || order.targetPrice),
+      imageUrl: order.imageUrl,
+      receiptNumber: order.receiptNumber,
+      orderId: order.orderId || order._id,
+      dateAdded: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    };
+
+    inventory.push(inventoryItem);
+  }
+
+  localStorage.setItem("dealerInventory", JSON.stringify(inventory));
+  console.log('Item added to inventory:', inventory);
+}
+
+function changeInventoryPrice(inventoryId) {
+  const item = inventory.find(i => i.inventoryId === inventoryId);
+  if (!item) {
+    alert('Item not found');
+    return;
+  }
+
+  const newPrice = prompt(`Current unit price: ₹${item.unitPrice}\n\nEnter new unit price (₹):`, item.unitPrice);
+
+  if (newPrice === null) return; // User cancelled
+
+  const price = parseFloat(newPrice);
+
+  if (isNaN(price) || price <= 0) {
+    alert('Please enter a valid price');
+    return;
+  }
+
+  // Update price
+  item.unitPrice = price;
+  item.totalValue = price * item.quantity;
+  item.lastUpdated = new Date().toISOString();
+
+  localStorage.setItem("dealerInventory", JSON.stringify(inventory));
+  loadInventory();
+  alert(`✓ Price updated to ₹${price.toFixed(2)} per ${item.unitOfSale}`);
+}
+
+function loadInventory() {
+  const inventoryGrid = document.getElementById("inventoryGrid");
+
+  if (!inventory || inventory.length === 0) {
+    inventoryGrid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h3>No Inventory Yet</h3>
+        <p>Products from confirmed orders will appear here</p>
+      </div>
+    `;
+    updateInventoryStats();
+    return;
+  }
+
+  // Sort by date added (newest first)
+  const sortedInventory = [...inventory].sort((a, b) =>
+    new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0)
+  );
+
+  inventoryGrid.innerHTML = sortedInventory.map(item => {
+    // Ensure numeric values exist with safe fallbacks
+    const unitPrice = parseFloat(item.unitPrice) || 0;
+    const quantity = parseFloat(item.quantity) || 0;
+    const totalValue = parseFloat(item.totalValue) || (unitPrice * quantity);
+    const productName = item.productName || 'Unknown Product';
+    const productType = item.productType || 'N/A';
+    const unitOfSale = item.unitOfSale || 'units';
+    const farmerName = item.farmerName || 'N/A';
+    const imageUrl = item.imageUrl || 'https://via.placeholder.com/150';
+    const inventoryId = item.inventoryId || 'N/A';
+    const dateAdded = item.dateAdded ? new Date(item.dateAdded).toLocaleDateString() : 'N/A';
+    
+    return `
+      <div class="inventory-card">
+        <div class="inventory-card-header">
+          <img src="${imageUrl}" alt="${productName}" class="inventory-image" onerror="this.src='https://via.placeholder.com/150'">
+          <div class="inventory-badge">${inventoryId}</div>
+        </div>
+
+        <div class="inventory-content">
+          <h3>${productName}</h3>
+          <p class="inventory-type">${productType}</p>
+
+          <div class="inventory-details">
+            <div class="inventory-detail-row">
+              <span class="detail-label">Quantity:</span>
+              <span class="detail-value">${quantity.toFixed(2)} ${unitOfSale}</span>
+            </div>
+            <div class="inventory-detail-row">
+              <span class="detail-label">Unit Price:</span>
+              <span class="detail-value">₹${unitPrice.toFixed(2)}</span>
+            </div>
+            <div class="inventory-detail-row">
+              <span class="detail-label">Total Value:</span>
+              <span class="detail-value" style="font-weight: bold; color: #059669;">₹${totalValue.toFixed(2)}</span>
+            </div>
+            <div class="inventory-detail-row">
+              <span class="detail-label">Farmer:</span>
+              <span class="detail-value">${farmerName}</span>
+            </div>
+            <div class="inventory-detail-row">
+              <span class="detail-label">Added:</span>
+              <span class="detail-value">${dateAdded}</span>
+            </div>
+            ${item.receiptNumber ? `
+              <div class="inventory-detail-row">
+                <span class="detail-label">Receipt:</span>
+                <span class="detail-value">${item.receiptNumber}</span>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="inventory-actions">
+            <button class="btn-reduce" onclick="reduceInventoryQuantity('${inventoryId}')">
+              ➖ Reduce Quantity
+            </button>
+            <button class="btn-primary" onclick="changeInventoryPrice('${inventoryId}')" style="background: #3b82f6;">
+              💰 Change Price
+            </button>
+            <button class="btn-remove-inventory" onclick="removeFromInventory('${inventoryId}')">
+              🗑️ Remove All
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateInventoryStats();
+}
+
+function reduceInventoryQuantity(inventoryId) {
+  const item = inventory.find(i => i.inventoryId === inventoryId);
+  if (!item) return;
+
+  const newQuantity = prompt(`Current quantity: ${item.quantity} ${item.unitOfSale}\n\nEnter new quantity:`, item.quantity);
+
+  if (newQuantity === null) return; // User cancelled
+
+  const qty = parseFloat(newQuantity);
+
+  if (isNaN(qty) || qty < 0) {
+    alert('Please enter a valid quantity');
+    return;
+  }
+
+  if (qty === 0) {
+    if (confirm('Quantity is 0. Remove this item from inventory?')) {
+      removeFromInventory(inventoryId);
+    }
+    return;
+  }
+
+  if (qty > item.quantity) {
+    alert('Quantity cannot exceed current inventory');
+    return;
+  }
+
+  // Update inventory
+  item.quantity = qty;
+  item.totalValue = qty * item.unitPrice;
+  item.lastUpdated = new Date().toISOString();
+
+  localStorage.setItem("dealerInventory", JSON.stringify(inventory));
+  loadInventory();
+  alert(`✓ Quantity updated to ${qty} ${item.unitOfSale}`);
+}
+
+function removeFromInventory(inventoryId) {
+  const item = inventory.find(i => i.inventoryId === inventoryId);
+  if (!item) return;
+
+  if (!confirm(`Remove ${item.productName} (${item.quantity} ${item.unitOfSale}) from inventory?`)) {
+    return;
+  }
+
+  inventory = inventory.filter(i => i.inventoryId !== inventoryId);
+  localStorage.setItem("dealerInventory", JSON.stringify(inventory));
+  loadInventory();
+  alert('✓ Product removed from inventory');
+}
+
+function updateInventoryStats() {
+  const totalItems = inventory.reduce((sum, item) => sum + item.quantity, 0);
+  const totalValue = inventory.reduce((sum, item) => sum + item.totalValue, 0);
+  const productTypes = new Set(inventory.map(item => item.productType)).size;
+
+  document.getElementById('totalItems').textContent = totalItems.toString();
+  document.getElementById('totalValue').textContent = '₹' + totalValue.toFixed(2);
+  document.getElementById('productTypes').textContent = productTypes.toString();
+}
+
+// Poll for bid updates every 10 seconds
+setInterval(checkBidUpdates, 10000);
+
+// Also check immediately when orders section is opened
+const originalOrdersOnClick = ordersBtn.onclick;
+ordersBtn.onclick = async () => {
+  originalOrdersOnClick();
+  await checkBidUpdates();
+};
+
+// ===========================
 // PROFILE
 // ===========================
 
@@ -1094,6 +1334,9 @@ async function checkBidUpdates() {
                 localOrder.receiptDate = serverOrder.receiptGeneratedAt;
                 localOrder.farmerName = serverOrder.farmerDetails?.firstName + ' ' + (serverOrder.farmerDetails?.lastName || '');
                 localOrder.farmerMobile = serverOrder.farmerDetails?.mobile;
+                
+                // ADD TO INVENTORY when bid is accepted
+                addToInventory(localOrder);
               }
               
               hasUpdates = true;
@@ -1115,19 +1358,16 @@ async function checkBidUpdates() {
     console.error("Error checking bid updates:", error);
   }
 }
-
 // Poll for bid updates every 10 seconds
 setInterval(checkBidUpdates, 10000);
 
 // Also check immediately when orders section is opened
-const originalOrdersOnClick = ordersBtn.onclick;
 ordersBtn.onclick = async () => {
   originalOrdersOnClick();
   await checkBidUpdates();
 };
 
 setInterval(async () => {
-  // Only refresh if browsing products section is active
   if (browseSection.classList.contains('active')) {
     try {
       const response = await fetch("http://localhost:3000/api/dealer/all-products");
@@ -1137,7 +1377,6 @@ setInterval(async () => {
         const currentProductIds = allProducts.map(p => p._id);
         const newProductIds = data.map(p => p._id);
         
-        // Check if any products were removed or quantities changed
         const productsChanged = currentProductIds.length !== newProductIds.length ||
                                allProducts.some(oldProduct => {
                                  const newProduct = data.find(p => p._id === oldProduct._id);
@@ -1154,7 +1393,6 @@ setInterval(async () => {
     }
   }
 }, 15000);
-
 // ===========================
 // SIGN OUT
 // ===========================
