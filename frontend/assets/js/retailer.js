@@ -1,394 +1,700 @@
 // ===========================
-// COMPLETE FIXED retailer.js
+// GLOBAL VARIABLES & AUTH
 // ===========================
 let currentUser = JSON.parse(localStorage.getItem("agroChainUser"));
-let allProducts = [];
-let cartItems = JSON.parse(localStorage.getItem("retailerCart")) || [];
-let orders = JSON.parse(localStorage.getItem("retailerOrders")) || [];
+let allInventory = [];
+let retailerCart = JSON.parse(localStorage.getItem("retailerCart")) || [];
+let retailerOrders = []; // Will store fetched orders
+let currentPaymentOrder = null; // Holds the order being processed in the modal
+let currentReviewOrderId = null; // For review modal
 
-// ✅ Requirement 2: Form Validation
-if (!currentUser || currentUser.role !== "retailer") {
-  alert("Please login as Retailer");
+if (!currentUser || currentUser.role !== 'retailer') {
+  alert("Access denied. Please login as a retailer.");
   window.location.href = "login.html";
 }
 
-// Sidebar navigation
-const sections = document.querySelectorAll(".section");
-const buttons = document.querySelectorAll(".sidebar button");
-
-function showSection(section, button) {
-  sections.forEach(s => s.classList.remove("active"));
-  buttons.forEach(b => b.classList.remove("active"));
-  section.classList.add("active");
-  button.classList.add("active");
-}
-
+// ===========================
+// DOM ELEMENTS & NAVIGATION
+// ===========================
 const browseBtn = document.getElementById("browseBtn");
 const cartBtn = document.getElementById("cartBtn");
 const ordersBtn = document.getElementById("ordersBtn");
 const profileBtn = document.getElementById("profileBtn");
 const signoutBtn = document.getElementById("signoutBtn");
 
-browseBtn.onclick = () => { showSection(browseSection, browseBtn); loadProducts(); };
-cartBtn.onclick = () => { showSection(cartSection, cartBtn); loadCart(); };
-ordersBtn.onclick = () => { showSection(ordersSection, ordersBtn); loadOrders(); };
-profileBtn.onclick = () => { showSection(profileSection, profileBtn); loadProfile(); };
-signoutBtn.onclick = () => { localStorage.clear(); window.location.href = "login.html"; };
+const browseSection = document.getElementById("browseSection");
+const cartSection = document.getElementById("cartSection");
+const ordersSection = document.getElementById("ordersSection");
+const profileSection = document.getElementById("profileSection");
 
-// ✅ Requirement 4: Async Data Handling with Fetch API
-async function loadProducts() {
-  const grid = document.getElementById("productsGrid");
-  
-  // ✅ Requirement 3: Dynamic HTML - Loading state
-  grid.innerHTML = `
-    <div style="text-align: center; padding: 40px;">
-      <div style="font-size: 48px;">⏳</div>
-      <p style="color: #6b7280; margin-top: 10px;">Loading products...</p>
-    </div>
-  `;
+function showSection(sectionToShow, activeBtn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
+  sectionToShow.classList.add('active');
+  activeBtn.classList.add('active');
+}
 
+browseBtn.onclick = () => showSection(browseSection, browseBtn);
+cartBtn.onclick = () => {
+    showSection(cartSection, cartBtn);
+    displayCart();
+};
+ordersBtn.onclick = () => {
+    showSection(ordersSection, ordersBtn);
+    displayOrders();
+};
+profileBtn.onclick = () => {
+  showSection(profileSection, profileBtn);
+  loadProfile();
+};
+signoutBtn.onclick = () => {
+    if (confirm("Are you sure you want to sign out?")) {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+};
+
+// ===========================
+// CORE LOGIC (Browse, Cart)
+// ===========================
+
+async function loadInventory() {
+  const inventoryGrid = document.getElementById("inventoryGrid");
+  inventoryGrid.innerHTML = `<p>Loading products...</p>`;
   try {
-    const res = await fetch("http://localhost:3000/api/retailer/all-dealer-products");
-    const data = await res.json();
-    
-    if (!res.ok) throw new Error(data.msg || "Error fetching products");
-    
-    allProducts = data;
-    displayProducts(data);
-    
-  } catch (err) {
-    // ✅ Requirement 3: Dynamic HTML - Error state
-    grid.innerHTML = `
-      <div style="text-align: center; padding: 40px;">
-        <div style="font-size: 48px; color: #ef4444;">⚠️</div>
-        <h3 style="color: #dc2626; margin-top: 10px;">Error Loading Products</h3>
-        <p style="color: #6b7280;">${err.message}</p>
-        <button class="btn-primary" onclick="loadProducts()" style="margin-top: 20px;">
-          🔄 Retry
-        </button>
-      </div>
-    `;
+    const response = await fetch("http://localhost:3000/api/retailer/dealer-inventory");
+    const data = await response.json();
+    if (response.ok) {
+      allInventory = data;
+      console.log('📦 Loaded inventory items:', data.length);
+      console.log('🔍 Sample item with reviews:', data[0]); // Debug log
+      displayInventory(allInventory);
+    } else {
+      inventoryGrid.innerHTML = `<p style="color:red;">Error: ${data.msg}</p>`;
+    }
+  } catch (error) {
+    console.error("Failed to fetch inventory:", error);
+    inventoryGrid.innerHTML = `<p style="color:red;">Network error. Please try again later.</p>`;
   }
 }
 
-// ✅ Requirement 3: Dynamic HTML Implementation
-function displayProducts(products) {
-  const grid = document.getElementById("productsGrid");
-  
-  if (!products.length) {
-    grid.innerHTML = `
-      <div style="text-align: center; padding: 40px; grid-column: 1/-1;">
-        <div style="font-size: 64px;">📦</div>
-        <h3 style="color: #374151; margin-top: 15px;">No Products Available</h3>
-        <p style="color: #6b7280;">Check back later for dealer inventory</p>
+function displayInventory(inventory) {
+  const inventoryGrid = document.getElementById("inventoryGrid");
+  inventoryGrid.innerHTML = "";
+  if (!inventory || inventory.length === 0) {
+    inventoryGrid.innerHTML = `<div class="empty-state"><h3>No products available from dealers.</h3></div>`;
+    return;
+  }
+  inventory.forEach(item => {
+    console.log(`Product: ${item.productName}, Reviews:`, item.retailerReviews);
+    const card = document.createElement('div');
+    card.className = 'inventory-card';
+    card.setAttribute('id', `product-${item._id}`);
+    const unitOfSale = item.unitOfSale || 'unit';
+    
+    // Display reviews if available
+    let reviewsHTML = '';
+    if (item.retailerReviews && item.retailerReviews.length > 0) {
+      const avgRating = (item.retailerReviews.reduce((sum, r) => sum + r.rating, 0) / item.retailerReviews.length).toFixed(1);
+      reviewsHTML = `
+        <div class="product-reviews" style="margin-top: 15px; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="font-size: 14px; margin: 0; color: #374151;">
+              ⭐ Reviews (${item.retailerReviews.length})
+            </h4>
+            <span style="font-size: 14px; font-weight: 600; color: #f59e0b;">
+              ${avgRating}/5
+            </span>
+          </div>
+          
+          ${item.retailerReviews.slice(0, 2).map(review => `
+            <div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 4px; border-left: 3px solid #4a148c;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-weight: 600; color: #4a148c; font-size: 13px;">${review.quality}</span>
+                <span style="color: #f59e0b; font-size: 12px;">${'⭐'.repeat(review.rating)}</span>
+              </div>
+              <p style="margin: 4px 0; font-size: 12px; color: #374151; line-height: 1.4;">${review.comments}</p>
+              <small style="color: #6b7280;">By: ${review.retailerEmail}</small>
+            </div>
+          `).join('')}
+          
+          ${item.retailerReviews.length > 2 ? `
+            <button class="btn-view-all-reviews" onclick="openViewReviewsModal('${item._id}')" style="width: 100%; margin-top: 10px; padding: 8px; background: #f3e5f5; border: 1px solid #ce93d8; color: #4a148c; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.3s ease;">
+              View All ${item.retailerReviews.length} Reviews →
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }
+    
+    card.innerHTML = `
+      <img src="${item.imageUrl}" alt="${item.productName}" class="inventory-image" onerror="this.src='https://via.placeholder.com/150'">
+      <div class="inventory-content">
+        <h3>${item.productName}</h3>
+        <p class="inventory-type">${item.productType}</p>
+        <div class="inventory-details">
+          <div class="detail-row"><span class="detail-label">Available:</span><span class="detail-value">${item.quantity} ${unitOfSale}</span></div>
+          <div class="detail-row"><span class="detail-label">Price per ${unitOfSale}:</span><span class="detail-value" style="font-weight: bold; color: #4a148c;">₹${item.unitPrice.toFixed(2)}</span></div>
+        </div>
+        ${reviewsHTML}
+        <div class="dealer-info">Sold by: ${item.dealerName} | ☎️ ${item.dealerMobile}</div>
+        <div class="add-to-cart-section">
+            <input type="number" id="qty-${item._id}" placeholder="Qty" min="1" max="${item.quantity}">
+            <button class="btn-primary btn-add-cart" onclick="addToCart('${item._id}')">Add to Cart</button>
+        </div>
+        <div class="card-feedback" id="feedback-${item._id}"></div>
       </div>
     `;
-    return;
-  }
-
-  grid.innerHTML = products.map(p => `
-    <div class="product-card" data-product-id="${p._id}">
-      <img src="${p.imageUrl}" alt="${p.productName}" class="product-image" 
-           onerror="this.src='https://via.placeholder.com/270x180?text=No+Image'">
-      <h3>${p.productName}</h3>
-      <p>Type: ${p.productType}</p>
-      <p><strong>Dealer:</strong> ${p.dealerName || "N/A"}</p>
-      <p style="color: #059669; font-weight: bold;">₹${p.unitPrice} per ${p.unitOfSale}</p>
-      <p><strong>Available:</strong> ${p.quantity} ${p.unitOfSale}</p>
-      
-      <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-        <input 
-          id="qty-${p._id}" 
-          type="number" 
-          placeholder="Qty" 
-          min="1" 
-          max="${p.quantity}" 
-          step="0.01"
-          style="width:80px; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;"
-          oninput="validateRetailerQuantity('${p._id}', ${p.quantity})">
-        <button class="btn-primary" onclick="addToCart('${p._id}')">Add to Cart</button>
-      </div>
-      
-      <div id="qty-error-${p._id}" style="color: #ef4444; font-size: 12px; margin-top: 5px; display: none;"></div>
-    </div>
-  `).join("");
+    inventoryGrid.appendChild(card);
+  });
 }
 
-// ✅ Requirement 2: Form Validation using DOM
-function validateRetailerQuantity(productId, maxQuantity) {
-  const input = document.getElementById(`qty-${productId}`);
-  const errorDiv = document.getElementById(`qty-error-${productId}`);
-  const value = parseFloat(input.value);
+function addToCart(itemId) {
+    const product = allInventory.find(p => p._id === itemId);
+    const qtyInput = document.getElementById(`qty-${itemId}`);
+    const feedbackDiv = document.getElementById(`feedback-${itemId}`);
+    const quantity = parseFloat(qtyInput.value);
+    if (!quantity || quantity <= 0) {
+        feedbackDiv.textContent = 'Please enter a valid quantity.';
+        feedbackDiv.className = 'card-feedback error';
+        return;
+    }
+    if (quantity > product.quantity) {
+        feedbackDiv.textContent = `Only ${product.quantity} available.`;
+        feedbackDiv.className = 'card-feedback error';
+        return;
+    }
+    const existingItem = retailerCart.find(item => item._id === itemId);
+    if (existingItem) {
+        existingItem.quantity += quantity;
+    } else {
+        retailerCart.push({ ...product, quantity: quantity });
+    }
+    localStorage.setItem("retailerCart", JSON.stringify(retailerCart));
+    updateCartCount();
+    qtyInput.value = '';
+    feedbackDiv.textContent = 'Added to cart!';
+    feedbackDiv.className = 'card-feedback success';
+    setTimeout(() => { feedbackDiv.textContent = ''; }, 2000);
+}
 
-  // Clear previous errors
-  errorDiv.style.display = 'none';
-  input.style.borderColor = '#d1d5db';
+function displayCart() {
+    const cartGrid = document.getElementById('cartGrid');
+    cartGrid.innerHTML = '';
+    if (retailerCart.length === 0) {
+        cartGrid.innerHTML = `<div class="empty-state"><h3>Your cart is empty.</h3></div>`;
+        return;
+    }
+    let subtotal = 0;
+    retailerCart.forEach(item => {
+        const itemTotal = item.unitPrice * item.quantity;
+        subtotal += itemTotal;
+        const cartItemDiv = document.createElement('div');
+        cartItemDiv.className = 'cart-item';
+        cartItemDiv.innerHTML = `
+            <img src="${item.imageUrl}" alt="${item.productName}" class="cart-item-img">
+            <div class="cart-item-info">
+                <h4>${item.productName}</h4>
+                <p>Quantity: ${item.quantity} x ₹${item.unitPrice.toFixed(2)}</p>
+                <p>Sold by: ${item.dealerName}</p>
+            </div>
+            <div class="cart-item-actions">
+                <div class="price">₹${itemTotal.toFixed(2)}</div>
+                <button class="btn-remove" onclick="removeFromCart('${item._id}')">Remove</button>
+            </div>
+        `;
+        cartGrid.appendChild(cartItemDiv);
+    });
+    const summaryDiv = document.createElement('div');
+    summaryDiv.className = 'cart-summary';
+    summaryDiv.innerHTML = `
+        <h3>Order Summary</h3>
+        <div class="total-row"><span>Total</span><span>₹${subtotal.toFixed(2)}</span></div>
+        <button class="btn-primary btn-checkout" onclick="handleCheckout()">Proceed to Checkout</button>
+    `;
+    cartGrid.appendChild(summaryDiv);
+}
 
-  // Validation checks
-  if (isNaN(value) || value === '') {
-    return; // Allow empty for user to type
-  }
+async function handleCheckout() {
+    if (retailerCart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+    }
+    if (!confirm('Are you sure you want to place this order?')) return;
+    try {
+        const response = await fetch('http://localhost:3000/api/retailer/place-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                retailerEmail: currentUser.email,
+                cartItems: retailerCart
+            })
+        });
+        const result = await response.json();
+        if (response.ok) {
+            alert('✅ Order placed successfully!');
+            retailerCart = [];
+            localStorage.setItem('retailerCart', JSON.stringify(retailerCart));
+            updateCartCount();
+            showSection(ordersSection, ordersBtn);
+            displayOrders();
+        } else {
+            alert(`❌ Error: ${result.msg}`);
+        }
+    } catch (error) {
+        console.error('Checkout failed:', error);
+        alert('A network error occurred. Please try again.');
+    }
+}
 
-  if (value <= 0) {
-    input.value = 1;
-    errorDiv.textContent = '⚠️ Quantity must be at least 1';
-    errorDiv.style.display = 'block';
-    input.style.borderColor = '#ef4444';
-    setTimeout(() => {
-      errorDiv.style.display = 'none';
-      input.style.borderColor = '#d1d5db';
-    }, 3000);
-    return;
-  }
+// ===========================
+// ORDER & PAYMENT LOGIC
+// ===========================
 
-  if (value > maxQuantity) {
-    input.value = maxQuantity;
-    errorDiv.textContent = `⚠️ Maximum available: ${maxQuantity}`;
-    errorDiv.style.display = 'block';
-    input.style.borderColor = '#f59e0b';
-    setTimeout(() => {
-      errorDiv.style.display = 'none';
-      input.style.borderColor = '#d1d5db';
-    }, 3000);
-    return;
-  }
+async function displayOrders() {
+    const ordersGrid = document.getElementById('ordersGrid');
+    ordersGrid.innerHTML = `<p>Loading your orders...</p>`;
+    try {
+        const response = await fetch(`http://localhost:3000/api/retailer/orders/${currentUser.email}`);
+        const orders = await response.json();
+        retailerOrders = orders;
+        if (response.ok) {
+            if (orders.length === 0) {
+                ordersGrid.innerHTML = `<div class="empty-state"><h3>You have no orders.</h3></div>`;
+                return;
+            }
+            ordersGrid.innerHTML = orders.map(order => `
+                <div class="inventory-card" style="border-left-color: ${order.paymentDetails.status === 'Completed' ? '#10b981' : '#f59e0b'};">
+                    <div class="inventory-content">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <div>
+                                <h3>Order from: ${order.dealerInfo.businessName}</h3>
+                                <p class="inventory-type">Status: <strong>${order.orderStatus}</strong></p>
+                            </div>
+                            <p style="font-size: 18px; font-weight: bold; color: #4a148c;">Total: ₹${order.totalAmount.toFixed(2)}</p>
+                        </div>
+                        <div class="inventory-details" style="margin-top:15px;">
+                            ${order.products.map(p => `<div class="detail-row"><span>${p.productName} (x${p.quantity})</span><span>₹${(p.quantity * p.unitPrice).toFixed(2)}</span></div>`).join('')}
+                        </div>
+                        <div class="dealer-info"><strong>Dealer Address:</strong> ${order.dealerInfo.warehouseAddress}</div>
+                        <div class="add-to-cart-section">
+                           <p><strong>Payment Status: </strong><span style="color:${order.paymentDetails.status === 'Completed' ? '#00c853' : '#f59e0b'}; font-weight: bold;">${order.paymentDetails.status}</span></p>
+                           ${
+                             order.paymentDetails.status === 'Completed'
+                               ? `
+                               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                 <button class="btn-primary" onclick="openReceiptModal('${order._id}')" style="background:#3b82f6;">View Receipt</button>
+                                 ${!order.reviewSubmitted ? `<button class="btn-primary" onclick="openReviewModal('${order._id}')" style="background:#10b981;">⭐ Add Review</button>` : `<span style="color: #10b981; font-size: 14px;">✓ Review Submitted</span>`}
+                               </div>
+                               `
+                               : `<button class="btn-primary" onclick="openPaymentModal('${order._id}')">Pay Now</button>`
+                           }
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            ordersGrid.innerHTML = `<p style="color:red;">Error loading orders: ${orders.msg}</p>`;
+        }
+    } catch (error) {
+        console.error('Failed to fetch orders:', error);
+        ordersGrid.innerHTML = `<p style="color:red;">Network error while fetching orders.</p>`;
+    }
+}
 
-  // Valid input
-  input.style.borderColor = '#10b981';
+function openPaymentModal(orderId) {
+    const order = retailerOrders.find(o => o._id === orderId);
+    if (!order) {
+        alert('Order not found!');
+        return;
+    }
+    currentPaymentOrder = JSON.parse(JSON.stringify(order));
+    renderPaymentStep1();
+    document.getElementById('paymentModal').style.display = 'block';
+    goToPaymentStep(1);
+}
+
+function renderPaymentStep1() {
+    const summaryDiv = document.getElementById('payment-order-summary');
+    const order = currentPaymentOrder;
+    const itemsHTML = order.products.map(p => `
+        <div class="payment-order-item">
+            <span>${p.productName} (₹${p.unitPrice.toFixed(2)} each)</span>
+            <div>
+                <input type="number" value="${p.quantity}" min="1" onchange="updatePaymentQuantity('${p.productId}', this.value)">
+            </div>
+            <strong>₹${(p.quantity * p.unitPrice).toFixed(2)}</strong>
+        </div>
+    `).join('');
+    summaryDiv.innerHTML = `
+        <div class="dealer-info" style="background-color:#f3e5f5; border: 1px solid #e1bee7;">
+            <p><strong>Order From:</strong> ${order.dealerInfo.businessName}</p>
+            <p><strong>Dealer Address:</strong> ${order.dealerInfo.warehouseAddress}</p>
+        </div>
+        <h4>Products (edit quantity if needed)</h4>
+        <div id="payment-order-items">${itemsHTML}</div>
+        <div class="total-row" style="margin-top:20px; display:flex; justify-content:space-between; align-items:center;">
+            <h3>Total:</h3>
+            <h3 id="payment-total">₹${order.totalAmount.toFixed(2)}</h3>
+        </div>
+    `;
+}
+
+function updatePaymentQuantity(productId, newQuantity) {
+    const qty = parseInt(newQuantity);
+    if (isNaN(qty) || qty < 1) {
+        alert("Quantity must be at least 1.");
+        renderPaymentStep1();
+        return;
+    }
+    const product = currentPaymentOrder.products.find(p => p.productId === productId);
+    if (product) {
+        product.quantity = qty;
+    }
+    currentPaymentOrder.totalAmount = currentPaymentOrder.products.reduce((total, p) => total + (p.quantity * p.unitPrice), 0);
+    document.getElementById('payment-total').textContent = `₹${currentPaymentOrder.totalAmount.toFixed(2)}`;
+    renderPaymentStep1();
+}
+
+function goToPaymentStep(stepNum) {
+    document.getElementById('paymentStep1').style.display = (stepNum === 1) ? 'block' : 'none';
+    document.getElementById('paymentStep2').style.display = (stepNum === 2) ? 'block' : 'none';
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').style.display = 'none';
+    currentPaymentOrder = null;
+}
+
+async function confirmPayment() {
+    if (!currentPaymentOrder) return;
+    const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    try {
+        const response = await fetch(`http://localhost:3000/api/retailer/orders/${currentPaymentOrder._id}/complete-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                products: currentPaymentOrder.products,
+                totalAmount: currentPaymentOrder.totalAmount,
+                paymentMethod: selectedMethod
+            })
+        });
+        const result = await response.json();
+        if (response.ok) {
+            alert('✅ Payment successful! Dealer inventory has been updated.');
+            closePaymentModal();
+            displayOrders();
+        } else {
+            alert(`❌ Error: ${result.msg}`);
+        }
+    } catch (error) {
+        console.error('Payment confirmation failed:', error);
+        alert('A network error occurred. Please try again.');
+    }
+}
+
+// ===========================
+// REVIEW SYSTEM
+// ===========================
+
+function openReviewModal(orderId) {
+    currentReviewOrderId = orderId;
+    const order = retailerOrders.find(o => o._id === orderId);
+    
+    if (!order) {
+        alert('Order not found!');
+        return;
+    }
+    
+    document.getElementById('reviewModalTitle').textContent = `Review Order from ${order.dealerInfo.businessName}`;
+    document.getElementById('reviewModal').style.display = 'block';
+}
+
+function closeReviewModal() {
+    document.getElementById('reviewModal').style.display = 'none';
+    document.getElementById('reviewForm').reset();
+    currentReviewOrderId = null;
+}
+
+document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const quality = document.getElementById('reviewQuality').value;
+    const comments = document.getElementById('reviewComments').value;
+    const rating = parseInt(document.getElementById('reviewRating').value);
+    
+    if (!quality || !comments || !rating) {
+        alert('Please complete all fields');
+        return;
+    }
+    
+    if (rating < 1 || rating > 5) {
+        alert('Rating must be between 1 and 5');
+        return;
+    }
+    
+    try {
+        const response = await fetch('http://localhost:3000/api/retailer/submit-review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                orderId: currentReviewOrderId,
+                retailerEmail: currentUser.email,
+                quality,
+                comments,
+                rating
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('✅ Review submitted successfully!');
+            closeReviewModal();
+            
+            // Update local order data to mark review as submitted
+            const order = retailerOrders.find(o => o._id === currentReviewOrderId);
+            if (order) {
+                order.reviewSubmitted = true;
+            }
+            
+            // Refresh both views to show updated reviews
+            displayOrders();
+            loadInventory();
+        } else {
+            alert('❌ Error submitting review: ' + result.msg);
+        }
+    } catch (error) {
+        console.error('Error submitting review:', error);
+        alert('Network error. Please try again.');
+    }
+});
+
+// ===========================
+// VIEW REVIEWS MODAL (Add this to BOTH dealer.js and retailer.js)
+// ===========================
+
+function openViewReviewsModal(productId) {
+    console.log("Opening reviews modal for product:", productId);
+    
+    // Find product in the appropriate inventory
+    let product = null;
+    
+    if (typeof allInventory !== 'undefined' && allInventory.length > 0) {
+        // Retailer side
+        product = allInventory.find(p => p._id === productId);
+        console.log("Searching in allInventory (retailer)");
+    } else if (typeof inventory !== 'undefined' && inventory.length > 0) {
+        // Dealer side
+        product = inventory.find(p => p._id === productId);
+        console.log("Searching in inventory (dealer)");
+    }
+    
+    if (!product) {
+        console.error("Product not found with ID:", productId);
+        alert('Product not found');
+        return;
+    }
+    
+    console.log("Product found:", product.productName);
+    console.log("Reviews:", product.retailerReviews);
+    
+    const reviews = product.retailerReviews || [];
+    
+    // Build reviews HTML
+    let reviewsHTML = '';
+    if (reviews.length === 0) {
+        reviewsHTML = '<p style="color: #6b7280; text-align: center; padding: 30px 20px;">No reviews yet</p>';
+    } else {
+        reviewsHTML = reviews.map((review, index) => `
+            <div style="margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #10b981;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #10b981; font-size: 14px;">${review.quality}</span>
+                    <span style="color: #f59e0b; font-size: 14px;">${'⭐'.repeat(review.rating)}</span>
+                </div>
+                <p style="margin: 8px 0; font-size: 13px; color: #374151; line-height: 1.6;">${review.comments}</p>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-top: 8px;">
+                    <span><strong>By:</strong> ${review.retailerEmail}</span>
+                    <span>${new Date(review.date).toLocaleDateString()}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Calculate average rating
+    let avgRatingHTML = '';
+    if (reviews.length > 0) {
+        const avgRating = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
+        const roundedRating = Math.round(avgRating);
+        avgRatingHTML = `
+            <div style="text-align: right;">
+                <div style="font-size: 28px; color: #f59e0b; margin-bottom: 5px;">
+                    ${'⭐'.repeat(roundedRating)}
+                </div>
+                <p style="margin: 0; color: #6b7280; font-size: 13px;">
+                    Average: ${avgRating}/5.0
+                </p>
+            </div>
+        `;
+    }
+    
+    // Create modal dynamically
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'viewReviewsModal';
+    modal.style.display = 'block';
+    modal.style.zIndex = '1000';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            closeViewReviewsModal();
+        }
+    };
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 650px; max-height: 80vh; overflow-y: auto;">
+            <span class="close" onclick="closeViewReviewsModal()" style="cursor: pointer; font-size: 28px; font-weight: bold; color: #6b7280; float: right; padding: 5px 10px; transition: color 0.2s;">&times;</span>
+            
+            <div style="clear: both; text-align: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px;">${product.productName}</h3>
+                <p style="margin: 0; color: #6b7280; font-size: 13px;">${product.productType}</p>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding: 15px; background: #f3f4f6; border-radius: 6px;">
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 14px;">Total Reviews</h4>
+                    <p style="margin: 0; font-size: 24px; font-weight: bold; color: #4a148c;">${reviews.length}</p>
+                </div>
+                ${avgRatingHTML}
+            </div>
+            
+            <h4 style="color: #374151; margin: 0 0 15px 0; font-size: 14px;">All Reviews</h4>
+            
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                ${reviewsHTML}
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                <button class="btn-secondary" onclick="closeViewReviewsModal()" style="padding: 10px 20px; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s;">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    console.log("Modal opened successfully");
+}
+
+function closeViewReviewsModal() {
+    console.log("Closing reviews modal");
+    const modal = document.getElementById('viewReviewsModal');
+    
+    if (modal) {
+        modal.remove();
+        console.log("Modal removed");
+    }
+}
+
+function openReceiptModal(orderId) {
+    const order = retailerOrders.find(o => o._id === orderId);
+    if (!order) return;
+    const receiptContent = document.getElementById('receiptContent');
+    receiptContent.innerHTML = `
+        <div style="text-align:center; border-bottom: 1px solid #ccc; margin-bottom: 20px;">
+            <h2>Payment Receipt</h2>
+            <p>Order ID: ${order._id}</p>
+        </div>
+        <p><strong>Billed To:</strong> ${currentUser.shopName || currentUser.firstName}</p>
+        <p><strong>Date:</strong> ${new Date(order.updatedAt).toLocaleDateString()}</p>
+        <hr>
+        <h4>Order from: ${order.dealerInfo.businessName}</h4>
+        <p><strong>Dealer Address:</strong> ${order.dealerInfo.warehouseAddress}</p>
+        <div class="inventory-details">
+            ${order.products.map(p => `<div class="detail-row"><span>${p.productName} (x${p.quantity})</span><span>₹${(p.quantity * p.unitPrice).toFixed(2)}</span></div>`).join('')}
+        </div>
+        <div class="total-row" style="margin-top:20px; padding-top:10px; border-top:1px solid #ccc; display:flex; justify-content:space-between;">
+            <h4>Total Paid:</h4>
+            <h4>₹${order.totalAmount.toFixed(2)}</h4>
+        </div>
+        <p><strong>Payment Method:</strong> ${order.paymentDetails.method}</p>
+        <p style="color:green; font-weight:bold;">Status: PAID</p>
+    `;
+    document.getElementById('receiptModal').style.display = 'block';
+}
+
+function closeReceiptModal() {
+    document.getElementById('receiptModal').style.display = 'none';
+}
+
+// ===========================
+// OTHER FUNCTIONS
+// ===========================
+
+function removeFromCart(itemId) {
+    retailerCart = retailerCart.filter(item => item._id !== itemId);
+    localStorage.setItem("retailerCart", JSON.stringify(retailerCart));
+    updateCartCount();
+    displayCart();
+}
+
+function updateCartCount() {
+    const count = retailerCart.reduce((total, item) => total + item.quantity, 0);
+    document.getElementById('cartCount').textContent = count;
 }
 
 function applyFilters() {
-  const type = document.getElementById("filterProductType").value;
-  const variety = document.getElementById("filterVariety").value.toLowerCase();
-  const maxPrice = parseFloat(document.getElementById("filterPrice").value) || Infinity;
-  
-  const filtered = allProducts.filter(p =>
-    (!type || p.productType === type) &&
-    (!variety || p.productName.toLowerCase().includes(variety)) &&
-    p.unitPrice <= maxPrice
-  );
-  
-  displayProducts(filtered);
-}
-
-// ✅ Requirement 2: Cart Validation
-function addToCart(id) {
-  const p = allProducts.find(x => x._id === id);
-  const qtyInput = document.getElementById(`qty-${id}`);
-  const qty = parseFloat(qtyInput.value);
-  
-  // Validation
-  if (!p) {
-    alert("❌ Product not found");
-    return;
-  }
-  
-  if (!qty || isNaN(qty) || qty <= 0) {
-    alert("❌ Please enter a valid quantity");
-    qtyInput.focus();
-    qtyInput.style.borderColor = '#ef4444';
-    return;
-  }
-  
-  if (qty > p.quantity) {
-    alert(`❌ Only ${p.quantity} ${p.unitOfSale} available`);
-    qtyInput.value = p.quantity;
-    return;
-  }
-
-  // Check if already in cart
-  const existing = cartItems.find(item => item._id === id);
-  if (existing) {
-    const totalQty = existing.quantity + qty;
-    if (totalQty > p.quantity) {
-      alert(`❌ Total quantity (${totalQty}) exceeds stock (${p.quantity})`);
-      return;
-    }
-    existing.quantity = totalQty;
+  const nameFilter = document.getElementById('filterName').value.toLowerCase();
+  const priceFilter = parseFloat(document.getElementById('filterPrice').value);
+  const typeFilter = document.getElementById('filterType').value;
+  const errorDiv = document.getElementById('filterError');
+  if (priceFilter < 0) {
+    errorDiv.textContent = 'Price must be a positive number.';
+    errorDiv.style.display = 'block'; 
+    return; 
   } else {
-    cartItems.push({ ...p, quantity: qty });
+    errorDiv.style.display = 'none'; 
   }
-
-  localStorage.setItem("retailerCart", JSON.stringify(cartItems));
-  
-  // ✅ Requirement 3: Dynamic feedback
-  const btn = qtyInput.nextElementSibling;
-  const originalText = btn.textContent;
-  btn.textContent = "✓ Added!";
-  btn.style.background = "#059669";
-  qtyInput.value = '';
-  
-  setTimeout(() => {
-    btn.textContent = originalText;
-    btn.style.background = "#10b981";
-  }, 2000);
+  const filteredInventory = allInventory.filter(item => {
+    const nameMatch = !nameFilter || item.productName.toLowerCase().includes(nameFilter);
+    const priceMatch = isNaN(priceFilter) || item.unitPrice <= priceFilter;
+    const typeMatch = !typeFilter || item.productType === typeFilter;
+    return nameMatch && priceMatch && typeMatch;
+  });
+  displayInventory(filteredInventory);
 }
 
-// ✅ Requirement 3: Dynamic HTML in Cart
-function loadCart() {
-  const grid = document.getElementById("cartGrid");
-  
-  if (!cartItems.length) {
-    grid.innerHTML = `
-      <div style="text-align: center; padding: 40px; grid-column: 1/-1;">
-        <div style="font-size: 64px;">🛒</div>
-        <h3 style="color: #374151; margin-top: 15px;">Your Cart is Empty</h3>
-        <p style="color: #6b7280;">Add items from Browse Products</p>
-      </div>
-    `;
-    return;
-  }
-
-  const totalValue = cartItems.reduce((sum, item) => 
-    sum + (item.unitPrice * item.quantity), 0
-  );
-
-  grid.innerHTML = `
-    <div style="grid-column: 1/-1; background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-      <h3 style="margin: 0;">Cart Summary</h3>
-      <p style="margin: 5px 0;"><strong>Total Items:</strong> ${cartItems.length}</p>
-      <p style="margin: 5px 0; color: #059669; font-size: 20px;"><strong>Total Value:</strong> ₹${totalValue.toFixed(2)}</p>
-    </div>
-  ` + cartItems.map(i => `
-    <div class="order-item">
-      <img src="${i.imageUrl}" class="product-image" 
-           onerror="this.src='https://via.placeholder.com/150'">
-      <h4>${i.productName}</h4>
-      <p>${i.productType}</p>
-      <p>₹${i.unitPrice} per ${i.unitOfSale}</p>
-      <p><strong>Qty:</strong> ${i.quantity}</p>
-      <p style="color: #059669; font-weight: bold;">Subtotal: ₹${(i.unitPrice * i.quantity).toFixed(2)}</p>
-      <button class="btn-remove" onclick="removeFromCart('${i._id}')">Remove</button>
-      <button class="btn-primary" onclick="placeOrder('${i._id}')">Order Now</button>
-    </div>
-  `).join("");
-}
-
-function removeFromCart(id) {
-  const item = cartItems.find(i => i._id === id);
-  if (!item) return;
-  
-  if (confirm(`Remove ${item.productName} from cart?`)) {
-    cartItems = cartItems.filter(i => i._id !== id);
-    localStorage.setItem("retailerCart", JSON.stringify(cartItems));
-    loadCart();
-  }
-}
-
-// ✅ Requirement 4: Async Order Placement
-async function placeOrder(id) {
-  const item = cartItems.find(i => i._id === id);
-  if (!item) return;
-  
-  const newOrder = {
-    ...item,
-    orderId: "ORD-" + Date.now(),
-    status: "Placed",
-    orderDate: new Date().toISOString()
-  };
-  
-  orders.push(newOrder);
-  localStorage.setItem("retailerOrders", JSON.stringify(orders));
-  removeFromCart(id);
-  
-  // ✅ Dynamic success message
-  const grid = document.getElementById("cartGrid");
-  const successMsg = document.createElement('div');
-  successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
-  successMsg.textContent = `✓ Order placed for ${item.productName}`;
-  document.body.appendChild(successMsg);
-  
-  setTimeout(() => successMsg.remove(), 3000);
-  
-  loadOrders();
-}
-
-function loadOrders() {
-  const grid = document.getElementById("ordersGrid");
-  
-  if (!orders.length) {
-    grid.innerHTML = `
-      <div style="text-align: center; padding: 40px; grid-column: 1/-1;">
-        <div style="font-size: 64px;">📦</div>
-        <h3 style="color: #374151; margin-top: 15px;">No Orders Yet</h3>
-        <p style="color: #6b7280;">Your orders will appear here</p>
-      </div>
-    `;
-    return;
-  }
-
-  grid.innerHTML = orders.map(o => `
-    <div class="order-item">
-      <img src="${o.imageUrl}" class="product-image" 
-           onerror="this.src='https://via.placeholder.com/150'">
-      <h4>${o.productName}</h4>
-      <p>${o.productType}</p>
-      <p><strong>Qty:</strong> ${o.quantity} ${o.unitOfSale}</p>
-      <p><strong>Status:</strong> <span style="color: #10b981;">${o.status}</span></p>
-      <p><strong>Order ID:</strong> ${o.orderId}</p>
-      <p style="font-size: 12px; color: #6b7280;">${new Date(o.orderDate).toLocaleDateString()}</p>
-    </div>
-  `).join("");
-}
-
-// ✅ Requirement 4: Async Profile Loading
 async function loadProfile() {
-  const profileDiv = document.getElementById("profileInfo");
-  
-  profileDiv.innerHTML = `
-    <div style="text-align: center; padding: 20px;">
-      <div style="font-size: 32px;">⏳</div>
-      <p>Loading profile...</p>
-    </div>
-  `;
-  
-  try {
-    const res = await fetch(`http://localhost:3000/api/auth/profile/${currentUser.email}`);
-    const data = await res.json();
-    
-    if (!res.ok) throw new Error(data.msg || "Failed to load profile");
-    
-    profileDiv.innerHTML = `
-      <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <h2 style="margin-top: 0; color: #1f2937;">Profile Information</h2>
-        <div style="display: grid; gap: 15px;">
-          <div style="padding: 10px; background: #f9fafb; border-radius: 6px;">
-            <strong style="color: #6b7280;">Name:</strong>
-            <p style="margin: 5px 0;">${data.firstName} ${data.lastName || ''}</p>
-          </div>
-          <div style="padding: 10px; background: #f9fafb; border-radius: 6px;">
-            <strong style="color: #6b7280;">Email:</strong>
-            <p style="margin: 5px 0;">${data.email}</p>
-          </div>
-          <div style="padding: 10px; background: #f9fafb; border-radius: 6px;">
-            <strong style="color: #6b7280;">Mobile:</strong>
-            <p style="margin: 5px 0;">${data.mobile}</p>
-          </div>
-          <div style="padding: 10px; background: #f9fafb; border-radius: 6px;">
-            <strong style="color: #6b7280;">Shop Name:</strong>
-            <p style="margin: 5px 0;">${data.shopName || "N/A"}</p>
-          </div>
-          <div style="padding: 10px; background: #f9fafb; border-radius: 6px;">
-            <strong style="color: #6b7280;">Address:</strong>
-            <p style="margin: 5px 0;">${data.shopAddress || "N/A"}</p>
-          </div>
-        </div>
-      </div>
-    `;
-  } catch (err) {
-    profileDiv.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: #dc2626;">
-        <div style="font-size: 32px;">⚠️</div>
-        <p>${err.message}</p>
-        <button class="btn-primary" onclick="loadProfile()">Retry</button>
-      </div>
-    `;
-  }
+    const profileInfo = document.getElementById('profileInfo');
+    try {
+        const response = await fetch(`http://localhost:3000/api/auth/profile/${currentUser.email}`);
+        const data = await response.json();
+        if (response.ok) {
+            profileInfo.innerHTML = `
+                <p><strong>Name:</strong> ${data.firstName} ${data.lastName || ''}</p>
+                <p><strong>Email:</strong> ${data.email}</p>
+                <p><strong>Mobile:</strong> ${data.mobile}</p>
+                <p><strong>Shop Name:</strong> ${data.shopName || 'N/A'}</p>
+                <p><strong>Shop Address:</strong> ${data.shopAddress || 'N/A'}</p>
+            `;
+        } else {
+            profileInfo.innerHTML = `<p style="color:red;">Could not load profile.</p>`;
+        }
+    } catch (error) {
+        profileInfo.innerHTML = `<p style="color:red;">Error loading profile.</p>`;
+    }
 }
 
-// ✅ Auto-refresh products every 30 seconds
-setInterval(() => {
-  if (browseSection.classList.contains('active')) {
-    loadProducts();
-  }
-}, 30000);
+// ===========================
+// INITIALIZATION
+// ===========================
+document.addEventListener('DOMContentLoaded', () => {
+  loadInventory();
+  updateCartCount();
+});

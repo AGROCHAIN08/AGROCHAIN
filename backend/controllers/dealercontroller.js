@@ -1,5 +1,6 @@
 const User = require("../models/user");
 const Order = require("../models/order");
+const RetailerOrder = require("../models/retailerOrder");
 
 // ===========================
 // DEALER PROFILE MANAGEMENT
@@ -334,12 +335,10 @@ exports.freeVehicle = async (req, res) => {
       return res.status(400).json({ msg: "Vehicle is already available" });
     }
 
-    // Update vehicle status to available
     dealer.vehicles[vehicleIndex].currentStatus = 'AVAILABLE';
     dealer.vehicles[vehicleIndex].assignedTo = undefined;
     await dealer.save();
 
-    // If there was an assigned order, update it
     if (vehicle.assignedTo?.productId) {
       const order = await Order.findOne({
         dealerEmail: email,
@@ -348,28 +347,24 @@ exports.freeVehicle = async (req, res) => {
       });
 
       if (order) {
-        // Update order status
         order.status = 'Cancelled';
         await order.save();
 
-        // Make product available again
         const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
         if (farmer && farmer.crops) {
           const productIndex = farmer.crops.findIndex(c => c._id.toString() === order.productId.toString());
           if (productIndex !== -1) {
             farmer.crops[productIndex].availabilityStatus = 'Available';
-            await farmer.save();
           }
-        }
 
-        // Notify farmer
-        if (!farmer.notifications) farmer.notifications = [];
-        farmer.notifications.push({
-          title: "Vehicle Assignment Cancelled",
-          message: `Dealer has cancelled the vehicle assignment for your ${vehicle.assignedTo.productName}.`,
-          createdAt: new Date()
-        });
-        await farmer.save();
+          if (!farmer.notifications) farmer.notifications = [];
+          farmer.notifications.push({
+            title: "Vehicle Assignment Cancelled",
+            message: `Dealer has cancelled the vehicle assignment for your ${vehicle.assignedTo.productName}.`,
+            createdAt: new Date()
+          });
+          await farmer.save();
+        }
       }
     }
 
@@ -410,13 +405,11 @@ exports.placeBid = async (req, res) => {
 
     console.log("Order found:", order._id);
 
-    // Validate bid price
     if (parseFloat(bidPrice) <= 0) {
       console.log("Invalid bid price");
       return res.status(400).json({ msg: "Bid price must be greater than 0" });
     }
 
-    // Update order with bid information
     order.bidPrice = parseFloat(bidPrice);
     order.bidStatus = 'Pending';
     order.bidDate = new Date();
@@ -570,3 +563,155 @@ exports.submitReview = async (req, res) => {
     res.status(500).json({ msg: "Error submitting review" });
   }
 };
+
+// ===========================
+// INVENTORY MANAGEMENT (NEW)
+// ===========================
+
+// Update Inventory Price
+exports.updateInventoryPrice = async (req, res) => {
+  try {
+    const { dealerEmail, inventoryId, newPrice } = req.body;
+
+    if (!dealerEmail || !inventoryId || !newPrice) {
+      return res.status(400).json({ msg: "All fields are required" });
+    }
+
+    if (parseFloat(newPrice) <= 0) {
+      return res.status(400).json({ msg: "Price must be greater than 0" });
+    }
+
+    const dealer = await User.findOne({ email: dealerEmail, role: "dealer" });
+    if (!dealer) {
+      return res.status(404).json({ msg: "Dealer not found" });
+    }
+
+    const inventoryIndex = dealer.inventory?.findIndex(
+      item => item._id?.toString() === inventoryId?.toString()
+    );
+
+    if (inventoryIndex === -1 || inventoryIndex === undefined) {
+      return res.status(404).json({ msg: "Inventory item not found" });
+    }
+
+    dealer.inventory[inventoryIndex].unitPrice = parseFloat(newPrice);
+    dealer.inventory[inventoryIndex].totalValue = 
+      parseFloat(newPrice) * dealer.inventory[inventoryIndex].quantity;
+
+    await dealer.save();
+
+    res.json({ 
+      msg: "Price updated successfully",
+      item: dealer.inventory[inventoryIndex]
+    });
+
+  } catch (err) {
+    console.error("Error updating inventory price:", err);
+    res.status(500).json({ msg: "Error updating price" });
+  }
+};
+
+// Update Inventory Quantity
+exports.updateInventoryQuantity = async (req, res) => {
+  try {
+    const { dealerEmail, inventoryId, newQuantity } = req.body;
+
+    if (!dealerEmail || !inventoryId || newQuantity === undefined) {
+      return res.status(400).json({ msg: "All fields are required" });
+    }
+
+    if (parseFloat(newQuantity) < 0) {
+      return res.status(400).json({ msg: "Quantity cannot be negative" });
+    }
+
+    const dealer = await User.findOne({ email: dealerEmail, role: "dealer" });
+    if (!dealer) {
+      return res.status(404).json({ msg: "Dealer not found" });
+    }
+
+    const inventoryIndex = dealer.inventory?.findIndex(
+      item => item._id?.toString() === inventoryId?.toString()
+    );
+
+    if (inventoryIndex === -1 || inventoryIndex === undefined) {
+      return res.status(404).json({ msg: "Inventory item not found" });
+    }
+
+    dealer.inventory[inventoryIndex].quantity = parseFloat(newQuantity);
+    dealer.inventory[inventoryIndex].totalValue = 
+      dealer.inventory[inventoryIndex].unitPrice * parseFloat(newQuantity);
+
+    await dealer.save();
+
+    res.json({ 
+      msg: "Quantity updated successfully",
+      item: dealer.inventory[inventoryIndex]
+    });
+
+  } catch (err) {
+    console.error("Error updating inventory quantity:", err);
+    res.status(500).json({ msg: "Error updating quantity" });
+  }
+};
+
+// Remove Inventory Item
+exports.removeInventoryItem = async (req, res) => {
+  try {
+    const { dealerEmail, inventoryId } = req.body;
+
+    if (!dealerEmail || !inventoryId) {
+      return res.status(400).json({ msg: "All fields are required" });
+    }
+
+    const dealer = await User.findOne({ email: dealerEmail, role: "dealer" });
+    if (!dealer) {
+      return res.status(404).json({ msg: "Dealer not found" });
+    }
+
+    const inventoryIndex = dealer.inventory?.findIndex(
+      item => item._id?.toString() === inventoryId?.toString()
+    );
+
+    if (inventoryIndex === -1 || inventoryIndex === undefined) {
+      return res.status(404).json({ msg: "Inventory item not found" });
+    }
+
+    dealer.inventory.splice(inventoryIndex, 1);
+    await dealer.save();
+
+    res.json({ 
+      msg: "Inventory item removed successfully"
+    });
+
+  } catch (err) {
+    console.error("Error removing inventory item:", err);
+    res.status(500).json({ msg: "Error removing item" });
+  }
+};
+
+// ===========================
+// RETAILER ORDERS (for Dealer)
+// ===========================
+
+exports.getRetailerOrders = async (req, res) => {
+  try {
+    const dealerEmail = req.params.email;
+    console.log("📥 Fetching retailer orders for dealer:", dealerEmail);
+    
+    const orders = await RetailerOrder.find({ "dealerInfo.email": dealerEmail })
+                                      .sort({ createdAt: -1 });
+    
+    console.log(`✅ Found ${orders.length} orders for dealer ${dealerEmail}`);
+    
+    if (orders.length === 0) {
+      return res.json([]);
+    }
+    
+    res.json(orders);
+  } catch (err) {
+    console.error("❌ Error fetching retailer orders:", err);
+    res.status(500).json({ msg: "Error fetching retailer orders", error: err.message });
+  }
+};
+
+module.exports = exports;

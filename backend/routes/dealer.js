@@ -12,7 +12,11 @@ const {
   getDealerOrders,
   submitReview,
   placeBid,
-  freeVehicle
+  freeVehicle,
+  getRetailerOrders,
+  updateInventoryPrice,
+  updateInventoryQuantity,
+  removeInventoryItem
 } = require("../controllers/dealercontroller");
 
 // ===========================
@@ -36,7 +40,7 @@ router.post("/vehicles/free/:email/:vehicleId", freeVehicle);
 router.get("/all-products", getAllProducts);
 
 // ===========================
-// ORDER MANAGEMENT ROUTES
+// ORDER MANAGEMENT ROUTES (from Farmer)
 // ===========================
 router.post("/assign-vehicle", assignVehicle);
 router.get("/orders/:email", getDealerOrders);
@@ -50,5 +54,17 @@ router.post("/submit-review", submitReview);
 // BIDDING ROUTES
 // ===========================
 router.post("/place-bid", placeBid);
+
+// ===========================
+// INVENTORY MANAGEMENT ROUTES (NEW)
+// ===========================
+router.put("/inventory/update-price", updateInventoryPrice);
+router.put("/inventory/update-quantity", updateInventoryQuantity);
+router.delete("/inventory/remove", removeInventoryItem);
+
+// ===========================
+// RETAILER ORDER ROUTES (for Dealer to see)
+// ===========================
+router.get("/retailer-orders/:email", getRetailerOrders);
 
 module.exports = router;

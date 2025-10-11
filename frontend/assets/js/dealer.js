@@ -12,7 +12,7 @@ let selectedFarmerEmail = null;
 let currentBidOrderId = null;
 let currentReviewProductId = null;
 let currentReviewOrderId = null;
-let inventory = JSON.parse(localStorage.getItem("dealerInventory")) || [];
+let inventory = [];
 
 // ===========================
 // AUTHENTICATION CHECK
@@ -39,12 +39,12 @@ function generateUniqueOrderId() {
   return 'local-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 }
 
-
 const vehiclesBtn = document.getElementById("vehiclesBtn");
 const browseBtn = document.getElementById("browseBtn");
 const cartBtn = document.getElementById("cartBtn");
 const ordersBtn = document.getElementById("ordersBtn");
 const inventoryBtn = document.getElementById("inventoryBtn");
+const retailerOrdersBtn = document.getElementById("retailerOrdersBtn");
 const profileBtn = document.getElementById("profileBtn");
 const signoutBtn = document.getElementById("signoutBtn");
 
@@ -52,29 +52,35 @@ const vehiclesSection = document.getElementById("vehiclesSection");
 const browseSection = document.getElementById("browseSection");
 const cartSection = document.getElementById("cartSection");
 const inventorySection = document.getElementById("inventorySection");
+const retailerOrdersSection = document.getElementById("retailerOrdersSection");
 const ordersSection = document.getElementById("ordersSection");
 const profileSection = document.getElementById("profileSection");
 
 vehiclesBtn.onclick = () => showSection(vehiclesSection, vehiclesBtn);
-browseBtn.onclick = () => { 
-  showSection(browseSection, browseBtn); 
+browseBtn.onclick = () => {
+  showSection(browseSection, browseBtn);
   loadProducts();
 };
-cartBtn.onclick = () => { 
-  showSection(cartSection, cartBtn); 
+cartBtn.onclick = () => {
+  showSection(cartSection, cartBtn);
   loadCart();
 };
-ordersBtn.onclick = () => { 
-  showSection(ordersSection, ordersBtn); 
+ordersBtn.onclick = () => {
+  showSection(ordersSection, ordersBtn);
   loadOrders();
 };
-profileBtn.onclick = () => { 
-  showSection(profileSection, profileBtn); 
+profileBtn.onclick = () => {
+  showSection(profileSection, profileBtn);
   loadProfile();
 };
 inventoryBtn.onclick = () => {
   showSection(inventorySection, inventoryBtn);
   loadInventory();
+};
+
+retailerOrdersBtn.onclick = () => {
+    showSection(retailerOrdersSection, retailerOrdersBtn);
+    loadRetailerOrders();
 };
 
 // ===========================
@@ -83,7 +89,7 @@ inventoryBtn.onclick = () => {
 
 document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
+
   const vehicleData = {
     vehicleId: document.getElementById('vehicleId').value,
     vehicleType: document.getElementById('vehicleType').value,
@@ -100,7 +106,7 @@ document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
     });
 
     const data = await response.json();
-    
+
     if (response.ok) {
       showMessage('vehicleMessage', 'Vehicle added successfully!', 'success');
       document.getElementById('vehicleForm').reset();
@@ -119,7 +125,7 @@ async function loadVehicles() {
     const vehicles = await response.json();
 
     const vehiclesGrid = document.getElementById('vehiclesGrid');
-    
+
     if (response.ok && vehicles.length > 0) {
       allVehicles = vehicles;
       vehiclesGrid.innerHTML = vehicles.map(vehicle => createVehicleCard(vehicle)).join('');
@@ -146,7 +152,7 @@ async function loadVehicles() {
 function createVehicleCard(vehicle) {
   const statusClass = `vehicle-${vehicle.currentStatus.toLowerCase().replace(' ', '-')}`;
   const statusBadgeClass = `status-${vehicle.currentStatus.toLowerCase().replace(' ', '-')}-vehicle`;
-  
+
   const actionButtons = vehicle.currentStatus !== 'AVAILABLE' ? `
     <div style="display: flex; gap: 10px; margin-top: 10px;">
       <button class="btn-free" onclick="freeVehicle('${vehicle._id}')">
@@ -163,7 +169,7 @@ function createVehicleCard(vehicle) {
       </button>
     </div>
   `;
-  
+
   return `
     <div class="vehicle-card ${statusClass}">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -275,10 +281,9 @@ async function loadProducts() {
 
 function displayProducts(products) {
   const productsGrid = document.getElementById('productsGrid');
-  
-  // Filter out products with zero or negative quantity
+
   const availableProducts = products.filter(p => p.harvestQuantity > 0);
-  
+
   if (availableProducts.length === 0) {
     productsGrid.innerHTML = `
       <div class="empty-state">
@@ -316,7 +321,6 @@ function validateQuantity(productId, maxQuantity) {
 }
 
 function createProductCard(product) {
-  // Skip products with zero or negative quantity
   if (product.harvestQuantity <= 0) {
     return '';
   }
@@ -375,11 +379,11 @@ function createProductCard(product) {
         </div>
 
         <div class="order-now-box">
-          <input 
-            type="number" 
-            id="qty-${product._id}" 
-            placeholder="Qty" 
-            min="1" 
+          <input
+            type="number"
+            id="qty-${product._id}"
+            placeholder="Qty"
+            min="1"
             max="${product.harvestQuantity}"
             step="0.01"
             style="width:80px;"
@@ -458,7 +462,7 @@ window.onclick = (e) => {
 
 function placeOrder(productId) {
   const qty = parseFloat(document.getElementById(`qty-${productId}`).value);
-  
+
   if (!qty || qty <= 0) {
     alert('Enter valid quantity');
     return;
@@ -467,29 +471,20 @@ function placeOrder(productId) {
   const product = allProducts.find(p => p._id === productId);
   if (!product) return;
 
-  // ✅ FIXED: Always create a new order for each placement
-  // Each order cycle (assign → review → bid → accept) should be independent
-  // This prevents interference between completed orders and new orders of the same product
-  const newOrder = { 
-    ...product, 
+  const newOrder = {
+    ...product,
     quantity: qty,
-    orderId: generateUniqueOrderId(),  // Unique identifier for this specific order
+    orderId: generateUniqueOrderId(),
     vehicleAssigned: false,
     reviewSubmitted: false,
     bidPlaced: false,
-    bidStatus: null  // Initialize bidStatus as null
+    bidStatus: null
   };
-  
+
   orderItems.push(newOrder);
   localStorage.setItem("dealerOrders", JSON.stringify(orderItems));
   alert("✅ Product successfully added to My Orders");
 }
-
-// Helper function to generate unique order IDs
-function generateUniqueOrderId() {
-  return 'local-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-}
-
 
 function loadOrders() {
   const ordersGrid = document.getElementById("ordersGrid");
@@ -506,9 +501,9 @@ function loadOrders() {
 
   ordersGrid.innerHTML = orderItems.map(item => {
     console.log('Order item:', item);
-    
+
     let actionButtons = '';
-    
+
     if (item.bidStatus === 'Accepted') {
       actionButtons = `
         <span class="bid-accepted">✓ Bid Accepted</span>
@@ -519,7 +514,6 @@ function loadOrders() {
     } else if (item.bidPlaced) {
       actionButtons = `<span class="bid-pending">⏳ Bid Pending</span>`;
     } else if (item.vehicleAssigned && !item.reviewSubmitted) {
-      // ✅ FIXED: Pass orderId as third parameter to openReviewModal
       actionButtons = `<button class="btn-review" onclick="openReviewModal('${item._id}', '${item.varietySpecies}', '${item.orderId}')">⭐ Add Review</button>`;
     } else if (item.vehicleAssigned && item.reviewSubmitted && !item.bidPlaced) {
       if (item.orderId) {
@@ -529,7 +523,6 @@ function loadOrders() {
         console.error('Order item missing orderId:', item);
       }
     } else {
-      // Pass orderId as third parameter to openAssignVehicleModal
       if (item.orderId) {
         actionButtons = `<button class="btn-assign" onclick="openAssignVehicleModal('${item._id}', '${item.farmerEmail}', '${item.orderId}')">Assign Vehicle</button>`;
       } else {
@@ -561,21 +554,20 @@ function loadOrders() {
 function addToCart(productId) {
   const qtyInput = document.getElementById(`qty-${productId}`);
   const qty = parseFloat(qtyInput.value);
-  
+
   if (!qty || qty <= 0) {
-    alert("❌ Please enter a valid quantity");
+    alert("⌛ Please enter a valid quantity");
     return;
   }
 
   const product = allProducts.find(p => p._id === productId);
   if (!product) {
-    alert("❌ Product not found");
+    alert("⌛ Product not found");
     return;
   }
 
-  // Validate against available stock
   if (qty > product.harvestQuantity) {
-    alert(`❌ Only ${product.harvestQuantity} ${product.unitOfSale} available in stock`);
+    alert(`⌛ Only ${product.harvestQuantity} ${product.unitOfSale} available in stock`);
     qtyInput.value = product.harvestQuantity;
     return;
   }
@@ -584,7 +576,7 @@ function addToCart(productId) {
   if (existing) {
     const totalQty = existing.quantity + qty;
     if (totalQty > product.harvestQuantity) {
-      alert(`❌ Total quantity (${totalQty}) exceeds available stock (${product.harvestQuantity})`);
+      alert(`⌛ Total quantity (${totalQty}) exceeds available stock (${product.harvestQuantity})`);
       return;
     }
     existing.quantity = totalQty;
@@ -620,7 +612,7 @@ function loadCart() {
         <p><b>Quantity:</b> ${item.quantity}</p>
       </div>
       <div class="order-actions">
-        <button class="btn-remove" onclick="removeFromCart('${item._id}')">❌ Remove</button>
+        <button class="btn-remove" onclick="removeFromCart('${item._id}')">⌛ Remove</button>
         <button class="btn-primary" onclick="orderFromCart('${item._id}')">📦 Order Now</button>
       </div>
     </div>
@@ -636,39 +628,37 @@ function removeFromCart(productId) {
 function orderFromCart(productId) {
   const cartProduct = cartItems.find(i => i._id === productId);
   if (!cartProduct) {
-    alert("❌ Product not found in cart");
+    alert("⌛ Product not found in cart");
     return;
   }
 
-  // Validate against current available stock
   const currentProduct = allProducts.find(p => p._id === productId);
   if (!currentProduct) {
-    alert("❌ Product no longer available");
+    alert("⌛ Product no longer available");
     removeFromCart(productId);
     return;
   }
 
   if (cartProduct.quantity > currentProduct.harvestQuantity) {
-    alert(`❌ Only ${currentProduct.harvestQuantity} available. Cart has ${cartProduct.quantity}.`);
+    alert(`⌛ Only ${currentProduct.harvestQuantity} available. Cart has ${cartProduct.quantity}.`);
     return;
   }
 
-  // Create order directly with cart quantity
-  const newOrder = { 
+  const newOrder = {
     ...currentProduct,
-    quantity: cartProduct.quantity,  // ✅ Use cart quantity
+    quantity: cartProduct.quantity,
     orderId: generateUniqueOrderId(),
     vehicleAssigned: false,
     reviewSubmitted: false,
     bidPlaced: false,
     bidStatus: null
   };
-  
+
   orderItems.push(newOrder);
   localStorage.setItem("dealerOrders", JSON.stringify(orderItems));
   alert("✅ Order placed successfully!");
   removeFromCart(productId);
-  
+
   if (ordersSection.classList.contains('active')) {
     loadOrders();
   }
@@ -681,8 +671,8 @@ function orderFromCart(productId) {
 async function openAssignVehicleModal(productId, farmerEmail, orderId) {
   selectedProductId = productId;
   selectedFarmerEmail = farmerEmail;
-  selectedOrderId = orderId;  // ✅ Store the specific order ID
-  
+  selectedOrderId = orderId;
+
   const modal = document.getElementById("assignVehicleModal");
   modal.style.display = "block";
 
@@ -724,9 +714,8 @@ async function confirmAssignVehicle() {
     return;
   }
 
-  // ✅ FIXED: Find order by its unique orderId, not by product _id
   const orderItem = orderItems.find(i => i.orderId === selectedOrderId);
-  
+
   if (!orderItem) {
     alert("Error: Order not found. Please refresh and try again.");
     console.error("Order not found for orderId:", selectedOrderId);
@@ -749,22 +738,20 @@ async function confirmAssignVehicle() {
     });
 
     const result = await response.json();
-    
+
     if (response.ok) {
       alert("✅ Vehicle Assigned Successfully!");
-      
-      // ✅ CRITICAL FIX: Store server orderId separately, keep local orderId
+
       orderItem.vehicleAssigned = true;
-      orderItem.serverOrderId = result.orderId;  // ✅ Store server ID separately
-      // Keep orderItem.orderId as is (local ID)
-      
+      orderItem.serverOrderId = result.orderId;
+
       localStorage.setItem("dealerOrders", JSON.stringify(orderItems));
-      
+
       closeAssignVehicleModal();
       loadOrders();
       loadVehicles();
     } else {
-      alert("❌ Error assigning vehicle: " + result.msg);
+      alert("⌛ Error assigning vehicle: " + result.msg);
     }
   } catch (error) {
     console.error("Error in confirmAssignVehicle:", error);
@@ -772,18 +759,17 @@ async function confirmAssignVehicle() {
   }
 }
 
-
 // ===========================
 // PRODUCT REVIEW
 // ===========================
 
 function openReviewModal(productId, productName, orderId) {
   currentReviewProductId = productId;
-  currentReviewOrderId = orderId;  // ✅ Store the specific order ID
-  
+  currentReviewOrderId = orderId;
+
   document.getElementById('reviewModalTitle').textContent = `Review: ${productName}`;
   document.getElementById('reviewModal').style.display = 'block';
-  
+
   console.log('Review modal opened for:', { productId, orderId });
 }
 
@@ -791,12 +777,12 @@ function closeReviewModal() {
   document.getElementById('reviewModal').style.display = 'none';
   document.getElementById('reviewForm').reset();
   currentReviewProductId = null;
-  currentReviewOrderId = null;  // ✅ Clear the order ID
+  currentReviewOrderId = null;
 }
 
 document.getElementById('reviewForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
+
   const quality = document.getElementById('reviewQuality').value;
   const comments = document.getElementById('reviewComments').value;
   const rating = parseInt(document.getElementById('reviewRating').value);
@@ -820,13 +806,12 @@ document.getElementById('reviewForm').addEventListener('submit', async (e) => {
     });
 
     const result = await response.json();
-    
+
     if (response.ok) {
       alert('✅ Review submitted successfully!');
-      
-      // ✅ FIXED: Find order by orderId instead of product _id
+
       const orderItem = orderItems.find(item => item.orderId === currentReviewOrderId);
-      
+
       if (orderItem) {
         orderItem.reviewSubmitted = true;
         localStorage.setItem('dealerOrders', JSON.stringify(orderItems));
@@ -834,12 +819,12 @@ document.getElementById('reviewForm').addEventListener('submit', async (e) => {
       } else {
         console.error('Order not found for orderId:', currentReviewOrderId);
       }
-      
+
       closeReviewModal();
       loadOrders();
       loadProducts();
     } else {
-      alert('❌ Error submitting review: ' + result.msg);
+      alert('⌛ Error submitting review: ' + result.msg);
     }
   } catch (error) {
     console.error('Error submitting review:', error);
@@ -859,27 +844,26 @@ function openBidModal(productId, productName, originalPrice, unitOfSale, orderId
     unitOfSale,
     orderId
   });
-  
-  currentBidOrderId = orderId;  // This is the local orderId
+
+  currentBidOrderId = orderId;
   currentReviewProductId = productId;
-  
+
   if (!orderId) {
     console.error('ERROR: No orderId provided to openBidModal');
     alert('Error: Order ID not found. Please refresh and try again.');
     return;
   }
-  
-  // Debug: Check if serverOrderId exists
+
   const orderItem = orderItems.find(item => item.orderId === orderId);
   if (orderItem && !orderItem.serverOrderId) {
     console.error('WARNING: Order missing serverOrderId:', orderItem);
   }
-  
+
   document.getElementById('bidModal').style.display = 'block';
   document.getElementById('bidProductName').textContent = productName;
   document.getElementById('bidOriginalPrice').textContent = `₹${originalPrice} per ${unitOfSale}`;
   document.getElementById('bidUnitOfSale').textContent = unitOfSale;
-  
+
   console.log('Current bid order ID set to:', currentBidOrderId);
 }
 
@@ -891,7 +875,7 @@ function closeBidModal() {
 
 document.getElementById('bidForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
+
   const bidPrice = parseFloat(document.getElementById('bidPrice').value);
 
   if (!bidPrice || bidPrice <= 0) {
@@ -899,9 +883,8 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
     return;
   }
 
-  // ✅ Find the order item to get serverOrderId
   const orderItem = orderItems.find(item => item.orderId === currentBidOrderId);
-  
+
   if (!orderItem || !orderItem.serverOrderId) {
     alert('Error: Server order ID not found. Please refresh and try again.');
     console.error('Missing serverOrderId for order:', currentBidOrderId);
@@ -909,7 +892,7 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
   }
 
   console.log('Submitting bid:', {
-    orderId: orderItem.serverOrderId,  // ✅ Use serverOrderId for API call
+    orderId: orderItem.serverOrderId,
     bidPrice: bidPrice
   });
 
@@ -918,29 +901,29 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        orderId: orderItem.serverOrderId,  // ✅ Use serverOrderId
+        orderId: orderItem.serverOrderId,
         bidPrice: bidPrice
       })
     });
 
     const result = await response.json();
     console.log('Bid response:', result);
-    
+
     if (response.ok) {
       alert('✅ Bid placed successfully! Waiting for farmer approval.');
-      
+
       if (orderItem) {
         orderItem.bidPlaced = true;
         orderItem.bidPrice = bidPrice;
         orderItem.bidStatus = 'Pending';
         localStorage.setItem('dealerOrders', JSON.stringify(orderItems));
       }
-      
+
       closeBidModal();
       loadOrders();
     } else {
       console.error('Bid error:', result);
-      alert('❌ Error placing bid: ' + (result.msg || 'Unknown error'));
+      alert('⌛ Error placing bid: ' + (result.msg || 'Unknown error'));
     }
   } catch (error) {
     console.error('Error placing bid:', error);
@@ -950,26 +933,26 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
 
 function viewReceipt(orderId) {
   const orderItem = orderItems.find(item => item.orderId === orderId);
-  
+
   if (!orderItem || !orderItem.receiptNumber) {
     alert('Receipt not available yet');
     return;
   }
-  
+
   const modal = document.getElementById('receiptModal');
   const receiptContent = document.getElementById('receiptContent');
-  
+
   receiptContent.innerHTML = `
     <div style="text-align: center; border-bottom: 2px solid #1f2937; padding-bottom: 20px; margin-bottom: 20px;">
       <h2 style="margin: 0; color: #1f2937;">ORDER RECEIPT</h2>
       <p style="margin: 5px 0; color: #6b7280;">AgroChain Platform</p>
     </div>
-    
+
     <div style="margin-bottom: 20px;">
       <p><strong>Receipt Number:</strong> ${orderItem.receiptNumber}</p>
       <p><strong>Date:</strong> ${new Date(orderItem.receiptDate || Date.now()).toLocaleDateString()}</p>
     </div>
-    
+
     <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
       <h3 style="margin-top: 0; color: #1f2937;">Product Details</h3>
       <p><strong>Product:</strong> ${orderItem.varietySpecies}</p>
@@ -979,7 +962,7 @@ function viewReceipt(orderId) {
       <p><strong>Agreed Price:</strong> ₹${orderItem.bidPrice} per ${orderItem.unitOfSale}</p>
       <p style="font-size: 18px; font-weight: bold; color: #059669;"><strong>Total Amount:</strong> ₹${(orderItem.bidPrice * orderItem.quantity).toFixed(2)}</p>
     </div>
-    
+
     <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
       <h3 style="margin-top: 0; color: #1f2937;">Farmer Details</h3>
       <p><strong>Name:</strong> ${orderItem.farmerName}</p>
@@ -987,20 +970,20 @@ function viewReceipt(orderId) {
       <p><strong>Mobile:</strong> ${orderItem.farmerMobile}</p>
       <p><strong>Location:</strong> ${orderItem.farmerLocation || 'N/A'}</p>
     </div>
-    
+
     <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;">
       <h3 style="margin-top: 0; color: #1f2937;">Dealer Details</h3>
       <p><strong>Name:</strong> ${currentUser.businessName || currentUser.firstName}</p>
       <p><strong>Email:</strong> ${currentUser.email}</p>
       <p><strong>Mobile:</strong> ${currentUser.mobile}</p>
     </div>
-    
+
     <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #1f2937;">
       <p style="color: #6b7280; font-size: 14px;">Thank you for your business!</p>
       <p style="color: #6b7280; font-size: 12px;">This is a computer-generated receipt</p>
     </div>
   `;
-  
+
   modal.style.display = 'block';
 }
 
@@ -1016,213 +999,266 @@ function printReceipt() {
 // INVENTORY MANAGEMENT
 // ===========================
 
-function addToInventory(order) {
-  // Check if product already exists in inventory
-  const existingItem = inventory.find(item =>
-    item.productId === order._id && item.farmerEmail === order.farmerEmail
-  );
-
-  if (existingItem) {
-    // Update quantity if product already exists
-    existingItem.quantity += order.quantity;
-    existingItem.totalValue = existingItem.quantity * existingItem.unitPrice;
-    existingItem.lastUpdated = new Date().toISOString();
-  } else {
-    // Add new inventory item
-    const inventoryItem = {
-      inventoryId: 'INV-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-      productId: order._id,
-      productName: order.varietySpecies,
-      productType: order.productType,
-      farmerEmail: order.farmerEmail,
-      farmerName: order.farmerName || 'Unknown Farmer',
-      quantity: order.quantity,
-      unitOfSale: order.unitOfSale,
-      unitPrice: order.bidPrice || order.targetPrice,
-      totalValue: order.quantity * (order.bidPrice || order.targetPrice),
-      imageUrl: order.imageUrl,
-      receiptNumber: order.receiptNumber,
-      orderId: order.orderId || order._id,
-      dateAdded: new Date().toISOString(),
-      lastUpdated: new Date().toISOString()
-    };
-
-    inventory.push(inventoryItem);
-  }
-
-  localStorage.setItem("dealerInventory", JSON.stringify(inventory));
-  console.log('Item added to inventory:', inventory);
-}
-
-function changeInventoryPrice(inventoryId) {
-  const item = inventory.find(i => i.inventoryId === inventoryId);
-  if (!item) {
-    alert('Item not found');
-    return;
-  }
-
-  const newPrice = prompt(`Current unit price: ₹${item.unitPrice}\n\nEnter new unit price (₹):`, item.unitPrice);
-
-  if (newPrice === null) return; // User cancelled
-
-  const price = parseFloat(newPrice);
-
-  if (isNaN(price) || price <= 0) {
-    alert('Please enter a valid price');
-    return;
-  }
-
-  // Update price
-  item.unitPrice = price;
-  item.totalValue = price * item.quantity;
-  item.lastUpdated = new Date().toISOString();
-
-  localStorage.setItem("dealerInventory", JSON.stringify(inventory));
-  loadInventory();
-  alert(`✓ Price updated to ₹${price.toFixed(2)} per ${item.unitOfSale}`);
-}
-
-function loadInventory() {
+async function loadInventory() {
   const inventoryGrid = document.getElementById("inventoryGrid");
+  inventoryGrid.innerHTML = `<p>Loading inventory...</p>`;
 
-  if (!inventory || inventory.length === 0) {
-    inventoryGrid.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📦</div>
-        <h3>No Inventory Yet</h3>
-        <p>Products from confirmed orders will appear here</p>
-      </div>
-    `;
-    updateInventoryStats();
-    return;
-  }
+  try {
+    const response = await fetch(`http://localhost:3000/api/dealer/profile/${currentUser.email}`);
+    const dealerData = await response.json();
 
-  // Sort by date added (newest first)
-  const sortedInventory = [...inventory].sort((a, b) =>
-    new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0)
-  );
-
-  inventoryGrid.innerHTML = sortedInventory.map(item => {
-    // Ensure numeric values exist with safe fallbacks
-    const unitPrice = parseFloat(item.unitPrice) || 0;
-    const quantity = parseFloat(item.quantity) || 0;
-    const totalValue = parseFloat(item.totalValue) || (unitPrice * quantity);
-    const productName = item.productName || 'Unknown Product';
-    const productType = item.productType || 'N/A';
-    const unitOfSale = item.unitOfSale || 'units';
-    const farmerName = item.farmerName || 'N/A';
-    const imageUrl = item.imageUrl || 'https://via.placeholder.com/150';
-    const inventoryId = item.inventoryId || 'N/A';
-    const dateAdded = item.dateAdded ? new Date(item.dateAdded).toLocaleDateString() : 'N/A';
-    
-    return `
-      <div class="inventory-card">
-        <div class="inventory-card-header">
-          <img src="${imageUrl}" alt="${productName}" class="inventory-image" onerror="this.src='https://via.placeholder.com/150'">
-          <div class="inventory-badge">${inventoryId}</div>
-        </div>
-
-        <div class="inventory-content">
-          <h3>${productName}</h3>
-          <p class="inventory-type">${productType}</p>
-
-          <div class="inventory-details">
-            <div class="inventory-detail-row">
-              <span class="detail-label">Quantity:</span>
-              <span class="detail-value">${quantity.toFixed(2)} ${unitOfSale}</span>
-            </div>
-            <div class="inventory-detail-row">
-              <span class="detail-label">Unit Price:</span>
-              <span class="detail-value">₹${unitPrice.toFixed(2)}</span>
-            </div>
-            <div class="inventory-detail-row">
-              <span class="detail-label">Total Value:</span>
-              <span class="detail-value" style="font-weight: bold; color: #059669;">₹${totalValue.toFixed(2)}</span>
-            </div>
-            <div class="inventory-detail-row">
-              <span class="detail-label">Farmer:</span>
-              <span class="detail-value">${farmerName}</span>
-            </div>
-            <div class="inventory-detail-row">
-              <span class="detail-label">Added:</span>
-              <span class="detail-value">${dateAdded}</span>
-            </div>
-            ${item.receiptNumber ? `
-              <div class="inventory-detail-row">
-                <span class="detail-label">Receipt:</span>
-                <span class="detail-value">${item.receiptNumber}</span>
-              </div>
-            ` : ''}
-          </div>
-
-          <div class="inventory-actions">
-            <button class="btn-reduce" onclick="reduceInventoryQuantity('${inventoryId}')">
-              ➖ Reduce Quantity
-            </button>
-            <button class="btn-primary" onclick="changeInventoryPrice('${inventoryId}')" style="background: #3b82f6;">
-              💰 Change Price
-            </button>
-            <button class="btn-remove-inventory" onclick="removeFromInventory('${inventoryId}')">
-              🗑️ Remove All
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  updateInventoryStats();
-}
-
-function reduceInventoryQuantity(inventoryId) {
-  const item = inventory.find(i => i.inventoryId === inventoryId);
-  if (!item) return;
-
-  const newQuantity = prompt(`Current quantity: ${item.quantity} ${item.unitOfSale}\n\nEnter new quantity:`, item.quantity);
-
-  if (newQuantity === null) return; // User cancelled
-
-  const qty = parseFloat(newQuantity);
-
-  if (isNaN(qty) || qty < 0) {
-    alert('Please enter a valid quantity');
-    return;
-  }
-
-  if (qty === 0) {
-    if (confirm('Quantity is 0. Remove this item from inventory?')) {
-      removeFromInventory(inventoryId);
+    if (!response.ok) {
+      throw new Error(dealerData.msg || 'Failed to fetch inventory data');
     }
-    return;
+
+    const serverInventory = dealerData.inventory || [];
+    inventory = serverInventory;
+
+    if (inventory.length === 0) {
+      inventoryGrid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📦</div>
+          <h3>No Inventory Yet</h3>
+          <p>Products from confirmed orders will appear here</p>
+        </div>
+      `;
+      updateInventoryStats();
+      return;
+    }
+
+    const sortedInventory = [...inventory].sort((a, b) =>
+      new Date(b.addedDate || 0) - new Date(a.addedDate || 0)
+    );
+
+    inventoryGrid.innerHTML = sortedInventory.map(item => createInventoryCard(item)).join('');
+    updateInventoryStats();
+
+  } catch (error) {
+    console.error("Error loading inventory:", error);
+    inventoryGrid.innerHTML = `<div class="empty-state"><h3>Error loading inventory. Please refresh.</h3></div>`;
   }
-
-  if (qty > item.quantity) {
-    alert('Quantity cannot exceed current inventory');
-    return;
-  }
-
-  // Update inventory
-  item.quantity = qty;
-  item.totalValue = qty * item.unitPrice;
-  item.lastUpdated = new Date().toISOString();
-
-  localStorage.setItem("dealerInventory", JSON.stringify(inventory));
-  loadInventory();
-  alert(`✓ Quantity updated to ${qty} ${item.unitOfSale}`);
 }
 
-function removeFromInventory(inventoryId) {
-  const item = inventory.find(i => i.inventoryId === inventoryId);
-  if (!item) return;
+function createInventoryCard(item) {
+  const unitPrice = parseFloat(item.unitPrice) || 0;
+  const quantity = parseFloat(item.quantity) || 0;
+  const totalValue = parseFloat(item.totalValue) || (unitPrice * quantity);
+  const dateAdded = item.addedDate ? new Date(item.addedDate).toLocaleDateString() : 'N/A';
 
-  if (!confirm(`Remove ${item.productName} (${item.quantity} ${item.unitOfSale}) from inventory?`)) {
-    return;
+  // Build reviews section
+  let reviewsHTML = '';
+  if (item.retailerReviews && item.retailerReviews.length > 0) {
+    const avgRating = (item.retailerReviews.reduce((sum, r) => sum + r.rating, 0) / item.retailerReviews.length).toFixed(1);
+    reviewsHTML = `
+      <div style="margin-top: 15px; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h4 style="font-size: 14px; margin: 0; color: #374151;">
+            ⭐ Reviews (${item.retailerReviews.length})
+          </h4>
+          <span style="font-size: 14px; font-weight: 600; color: #f59e0b;">
+            ${avgRating}/5
+          </span>
+        </div>
+        
+        ${item.retailerReviews.slice(0, 2).map(review => `
+          <div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 4px; border-left: 3px solid #10b981;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-weight: 600; color: #10b981; font-size: 13px;">${review.quality}</span>
+              <span style="color: #f59e0b; font-size: 12px;">${'⭐'.repeat(review.rating)}</span>
+            </div>
+            <p style="margin: 4px 0; font-size: 12px; color: #374151; line-height: 1.4;">${review.comments}</p>
+            <small style="color: #6b7280;">By: ${review.retailerEmail}</small>
+          </div>
+        `).join('')}
+        
+        ${item.retailerReviews.length > 2 ? `
+          <button class="btn-view-all-reviews" onclick="openViewReviewsModal('${item._id}')" style="width: 100%; margin-top: 10px; padding: 8px; background: #ecfdf5; border: 1px solid #6ee7b7; color: #10b981; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.3s ease;">
+            View All ${item.retailerReviews.length} Reviews →
+          </button>
+        ` : ''}
+      </div>
+    `;
   }
 
-  inventory = inventory.filter(i => i.inventoryId !== inventoryId);
-  localStorage.setItem("dealerInventory", JSON.stringify(inventory));
+  return `
+    <div class="inventory-card">
+        <div class="inventory-card-header">
+            <img src="${item.imageUrl}" alt="${item.productName}" class="inventory-image" onerror="this.src='https://via.placeholder.com/150'">
+        </div>
+        <div class="inventory-content">
+            <h3>${item.productName}</h3>
+            <p class="inventory-type">${item.productType}</p>
+            <div class="inventory-details">
+                <div class="inventory-detail-row">
+                    <span class="detail-label">Quantity:</span>
+                    <span class="detail-value">${quantity.toFixed(2)} ${item.unitOfSale || ''}</span>
+                </div>
+                <div class="inventory-detail-row">
+                    <span class="detail-label">Unit Price:</span>
+                    <span class="detail-value">₹${unitPrice.toFixed(2)}</span>
+                </div>
+                <div class="inventory-detail-row">
+                    <span class="detail-label">Total Value:</span>
+                    <span class="detail-value" style="font-weight: bold; color: #059669;">₹${totalValue.toFixed(2)}</span>
+                </div>
+                <div class="inventory-detail-row">
+                    <span class="detail-label">Farmer:</span>
+                    <span class="detail-value">${item.farmerName}</span>
+                </div>
+                <div class="inventory-detail-row">
+                    <span class="detail-label">Added:</span>
+                    <span class="detail-value">${dateAdded}</span>
+                </div>
+                <div class="inventory-detail-row">
+                    <span class="detail-label">Receipt:</span>
+                    <span class="detail-value">${item.receiptNumber}</span>
+                </div>
+            </div>
+            
+            ${reviewsHTML}
+            
+            <div class="inventory-actions">
+                <button class="btn-reduce" onclick="reduceInventoryQuantity('${item._id}')">➖ Reduce Quantity</button>
+                <button class="btn-primary" onclick="changeInventoryPrice('${item._id}')" style="background: #3b82f6;">💰 Change Price</button>
+                <button class="btn-remove-inventory" onclick="removeFromInventory('${item._id}')">🗑️ Remove All</button>
+            </div>
+        </div>
+    </div>
+    `;
+}
+
+function addToInventory(order) {
+  console.log('An order was completed. Refreshing inventory to see new item.');
   loadInventory();
-  alert('✓ Product removed from inventory');
+}
+
+async function changeInventoryPrice(inventoryId) {
+    const item = inventory.find(i => i._id === inventoryId);
+    if (!item) {
+        alert('Item not found');
+        return;
+    }
+
+    const newPrice = prompt(`Current unit price: ₹${item.unitPrice}\n\nEnter new unit price (₹):`, item.unitPrice);
+
+    if (newPrice === null) return;
+
+    const price = parseFloat(newPrice);
+
+    if (isNaN(price) || price <= 0) {
+        alert('Please enter a valid price');
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/dealer/inventory/update-price`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                dealerEmail: currentUser.email,
+                inventoryId: inventoryId,
+                newPrice: price
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`✅ Price updated successfully to ₹${price.toFixed(2)}`);
+            loadInventory();
+        } else {
+            alert('❌ Error: ' + (result.msg || 'Failed to update price'));
+        }
+    } catch (error) {
+        console.error('Error updating price:', error);
+        alert('Network error. Please try again.');
+    }
+}
+
+async function reduceInventoryQuantity(inventoryId) {
+    const item = inventory.find(i => i._id === inventoryId);
+    if (!item) return;
+
+    const newQuantity = prompt(`Current quantity: ${item.quantity} ${item.unitOfSale}\n\nEnter new quantity:`, item.quantity);
+
+    if (newQuantity === null) return;
+
+    const qty = parseFloat(newQuantity);
+
+    if (isNaN(qty) || qty < 0) {
+        alert('Please enter a valid quantity');
+        return;
+    }
+
+    if (qty > item.quantity) {
+        alert('New quantity cannot exceed current inventory');
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/dealer/inventory/update-quantity`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                dealerEmail: currentUser.email,
+                inventoryId: inventoryId,
+                newQuantity: qty
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`✅ Quantity updated successfully to ${qty}`);
+            
+            if (qty === 0) {
+                if (confirm('Quantity is 0. Remove this item from inventory?')) {
+                    await removeFromInventory(inventoryId);
+                } else {
+                    loadInventory();
+                }
+            } else {
+                loadInventory();
+            }
+        } else {
+            alert('❌ Error: ' + (result.msg || 'Failed to update quantity'));
+        }
+    } catch (error) {
+        console.error('Error updating quantity:', error);
+        alert('Network error. Please try again.');
+    }
+}
+
+async function removeFromInventory(inventoryId) {
+    const item = inventory.find(i => i._id === inventoryId);
+    if (!item) return;
+
+    if (!confirm(`Remove ${item.productName} from inventory? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/dealer/inventory/remove`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                dealerEmail: currentUser.email,
+                inventoryId: inventoryId
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('✅ Product removed successfully from inventory');
+            loadInventory();
+        } else {
+            alert('❌ Error: ' + (result.msg || 'Failed to remove product'));
+        }
+    } catch (error) {
+        console.error('Error removing inventory item:', error);
+        alert('Network error. Please try again.');
+    }
 }
 
 function updateInventoryStats() {
@@ -1230,20 +1266,244 @@ function updateInventoryStats() {
   const totalValue = inventory.reduce((sum, item) => sum + item.totalValue, 0);
   const productTypes = new Set(inventory.map(item => item.productType)).size;
 
-  document.getElementById('totalItems').textContent = totalItems.toString();
+  document.getElementById('totalItems').textContent = totalItems.toFixed(2);
   document.getElementById('totalValue').textContent = '₹' + totalValue.toFixed(2);
   document.getElementById('productTypes').textContent = productTypes.toString();
 }
 
-// Poll for bid updates every 10 seconds
-setInterval(checkBidUpdates, 10000);
+// ===========================
+// VIEW REVIEWS MODAL (Add this to BOTH dealer.js and retailer.js)
+// ===========================
 
-// Also check immediately when orders section is opened
-const originalOrdersOnClick = ordersBtn.onclick;
-ordersBtn.onclick = async () => {
-  originalOrdersOnClick();
-  await checkBidUpdates();
-};
+function openViewReviewsModal(productId) {
+    console.log("Opening reviews modal for product:", productId);
+    
+    // Find product in the appropriate inventory
+    let product = null;
+    
+    if (typeof allInventory !== 'undefined' && allInventory.length > 0) {
+        // Retailer side
+        product = allInventory.find(p => p._id === productId);
+        console.log("Searching in allInventory (retailer)");
+    } else if (typeof inventory !== 'undefined' && inventory.length > 0) {
+        // Dealer side
+        product = inventory.find(p => p._id === productId);
+        console.log("Searching in inventory (dealer)");
+    }
+    
+    if (!product) {
+        console.error("Product not found with ID:", productId);
+        alert('Product not found');
+        return;
+    }
+    
+    console.log("Product found:", product.productName);
+    console.log("Reviews:", product.retailerReviews);
+    
+    const reviews = product.retailerReviews || [];
+    
+    // Build reviews HTML
+    let reviewsHTML = '';
+    if (reviews.length === 0) {
+        reviewsHTML = '<p style="color: #6b7280; text-align: center; padding: 30px 20px;">No reviews yet</p>';
+    } else {
+        reviewsHTML = reviews.map((review, index) => `
+            <div style="margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid #10b981;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #10b981; font-size: 14px;">${review.quality}</span>
+                    <span style="color: #f59e0b; font-size: 14px;">${'⭐'.repeat(review.rating)}</span>
+                </div>
+                <p style="margin: 8px 0; font-size: 13px; color: #374151; line-height: 1.6;">${review.comments}</p>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-top: 8px;">
+                    <span><strong>By:</strong> ${review.retailerEmail}</span>
+                    <span>${new Date(review.date).toLocaleDateString()}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Calculate average rating
+    let avgRatingHTML = '';
+    if (reviews.length > 0) {
+        const avgRating = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
+        const roundedRating = Math.round(avgRating);
+        avgRatingHTML = `
+            <div style="text-align: right;">
+                <div style="font-size: 28px; color: #f59e0b; margin-bottom: 5px;">
+                    ${'⭐'.repeat(roundedRating)}
+                </div>
+                <p style="margin: 0; color: #6b7280; font-size: 13px;">
+                    Average: ${avgRating}/5.0
+                </p>
+            </div>
+        `;
+    }
+    
+    // Create modal dynamically
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'viewReviewsModal';
+    modal.style.display = 'block';
+    modal.style.zIndex = '1000';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            closeViewReviewsModal();
+        }
+    };
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 650px; max-height: 80vh; overflow-y: auto;">
+            <span class="close" onclick="closeViewReviewsModal()" style="cursor: pointer; font-size: 28px; font-weight: bold; color: #6b7280; float: right; padding: 5px 10px; transition: color 0.2s;">&times;</span>
+            
+            <div style="clear: both; text-align: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px;">${product.productName}</h3>
+                <p style="margin: 0; color: #6b7280; font-size: 13px;">${product.productType}</p>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding: 15px; background: #f3f4f6; border-radius: 6px;">
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 14px;">Total Reviews</h4>
+                    <p style="margin: 0; font-size: 24px; font-weight: bold; color: #4a148c;">${reviews.length}</p>
+                </div>
+                ${avgRatingHTML}
+            </div>
+            
+            <h4 style="color: #374151; margin: 0 0 15px 0; font-size: 14px;">All Reviews</h4>
+            
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                ${reviewsHTML}
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                <button class="btn-secondary" onclick="closeViewReviewsModal()" style="padding: 10px 20px; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s;">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    console.log("Modal opened successfully");
+}
+
+function closeViewReviewsModal() {
+    console.log("Closing reviews modal");
+    const modal = document.getElementById('viewReviewsModal');
+    
+    if (modal) {
+        modal.remove();
+        console.log("Modal removed");
+    }
+}
+
+// ===========================
+// RETAILER ORDER MANAGEMENT
+// ===========================
+
+async function loadRetailerOrders() {
+    const grid = document.getElementById('retailerOrdersGrid');
+    grid.innerHTML = `<p>Loading orders from retailers...</p>`;
+
+    try {
+        console.log('📥 Fetching retailer orders for:', currentUser.email);
+        const response = await fetch(`http://localhost:3000/api/dealer/retailer-orders/${currentUser.email}`);
+        const orders = await response.json();
+
+        console.log('📊 Response status:', response.status);
+        console.log('📦 Orders received:', orders);
+
+        if (response.ok) {
+            if (!Array.isArray(orders)) {
+                console.error('❌ Expected array but got:', typeof orders);
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <h3>Error: Invalid data format</h3>
+                        <p>Please refresh the page and try again.</p>
+                    </div>`;
+                return;
+            }
+
+            if (orders.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🛒</div>
+                        <h3>No orders received from retailers yet.</h3>
+                        <p>Orders will appear here once retailers place orders from your inventory.</p>
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = orders.map(order => `
+                <div class="inventory-card" style="border-left: 4px solid ${order.paymentDetails.status === 'Completed' ? '#10b981' : '#f59e0b'};">
+                    <div class="inventory-content">
+                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom: 15px;">
+                            <div>
+                                <h3>Order from: ${order.retailerEmail}</h3>
+                                <p class="inventory-type">Status: <strong>${order.orderStatus}</strong></p>
+                                <p class="inventory-type">Payment: <span style="color: ${order.paymentDetails.status === 'Completed' ? '#10b981' : '#f59e0b'}; font-weight: bold;">${order.paymentDetails.status}</span></p>
+                            </div>
+                            <p style="font-size: 20px; font-weight: bold; color: #059669;">₹${order.totalAmount.toFixed(2)}</p>
+                        </div>
+                        
+                        <div class="inventory-details" style="margin-bottom: 15px;">
+                            <h4 style="margin-bottom: 10px; color: #374151;">Products Sold:</h4>
+                            ${order.products.map(p => `
+                                <div class="detail-row" style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                                    <span style="font-weight: 500;">${p.productName} <small>(x${p.quantity})</small></span>
+                                    <span style="font-weight: 600; color: #059669;">₹${(p.quantity * p.unitPrice).toFixed(2)}</span>
+                                </div>`).join('')}
+                        </div>
+                        
+                        <div class="dealer-info" style="background: #f3f4f6; padding: 12px; border-radius: 6px; margin-bottom: 10px;">
+                            <p style="margin: 5px 0;"><strong>Retailer's Shipping Address:</strong></p>
+                            <p style="margin: 5px 0; color: #6b7280;">${order.shippingAddress}</p>
+                        </div>
+
+                        ${order.paymentDetails.method ? `
+                            <div style="margin-top: 10px; padding: 10px; background: #ecfdf5; border-radius: 6px; border-left: 3px solid #10b981;">
+                                <p style="margin: 0; color: #065f46;"><strong>Payment Method:</strong> ${order.paymentDetails.method}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #e5e7eb;">
+                            <small style="color: #6b7280;">Order placed: ${new Date(order.createdAt).toLocaleString()}</small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            console.error('❌ Error response:', orders);
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <h3>Error loading orders</h3>
+                    <p style="color:red">${orders.msg || 'Unknown error occurred'}</p>
+                    <button class="btn-primary" onclick="loadRetailerOrders()" style="margin-top: 15px;">
+                        🔄 Retry
+                    </button>
+                </div>`;
+        }
+    } catch (error) {
+        console.error('❌ Network error:', error);
+        grid.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">⚠️</div>
+                <h3>Network Error</h3>
+                <p style="color:red;">Failed to connect to server. Please check your connection and try again.</p>
+                <button class="btn-primary" onclick="loadRetailerOrders()" style="margin-top: 15px;">
+                    🔄 Retry
+                </button>
+            </div>`;
+    }
+}
 
 // ===========================
 // PROFILE
@@ -1311,44 +1571,39 @@ async function checkBidUpdates() {
   try {
     const response = await fetch(`http://localhost:3000/api/dealer/orders/${currentUser.email}`);
     const serverOrders = await response.json();
-    
+
     if (response.ok && Array.isArray(serverOrders)) {
       let hasUpdates = false;
-      
-      // Update local orders with server bid status
+
       orderItems.forEach(localOrder => {
         if (localOrder.serverOrderId) {
           const serverOrder = serverOrders.find(so => so._id === localOrder.serverOrderId);
-          
+
           if (serverOrder) {
-            // Check if bid status changed
             if (serverOrder.bidStatus !== localOrder.bidStatus) {
               console.log(`Bid status changed for order ${localOrder.orderId}: ${localOrder.bidStatus} -> ${serverOrder.bidStatus}`);
-              
+
               localOrder.bidStatus = serverOrder.bidStatus;
               localOrder.status = serverOrder.status;
-              
-              // Add receipt info if bid accepted
+
               if (serverOrder.bidStatus === 'Accepted' && serverOrder.receiptNumber) {
                 localOrder.receiptNumber = serverOrder.receiptNumber;
                 localOrder.receiptDate = serverOrder.receiptGeneratedAt;
                 localOrder.farmerName = serverOrder.farmerDetails?.firstName + ' ' + (serverOrder.farmerDetails?.lastName || '');
                 localOrder.farmerMobile = serverOrder.farmerDetails?.mobile;
-                
-                // ADD TO INVENTORY when bid is accepted
-                addToInventory(localOrder);
+
+                loadInventory();
               }
-              
+
               hasUpdates = true;
             }
           }
         }
       });
-      
+
       if (hasUpdates) {
         localStorage.setItem("dealerOrders", JSON.stringify(orderItems));
-        
-        // Reload orders view if currently active
+
         if (ordersSection.classList.contains('active')) {
           loadOrders();
         }
@@ -1358,12 +1613,12 @@ async function checkBidUpdates() {
     console.error("Error checking bid updates:", error);
   }
 }
-// Poll for bid updates every 10 seconds
+
 setInterval(checkBidUpdates, 10000);
 
-// Also check immediately when orders section is opened
 ordersBtn.onclick = async () => {
-  originalOrdersOnClick();
+  showSection(ordersSection, ordersBtn);
+  loadOrders();
   await checkBidUpdates();
 };
 
@@ -1372,17 +1627,17 @@ setInterval(async () => {
     try {
       const response = await fetch("http://localhost:3000/api/dealer/all-products");
       const data = await response.json();
-      
+
       if (response.ok) {
         const currentProductIds = allProducts.map(p => p._id);
         const newProductIds = data.map(p => p._id);
-        
+
         const productsChanged = currentProductIds.length !== newProductIds.length ||
                                allProducts.some(oldProduct => {
                                  const newProduct = data.find(p => p._id === oldProduct._id);
                                  return !newProduct || newProduct.harvestQuantity !== oldProduct.harvestQuantity;
                                });
-        
+
         if (productsChanged) {
           allProducts = data;
           displayProducts(allProducts);
@@ -1393,6 +1648,7 @@ setInterval(async () => {
     }
   }
 }, 15000);
+
 // ===========================
 // SIGN OUT
 // ===========================
@@ -1407,6 +1663,7 @@ signoutBtn.onclick = () => {
 // INITIALIZATION
 // ===========================
 document.addEventListener('DOMContentLoaded', () => {
+  showSection(browseSection, browseBtn);
   loadVehicles();
   loadProducts();
 });

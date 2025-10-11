@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Retailer Dashboard</title>
+  <link rel="stylesheet" href="../assets/css/retailer.css">
+  <style>
+    .product-reviews {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f9fafb;
+      border-radius: 6px;
+    }
+    
+    .review-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      background: white;
+      border-radius: 4px;
+      border-left: 3px solid #4a148c;
+    }
+    
+    .review-quality {
+      font-weight: 600;
+      color: #4a148c;
+    }
+    
+    .review-rating {
+      color: #f59e0b;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>🏪 Retailer Panel</h2>
+    <button id="browseBtn" class="active">🛍️ Browse Products</button>
+    <button id="cartBtn">🛒 My Cart <span id="cartCount" class="cart-count">0</span></button>
+    <button id="ordersBtn">📦 My Orders</button>
+    <button id="profileBtn">👤 Profile</button>
+    <button id="signoutBtn">🚪 Sign Out</button>
+  </div>
+
+  <div class="content">
+    <section id="browseSection" class="section active">
+        <div class="filters">
+            <h3>Filter Products</h3>
+            <div class="filters-grid">
+              <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="filterName" placeholder="e.g., Alphonso Mango">
+              </div>
+              <div class="form-group">
+                <label>Max Price (₹)</label>
+                <input type="number" id="filterPrice" placeholder="Enter max price">
+                <div id="filterError" class="error-message"></div>
+              </div>
+              <div class="form-group">
+                <label>Product Type</label>
+                <select id="filterType">
+                  <option value="">All Types</option>
+                  <option value="Fruit">Fruit</option>
+                  <option value="Vegetable">Vegetable</option>
+                  <option value="Cereal">Cereal</option>
+                  <option value="Spices">Spices</option>
+                  <option value="Pulses">Pulses</option>
+                  <option value="Oil Seeds">Oil Seeds</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <button class="btn-primary" onclick="applyFilters()">Apply Filters</button>
+              </div>
+            </div>
+          </div>
+        <div id="inventoryGrid" class="inventory-grid"></div>
+    </section>
+
+    <section id="cartSection" class="section">
+        <div class="section-header">
+            <h1 class="section-title">My Shopping Cart</h1>
+        </div>
+        <div id="cartGrid">
+            </div>
+    </section>
+
+    <section id="ordersSection" class="section">
+        <div class="section-header">
+            <h1 class="section-title">My Orders</h1>
+        </div>
+        <div id="ordersGrid">
+            </div>
+    </section>
+
+    <section id="profileSection" class="section">
+        <div class="section-header">
+            <h1 class="section-title">My Profile</h1>
+        </div>
+        <div id="profileInfo"></div>
+    </section>
+  </div>
+  
+  <div id="paymentModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <span class="close" onclick="closePaymentModal()">&times;</span>
+      
+      <div id="paymentStep1" class="payment-step">
+        <h3>Step 1: Review Your Order</h3>
+        <div id="payment-order-summary"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closePaymentModal()">Cancel</button>
+            <button class="btn-primary" onclick="goToPaymentStep(2)">Next: Select Payment</button>
+        </div>
+      </div>
+      
+      <div id="paymentStep2" class="payment-step" style="display:none;">
+        <h3>Step 2: Select Payment Method</h3>
+        <div class="payment-options">
+            <label><input type="radio" name="paymentMethod" value="UPI" checked> UPI / QR Code</label>
+            <label><input type="radio" name="paymentMethod" value="Credit/Debit Card"> Credit/Debit Card</label>
+            <label><input type="radio" name="paymentMethod" value="Net Banking"> Net Banking</label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="goToPaymentStep(1)">Back to Review</button>
+            <button class="btn-primary" onclick="confirmPayment()">Confirm & Proceed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="receiptModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <span class="close" onclick="closeReceiptModal()">&times;</span>
+      <div id="receiptContent"></div>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="window.print()">Print Receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="reviewModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <span class="close" onclick="closeReviewModal()">&times;</span>
+      <h3 id="reviewModalTitle">Submit Review</h3>
+      <form id="reviewForm">
+        <label>Product Quality *</label>
+        <select id="reviewQuality" required>
+          <option value="">-- Select Quality --</option>
+          <option value="Excellent">Excellent</option>
+          <option value="Good">Good</option>
+          <option value="Average">Average</option>
+          <option value="Poor">Poor</option>
+        </select>
+        
+        <label>Comments *</label>
+        <textarea id="reviewComments" placeholder="Describe product quality, delivery experience, packaging..." required rows="4"></textarea>
+        
+        <label>Rating (1-5) *</label>
+        <input type="number" id="reviewRating" min="1" max="5" required />
+        
+        <button type="submit" class="btn-primary" style="margin-top: 15px;">Submit Review</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="../assets/js/retailer.js"></script>
+</body>
+</html>

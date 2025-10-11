@@ -116,25 +116,37 @@ const userSchema = new mongoose.Schema({
   ],
 
   // ===========================
-// DEALER INVENTORY SECTION
-// ===========================
-inventory: [
-  {
-    productId: { type: String, required: true },
-    productName: { type: String, required: true },
-    productType: { type: String },
-    quantity: { type: Number, required: true },
-    unitPrice: { type: Number, required: true },
-    totalValue: { type: Number },
-    unitOfSale: { type: String },
-    imageUrl: { type: String },
-    farmerName: { type: String },
-    farmerEmail: { type: String },
-    receiptNumber: { type: String },
-    addedDate: { type: Date, default: Date.now }
-  }
-],
-
+  // DEALER INVENTORY SECTION
+  // ===========================
+  inventory: [
+    {
+      productId: { type: String, required: true },
+      productName: { type: String, required: true },
+      productType: { type: String },
+      quantity: { type: Number, required: true },
+      unitPrice: { type: Number, required: true },
+      totalValue: { type: Number },
+      unitOfSale: { type: String },
+      imageUrl: { type: String },
+      farmerName: { type: String },
+      farmerEmail: { type: String },
+      receiptNumber: { type: String },
+      addedDate: { type: Date, default: Date.now },
+      
+      // Reviews from retailers
+      retailerReviews: [{
+        retailerEmail: { type: String, required: true },
+        quality: { 
+          type: String, 
+          enum: ['Excellent', 'Good', 'Average', 'Poor'],
+          required: true 
+        },
+        comments: { type: String, required: true },
+        rating: { type: Number, min: 1, max: 5, required: true },
+        date: { type: Date, default: Date.now }
+      }]
+    }
+  ],
 
   // ===========================
   // RETAILER-SPECIFIC FIELDS
