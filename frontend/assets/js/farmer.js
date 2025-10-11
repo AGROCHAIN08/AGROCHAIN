@@ -306,7 +306,6 @@ function addCropToGrid(crop, index) {
   productsGrid.appendChild(card);
 }
 
-
 function removeCropCardIfOutOfStock(cropId) {
   const card = document.querySelector(`.product-card[data-crop-id='${cropId}']`);
   if (card) {
