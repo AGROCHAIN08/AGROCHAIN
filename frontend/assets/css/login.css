@@ -15,7 +15,7 @@ body {
     min-height: 100vh;
 }
 
-/* --- NAVBAR STYLES --- */
+/* --- NAVBAR STYLES (Identical to signup.css) --- */
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -117,7 +117,7 @@ body {
 /* --- END NAVBAR STYLES --- */
 
 
-/* --- FORM AND STEPPER STYLES --- */
+/* --- LOGIN FORM CONTAINER & ELEMENT STYLES --- */
 .signup-container {
     background: #fff;
     width: 600px;
@@ -128,78 +128,11 @@ body {
     padding: 30px;
 }
 
-/* Stepper navigation */
-.stepper {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    list-style: none;
-    padding: 0;
-}
-
-.stepper li {
-    flex: 1;
+.signup-container h2 {
     text-align: center;
-    font-size: 14px;
-    color: #aaa;
-    position: relative;
-    /* Pushes the text down, creating space for the line/dot at the top */
-    padding-top: 20px; 
-    padding-bottom: 0; 
-    line-height: 1.2; /* Tighter line height to save vertical space */
-}
-
-/* Stepper Circle/Dot */
-.stepper li::before {
-    content: '';
-    display: block; 
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #e0e0e0;
-    z-index: 1;
-    position: absolute;
-    top: 0; 
-    left: 50%;
-    transform: translateX(-50%); 
-}
-
-/* FIX: Stepper Line (The main fix) */
-.stepper li:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 6px; /* Vertically centered with the dot (12px dot / 2) */
-    
-    /* Ensure the line starts AFTER the current circle and ends BEFORE the next li text */
-    /* Start: 6px past the current center (half the dot) */
-    left: calc(50% + 6px); 
-    /* Width: Extends to the end of the current li box, then subtract a safe margin 
-       (e.g., 20% of the li width) to ensure it doesn't collide with the next li's text.
-       Using a fixed pixel value for margin subtraction is more reliable here: */
-    width: calc(100% - 10px); 
-
-    height: 2px;
-    background: #e0e0e0;
-    z-index: 0;
-}
-
-.stepper li.active {
-    font-weight: 600;
     color: #2e7d32;
-}
-
-.stepper li.active::before {
-    background: #2e7d32;
-}
-/* --- END STEPPER FIXES --- */
-
-
-.form-step {
-    display: none;
-    animation: fadeIn 0.3s ease-in-out;
-}
-.form-step.active {
-    display: block;
+    margin-bottom: 25px;
+    font-weight: 700;
 }
 
 label {
@@ -226,15 +159,10 @@ input:focus, select:focus {
     box-shadow: 0 0 0 1px #4caf50;
 }
 
-.required {
-    color: red;
-    font-weight: bold;
-}
-
 .buttons {
     margin-top: 30px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end; /* Align button to the right for login */
 }
 
 button {
@@ -255,29 +183,6 @@ button:hover:not([disabled]) {
 button[disabled] {
     background: #ccc;
     cursor: not-allowed;
-}
-
-/* Email verification specific styles */
-.verification-container {
-    text-align: center;
-    padding: 20px 0;
-}
-
-.verification-container h3 {
-    color: #2e7d32;
-    margin-bottom: 20px;
-    font-weight: 700;
-}
-
-.verification-container p {
-    color: #666;
-    margin-bottom: 20px;
-    line-height: 1.6;
-}
-
-#emailDisplay {
-    font-weight: 700;
-    color: #4caf50;
 }
 
 /* Google Sign-In Section */
@@ -390,12 +295,7 @@ button[disabled] {
     margin: 10px 0;
 }
 
-#verificationStatus {
-    margin-top: 15px;
-    min-height: 25px;
-}
-
-#verificationStatus p {
+#loginStatus p {
     margin: 5px 0;
     font-weight: 600;
     padding: 12px;
@@ -403,25 +303,7 @@ button[disabled] {
     font-size: 14px;
 }
 
-#verificationStatus p[style*="green"] {
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-    color: #155724;
-}
-
-#verificationStatus p[style*="red"] {
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-}
-
-/* Loading states */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-/* Success/Error messages */
+/* Success/Error messages (reusing status styles) */
 .message-success {
     background-color: #d4edda;
     border: 1px solid #c3e6cb;
@@ -439,108 +321,10 @@ button[disabled] {
     border-radius: 4px;
     margin: 15px 0;
 }
+/* --- END LOGIN FORM STYLES --- */
 
-/* --- ROLE SELECTION STYLES (STEP 3) --- */
 
-.role-grid-title {
-    font-size: 1.2em;
-    font-weight: 600;
-    color: #2e7d32;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.role-selection-grid {
-    display: grid;
-    /* 3 columns for the three roles */
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 15px;
-    margin-bottom: 25px;
-}
-
-.role-card {
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background-color: #fff;
-    min-height: 380px; /* Ensures vertical alignment when features list varies */
-    display: flex;
-    flex-direction: column;
-}
-
-.role-card:hover {
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    border-color: #81c784;
-}
-
-.role-card.active-role {
-    border-color: #2e7d32;
-    box-shadow: 0 0 0 2px #2e7d32; /* Green outline to indicate selection */
-    background-color: #f1f8e9; /* Very light green background */
-}
-
-.role-icon {
-    margin: 10px auto;
-    width: 60px;
-    height: 60px;
-    /* This styling is for the placeholder emoji/text icon */
-    font-size: 36px; 
-    line-height: 60px;
-    background: #e8f5e9;
-    color: #2e7d32;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.role-title {
-    font-size: 1.2em;
-    font-weight: 700;
-    color: #2e7d32;
-    margin-top: 5px;
-    margin-bottom: 15px;
-}
-
-.role-subtitle {
-    font-size: 0.9em;
-    color: #666;
-    font-weight: 500;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-}
-
-.role-features {
-    list-style-type: none;
-    text-align: left;
-    padding: 0;
-    margin: 0;
-    flex-grow: 1; /* Pushes the content down */
-}
-
-.role-features li {
-    font-size: 0.85em;
-    color: #555;
-    padding: 5px 0;
-    position: relative;
-    padding-left: 15px;
-}
-
-.role-features li::before {
-    content: '•';
-    color: #4caf50;
-    font-weight: bold;
-    display: inline-block;
-    width: 1em;
-    margin-left: -1em;
-}
-
-/* --- Responsive Design (Navbar and Form) --- */
-
+/* --- Responsive Design --- */
 @media (max-width: 900px) {
     .navbar {
         flex-wrap: wrap;
@@ -560,21 +344,6 @@ button[disabled] {
         padding: 20px;
     }
     
-    .stepper {
-        gap: 10px;
-    }
-    
-    .stepper li {
-        font-size: 12px;
-        padding-top: 15px;
-    }
-
-    .stepper li:not(:last-child)::after {
-        top: 4px;
-        left: calc(50% + 4px);
-        width: calc(100% - 15px);
-    }
-    
     .google-signin-section,
     .email-otp-section {
         padding: 15px;
@@ -582,15 +351,6 @@ button[disabled] {
     
     .divider {
         margin: 20px 0;
-    }
-
-    /* Stack role cards vertically on small screens */
-    .role-selection-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    .role-card {
-        min-height: auto;
     }
 }
 
@@ -603,17 +363,5 @@ button[disabled] {
     .nav-right .btn {
         padding: 8px 15px;
         font-size: 0.9em;
-    }
-}
-
-/* Animation for smooth transitions */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
     }
 }

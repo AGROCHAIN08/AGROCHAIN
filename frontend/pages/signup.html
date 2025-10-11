@@ -8,6 +8,23 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+
+  <nav class="navbar">
+    <div class="nav-left">
+        <img src="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh" alt="AgroChain Logo" class="logo">
+        <span class="brand-name">Agro<span class="chain-text">Chain</span></span>
+    </div>
+    <div class="nav-center">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="about.html" class="nav-link">About</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#roles" class="nav-link">User Roles</a>
+    </div>
+    <div class="nav-right">
+        <a href="login.html"><button class="btn">Log In</button></a>
+        <a href="signup.html"><button class="btn btn-signup">Sign Up</button></a>
+    </div>
+  </nav>
   <div class="signup-container">
     <!-- Stepper navigation -->
     <ul class="stepper">
@@ -49,20 +66,20 @@
           <div class="google-signin-section">
             <h4>Option 1: Sign in with Google</h4>
             <div id="g_id_onload"
-                 data-client_id="262898642473-niisbi298nfo33a175rju6acmpkatrs4.apps.googleusercontent.com"
-                 data-context="signup"
-                 data-ux_mode="popup"
-                 data-callback="handleGoogleSignIn"
-                 data-auto_prompt="false">
+                  data-client_id="262898642473-niisbi298nfo33a175rju6acmpkatrs4.apps.googleusercontent.com"
+                  data-context="signup"
+                  data-ux_mode="popup"
+                  data-callback="handleGoogleSignIn"
+                  data-auto_prompt="false">
             </div>
             
             <div class="g_id_signin" 
-                 data-type="standard"
-                 data-shape="rectangular"
-                 data-theme="outline"
-                 data-text="signin_with"
-                 data-size="large"
-                 data-logo_alignment="left">
+                  data-type="standard"
+                  data-shape="rectangular"
+                  data-theme="outline"
+                  data-text="signin_with"
+                  data-size="large"
+                  data-logo_alignment="left">
             </div>
           </div>
 
@@ -97,71 +114,98 @@
 
       <!-- Step 3: Role Selection -->
       <div class="form-step" id="step3">
-        <label>Select Role <span class="required">*</span></label>
-        <select id="role" name="role" required>
-          <option value="">Choose Role</option>
-          <option value="farmer">Farmer</option>
-          <option value="dealer">Dealer</option>
-          <option value="retailer">Retailer</option>
-        </select>
+          <h3 class="role-grid-title">Select your business type</h3>
+          
+          <div class="role-selection-grid">
+              
+              <div class="role-card" data-role="farmer">
+                  <div class="role-icon">
+                      <span class="icon-text">🌾</span> 
+                  </div>
+                  <h4 class="role-title">Farmer</h4>
+                  <p class="role-subtitle">This account type can manage</p>
+                  <ul class="role-features">
+                      <p>The core of the supply chain. Manage fields, track inventory, and connect directly with partners to maximize your harvest value and efficiency.</p>
+                  </ul>
+              </div>
+
+              <div class="role-card" data-role="dealer">
+                  <div class="role-icon">
+                      <span class="icon-text">📈</span>
+                  </div>
+                  <h4 class="role-title">Dealer</h4>
+                  <p class="role-subtitle">This account type can manage</p>
+                  <ul class="role-features">
+                     <p>Your hub for trade. Manage stock, contracts, and logistics for multiple growers, ensuring commodities move efficiently to the wider market.
+</p> 
+                  </ul>
+              </div>
+
+              <div class="role-card" data-role="retailer">
+                  <div class="role-icon">
+                      <span class="icon-text">💰</span>
+                  </div>
+                  <h4 class="role-title">Retailer</h4>
+                  <p class="role-subtitle">This account type can manage</p>
+                  <ul class="role-features">
+                      <p>The final link to the consumer. Manage your retail sites, handle purchases, and track sales volume to meet local demand reliably.</p>
+                  </ul>
+              </div>
+          </div>
+          <input type="hidden" id="role" name="role" value="" required>
+
+          <div class="buttons">
+            <button type="button" id="back2">Back</button>
+            <button type="button" id="next3" disabled>Continue</button>
+          </div>
+      </div>
+      <div class="form-step" id="step4">
+        <div id="farmerFields" style="display:none">
+          <label>Aadhaar (12 digits) <span class="required">*</span></label>
+          <input type="text" id="aadhaar" name="aadhaar">
+
+          <label>Farm Location <span class="required">*</span></label>
+          <input type="text" id="farmLocation" name="farmLocation" placeholder="Village or area name">
+
+          <label>Latitude</label>
+          <input type="text" id="latitude" name="latitude" readonly>
+
+          <label>Longitude</label>
+          <input type="text" id="longitude" name="longitude" readonly>
+
+          <button type="button" id="getLocationBtn" class="otp-btn">📍 Get Geotag Location</button>
+
+          <label>Farm Size <span class="required">*</span></label>
+          <input type="text" id="farmSize" name="farmSize" placeholder="e.g. 5 acres">
+        </div>
+
+        <div id="dealerFields" style="display:none">
+          <label>Business Name <span class="required">*</span></label>
+          <input type="text" id="businessName" name="businessName">
+          <label>GSTIN <span class="required">*</span></label>
+          <input type="text" id="gstin" name="gstin">
+          <label>Warehouse Address <span class="required">*</span></label>
+          <input type="text" id="warehouseAddress" name="warehouseAddress">
+          <label>Preferred Commodities</label>
+          <input type="text" id="preferredCommodities" name="preferredCommodities">
+        </div>
+
+        <div id="retailerFields" style="display:none">
+          <label>Shop Name <span class="required">*</span></label>
+          <input type="text" id="shopName" name="shopName">
+          <label>Shop Address <span class="required">*</span></label>
+          <input type="text" id="shopAddress" name="shopAddress">
+          <label>Shop Type <span class="required">*</span></label>
+          <input type="text" id="shopType" name="shopType">
+          <label>Monthly Purchase Volume</label>
+          <input type="text" id="monthlyPurchaseVolume" name="monthlyPurchaseVolume">
+        </div>
 
         <div class="buttons">
-          <button type="button" id="back2">Back</button>
-          <button type="button" id="next3">Continue</button>
+          <button type="button" id="back3">Back</button>
+          <button type="submit">Signup</button>
         </div>
       </div>
-
-      <!-- Step 4: Additional Details -->
-<div class="form-step" id="step4">
-  <!-- Farmer fields -->
-  <div id="farmerFields" style="display:none">
-    <label>Aadhaar (12 digits) <span class="required">*</span></label>
-    <input type="text" id="aadhaar" name="aadhaar">
-
-    <label>Farm Location <span class="required">*</span></label>
-    <input type="text" id="farmLocation" name="farmLocation" placeholder="Village or area name">
-
-    <label>Latitude</label>
-    <input type="text" id="latitude" name="latitude" readonly>
-
-    <label>Longitude</label>
-    <input type="text" id="longitude" name="longitude" readonly>
-
-    <button type="button" id="getLocationBtn" class="otp-btn">📍 Get Geotag Location</button>
-
-    <label>Farm Size <span class="required">*</span></label>
-    <input type="text" id="farmSize" name="farmSize" placeholder="e.g. 5 acres">
-  </div>
-
-  <!-- Dealer fields -->
-  <div id="dealerFields" style="display:none">
-    <label>Business Name <span class="required">*</span></label>
-    <input type="text" id="businessName" name="businessName">
-    <label>GSTIN <span class="required">*</span></label>
-    <input type="text" id="gstin" name="gstin">
-    <label>Warehouse Address <span class="required">*</span></label>
-    <input type="text" id="warehouseAddress" name="warehouseAddress">
-    <label>Preferred Commodities</label>
-    <input type="text" id="preferredCommodities" name="preferredCommodities">
-  </div>
-
-  <!-- Retailer fields -->
-  <div id="retailerFields" style="display:none">
-    <label>Shop Name <span class="required">*</span></label>
-    <input type="text" id="shopName" name="shopName">
-    <label>Shop Address <span class="required">*</span></label>
-    <input type="text" id="shopAddress" name="shopAddress">
-    <label>Shop Type <span class="required">*</span></label>
-    <input type="text" id="shopType" name="shopType">
-    <label>Monthly Purchase Volume</label>
-    <input type="text" id="monthlyPurchaseVolume" name="monthlyPurchaseVolume">
-  </div>
-
-  <div class="buttons">
-    <button type="button" id="back3">Back</button>
-    <button type="submit">Signup</button>
-  </div>
-</div>
 
     </form>
     <div id="message"></div>
