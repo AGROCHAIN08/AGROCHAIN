@@ -31,6 +31,46 @@ body {
     width: 100%;
 }
 
+/* Mobile Menu Toggle Button */
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    z-index: 1001;
+    width: 30px;
+    height: 25px;
+    justify-content: space-between;
+}
+
+.hamburger {
+    width: 100%;
+    height: 3px;
+    background-color: #FFD700;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.menu-toggle.active .hamburger:nth-child(1) {
+    transform: rotate(45deg) translate(8px, 8px);
+}
+
+.menu-toggle.active .hamburger:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-toggle.active .hamburger:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
 .nav-left {
     display: flex;
     align-items: center;
@@ -120,24 +160,23 @@ body {
 /* --- FORM AND STEPPER STYLES --- */
 .signup-container {
     background: #fff;
-    width: 600px;
-    margin-top: 100px; 
-    margin-bottom: 50px;
+    width: 100%;
+    max-width: 600px;
+    margin: 30px auto;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     padding: 30px;
 }
 
-/* --- FORM TITLE STYLES (NEW) --- */
+/* --- FORM TITLE STYLES --- */
 .form-title {
     font-size: 2em;
     font-weight: 700;
-    color: #2e7d32; /* Deep green color */
+    color: #2e7d32;
     text-align: center;
-    margin-bottom: 25px; /* Spacing below the title */
-    padding-top: 10px; /* Optional: adds a bit of space from the container top */
+    margin-bottom: 25px;
+    padding-top: 10px;
 }
-/* --- END FORM TITLE STYLES --- */
 
 /* Stepper navigation */
 .stepper {
@@ -154,10 +193,9 @@ body {
     font-size: 14px;
     color: #aaa;
     position: relative;
-    /* Pushes the text down, creating space for the line/dot at the top */
     padding-top: 20px; 
     padding-bottom: 0; 
-    line-height: 1.2; /* Tighter line height to save vertical space */
+    line-height: 1.2;
 }
 
 /* Stepper Circle/Dot */
@@ -175,20 +213,13 @@ body {
     transform: translateX(-50%); 
 }
 
-/* FIX: Stepper Line (The main fix) */
+/* Stepper Line */
 .stepper li:not(:last-child)::after {
     content: '';
     position: absolute;
-    top: 6px; /* Vertically centered with the dot (12px dot / 2) */
-    
-    /* Ensure the line starts AFTER the current circle and ends BEFORE the next li text */
-    /* Start: 6px past the current center (half the dot) */
+    top: 6px;
     left: calc(50% + 6px); 
-    /* Width: Extends to the end of the current li box, then subtract a safe margin 
-       (e.g., 20% of the li width) to ensure it doesn't collide with the next li's text.
-       Using a fixed pixel value for margin subtraction is more reliable here: */
     width: calc(100% - 10px); 
-
     height: 2px;
     background: #e0e0e0;
     z-index: 0;
@@ -202,8 +233,6 @@ body {
 .stepper li.active::before {
     background: #2e7d32;
 }
-/* --- END STEPPER FIXES --- */
-
 
 .form-step {
     display: none;
@@ -252,11 +281,12 @@ button {
     background: #2e7d32;
     border: none;
     color: #fff;
-    padding: 10px 20px;
+    padding: 12px 24px;
     border-radius: 4px;
     cursor: pointer;
     font-weight: 600;
     transition: background 0.3s ease;
+    font-size: 14px;
 }
 
 button:hover:not([disabled]) {
@@ -364,6 +394,7 @@ button[disabled] {
     cursor: pointer;
     font-size: 14px;
     margin: 10px 5px;
+    width: 100%;
 }
 
 .otp-btn:hover:not([disabled]) {
@@ -399,6 +430,7 @@ button[disabled] {
     color: #666;
     font-size: 14px;
     margin: 10px 0;
+    text-align: center;
 }
 
 #verificationStatus {
@@ -452,7 +484,6 @@ button[disabled] {
 }
 
 /* --- ROLE SELECTION STYLES (STEP 3) --- */
-
 .role-grid-title {
     font-size: 1.2em;
     font-weight: 600;
@@ -463,7 +494,6 @@ button[disabled] {
 
 .role-selection-grid {
     display: grid;
-    /* 3 columns for the three roles */
     grid-template-columns: repeat(3, 1fr); 
     gap: 15px;
     margin-bottom: 25px;
@@ -477,7 +507,7 @@ button[disabled] {
     cursor: pointer;
     transition: all 0.3s ease;
     background-color: #fff;
-    min-height: 380px; /* Ensures vertical alignment when features list varies */
+    min-height: 380px;
     display: flex;
     flex-direction: column;
 }
@@ -489,15 +519,14 @@ button[disabled] {
 
 .role-card.active-role {
     border-color: #2e7d32;
-    box-shadow: 0 0 0 2px #2e7d32; /* Green outline to indicate selection */
-    background-color: #f1f8e9; /* Very light green background */
+    box-shadow: 0 0 0 2px #2e7d32;
+    background-color: #f1f8e9;
 }
 
 .role-icon {
     margin: 10px auto;
     width: 60px;
     height: 60px;
-    /* This styling is for the placeholder emoji/text icon */
     font-size: 36px; 
     line-height: 60px;
     background: #e8f5e9;
@@ -530,7 +559,7 @@ button[disabled] {
     text-align: left;
     padding: 0;
     margin: 0;
-    flex-grow: 1; /* Pushes the content down */
+    flex-grow: 1;
 }
 
 .role-features li {
@@ -550,70 +579,451 @@ button[disabled] {
     margin-left: -1em;
 }
 
-/* --- Responsive Design (Navbar and Form) --- */
+.role-features p {
+    font-size: 0.9em;
+    color: #555;
+    line-height: 1.5;
+    margin: 0;
+}
 
+/* --- Responsive Design --- */
+
+/* Tablet Devices */
 @media (max-width: 900px) {
     .navbar {
-        flex-wrap: wrap;
+        padding: 15px 20px;
     }
 
     .nav-center {
-        flex-basis: 100%;
-        justify-content: center;
-        padding-top: 10px;
+        gap: 20px;
+    }
+
+    .nav-center .nav-link {
+        font-size: 0.95em;
+    }
+
+    .brand-name {
+        font-size: 1.4em;
+    }
+
+    .logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .role-selection-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 }
 
+/* Mobile Devices - Large */
 @media (max-width: 768px) {
+    .navbar {
+        flex-wrap: wrap;
+        padding: 15px 20px;
+        gap: 0;
+    }
+
+    /* Show hamburger menu */
+    .menu-toggle {
+        display: flex;
+    }
+
+    /* Hide menu by default on mobile */
+    .nav-menu {
+        position: fixed;
+        top: 75px;
+        left: -100%;
+        width: 280px;
+        height: calc(100vh - 75px);
+        background-color: whitesmoke;
+        flex-direction: column;
+        padding: 20px;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: left 0.3s ease;
+        overflow-y: auto;
+        gap: 20px;
+    }
+
+    .nav-menu.active {
+        left: 0;
+    }
+
+    .nav-left {
+        flex: 1;
+        justify-content: flex-start;
+        margin-left: 0;
+    }
+
+    .logo {
+        margin-left: 0;
+    }
+
+    .nav-center {
+        width: 100%;
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .nav-center .nav-link {
+        font-size: 1em;
+        padding: 10px 0;
+        width: 100%;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .nav-center .nav-link::after {
+        display: none;
+    }
+
+    .nav-right {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .nav-right .btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 0.95em;
+        text-align: center;
+    }
+
     .signup-container {
-        width: 90%;
+        width: 95%;
         margin: 20px auto;
         padding: 20px;
     }
+
+    .form-title {
+        font-size: 1.5em;
+    }
     
     .stepper {
-        gap: 10px;
+        gap: 5px;
+        flex-wrap: wrap;
     }
     
     .stepper li {
-        font-size: 12px;
+        font-size: 11px;
         padding-top: 15px;
     }
 
+    .stepper li::before {
+        width: 10px;
+        height: 10px;
+    }
+
     .stepper li:not(:last-child)::after {
-        top: 4px;
-        left: calc(50% + 4px);
-        width: calc(100% - 15px);
+        top: 5px;
+        left: calc(50% + 5px);
+        width: calc(100% - 12px);
     }
     
     .google-signin-section,
     .email-otp-section {
-        padding: 15px;
+        padding: 20px 15px;
+    }
+
+    .google-signin-section h4,
+    .email-otp-section h4 {
+        font-size: 14px;
     }
     
     .divider {
         margin: 20px 0;
     }
 
+    .divider span {
+        padding: 0 15px;
+        font-size: 14px;
+    }
+
     /* Stack role cards vertically on small screens */
     .role-selection-grid {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 12px;
     }
+    
     .role-card {
         min-height: auto;
+        padding: 20px 15px;
+    }
+
+    .role-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 30px;
+    }
+
+    .role-title {
+        font-size: 1.1em;
+    }
+
+    button {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+
+    .buttons {
+        gap: 10px;
     }
 }
 
-@media (max-width: 600px) {
-    .nav-right {
-        flex-basis: 100%;
-        justify-content: center;
-        margin-top: 10px;
+/* Mobile Devices - Small */
+@media (max-width: 480px) {
+    .navbar {
+        padding: 12px 15px;
     }
-    .nav-right .btn {
-        padding: 8px 15px;
+
+    .nav-menu {
+        top: 65px;
+        height: calc(100vh - 65px);
+        width: 250px;
+    }
+
+    .brand-name {
+        font-size: 1.2em;
+    }
+
+    .logo {
+        width: 35px;
+        height: 35px;
+    }
+
+    .menu-toggle {
+        width: 28px;
+        height: 23px;
+    }
+
+    .nav-center .nav-link {
+        font-size: 0.95em;
+        padding: 12px 0;
+    }
+
+    .signup-container {
+        width: 95%;
+        padding: 15px;
+        margin: 15px auto;
+        border-radius: 6px;
+    }
+
+    .form-title {
+        font-size: 1.3em;
+        margin-bottom: 20px;
+    }
+
+    .stepper {
+        margin-bottom: 15px;
+    }
+
+    .stepper li {
+        font-size: 10px;
+        padding-top: 12px;
+    }
+
+    .stepper li::before {
+        width: 8px;
+        height: 8px;
+    }
+
+    .stepper li:not(:last-child)::after {
+        top: 4px;
+        left: calc(50% + 4px);
+        height: 1.5px;
+    }
+
+    .google-signin-section,
+    .email-otp-section {
+        padding: 15px 12px;
+        margin: 15px 0;
+    }
+
+    .google-signin-section h4,
+    .email-otp-section h4 {
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+
+    input, select {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    label {
+        font-size: 13px;
+        margin-top: 12px;
+    }
+
+    button {
+        padding: 11px 18px;
+        font-size: 13px;
+    }
+
+    .otp-btn {
+        padding: 11px 20px;
+        font-size: 13px;
+    }
+
+    #otpSection {
+        padding: 15px;
+    }
+
+    #otpInput {
+        font-size: 16px;
+        letter-spacing: 1px;
+        max-width: 180px;
+    }
+
+    .otp-timer {
+        font-size: 12px;
+    }
+
+    .divider {
+        margin: 15px 0;
+    }
+
+    .divider span {
+        padding: 0 10px;
+        font-size: 12px;
+    }
+
+    .verification-container h3 {
+        font-size: 1.2em;
+    }
+
+    .verification-container p {
         font-size: 0.9em;
+    }
+
+    #verificationStatus p {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .message-success,
+    .message-error {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .role-grid-title {
+        font-size: 1.1em;
+        margin-bottom: 15px;
+    }
+
+    .role-card {
+        padding: 15px 12px;
+    }
+
+    .role-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 26px;
+    }
+
+    .role-title {
+        font-size: 1em;
+        margin-bottom: 10px;
+    }
+
+    .role-subtitle {
+        font-size: 0.85em;
+    }
+
+    .role-features p {
+        font-size: 0.85em;
+    }
+
+    .buttons {
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .buttons button {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+/* Extra Small Devices */
+@media (max-width: 360px) {
+    .navbar {
+        padding: 10px 12px;
+    }
+
+    .nav-menu {
+        width: 220px;
+        top: 60px;
+        height: calc(100vh - 60px);
+    }
+
+    .brand-name {
+        font-size: 1.1em;
+    }
+
+    .logo {
+        width: 32px;
+        height: 32px;
+    }
+
+    .menu-toggle {
+        width: 26px;
+        height: 21px;
+    }
+
+    .hamburger {
+        height: 2.5px;
+    }
+
+    .nav-center .nav-link {
+        font-size: 0.9em;
+        padding: 10px 0;
+    }
+
+    .signup-container {
+        padding: 12px;
+    }
+
+    .form-title {
+        font-size: 1.2em;
+    }
+
+    .stepper li {
+        font-size: 9px;
+    }
+
+    .google-signin-section,
+    .email-otp-section {
+        padding: 12px 10px;
+    }
+
+    button {
+        padding: 10px 15px;
+        font-size: 12px;
+    }
+
+    .otp-btn {
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+
+    .role-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+    }
+
+    .role-title {
+        font-size: 0.95em;
+    }
+
+    .buttons button {
+        min-width: 100px;
+        padding: 10px 12px;
     }
 }
 
