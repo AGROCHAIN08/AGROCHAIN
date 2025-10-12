@@ -360,7 +360,7 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
         
         // Redirect logic after successful signup
         setTimeout(() => {
-          window.location.href = "/frontend/pages/login.html";
+          window.location.href = "./login.html";
         }, 1500); 
     } else {
         document.getElementById("message").innerHTML = `<p class="message-error">${result.msg}</p>`;
