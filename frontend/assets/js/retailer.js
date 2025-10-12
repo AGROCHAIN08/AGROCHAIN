@@ -21,16 +21,40 @@ const cartBtn = document.getElementById("cartBtn");
 const ordersBtn = document.getElementById("ordersBtn");
 const profileBtn = document.getElementById("profileBtn");
 const signoutBtn = document.getElementById("signoutBtn");
+const profileDropdownBtn = document.getElementById("profileDropdownBtn");
+const profileDropdownMenu = document.getElementById("profileDropdownMenu");
+const retailerNameDisplay = document.getElementById("retailerNameDisplay");
 
 const browseSection = document.getElementById("browseSection");
 const cartSection = document.getElementById("cartSection");
 const ordersSection = document.getElementById("ordersSection");
 const profileSection = document.getElementById("profileSection");
 
+// Update retailer name in navbar
+if (currentUser && currentUser.firstName) {
+  retailerNameDisplay.textContent = currentUser.firstName;
+}
+
+// Profile dropdown toggle
+profileDropdownBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  profileDropdownMenu.classList.toggle('show');
+  profileDropdownBtn.classList.toggle('active');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.profile-dropdown')) {
+    profileDropdownMenu.classList.remove('show');
+    profileDropdownBtn.classList.remove('active');
+  }
+});
+
+
 function showSection(sectionToShow, activeBtn) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
-  sectionToShow.classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+  sectionToShow.style.display = 'block';
   activeBtn.classList.add('active');
 }
 
@@ -108,9 +132,9 @@ function displayInventory(inventory) {
           </div>
           
           ${item.retailerReviews.slice(0, 2).map(review => `
-            <div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 4px; border-left: 3px solid #4a148c;">
+            <div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 4px; border-left: 3px solid #228B22;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <span style="font-weight: 600; color: #4a148c; font-size: 13px;">${review.quality}</span>
+                <span style="font-weight: 600; color: #228B22; font-size: 13px;">${review.quality}</span>
                 <span style="color: #f59e0b; font-size: 12px;">${'⭐'.repeat(review.rating)}</span>
               </div>
               <p style="margin: 4px 0; font-size: 12px; color: #374151; line-height: 1.4;">${review.comments}</p>
@@ -119,7 +143,7 @@ function displayInventory(inventory) {
           `).join('')}
           
           ${item.retailerReviews.length > 2 ? `
-            <button class="btn-view-all-reviews" onclick="openViewReviewsModal('${item._id}')" style="width: 100%; margin-top: 10px; padding: 8px; background: #f3e5f5; border: 1px solid #ce93d8; color: #4a148c; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.3s ease;">
+            <button class="btn-view-all-reviews" onclick="openViewReviewsModal('${item._id}')" style="width: 100%; margin-top: 10px; padding: 8px; background: #f3e5f5; border: 1px solid #ce93d8; color: #228B22; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.3s ease;">
               View All ${item.retailerReviews.length} Reviews →
             </button>
           ` : ''}
@@ -134,7 +158,7 @@ function displayInventory(inventory) {
         <p class="inventory-type">${item.productType}</p>
         <div class="inventory-details">
           <div class="detail-row"><span class="detail-label">Available:</span><span class="detail-value">${item.quantity} ${unitOfSale}</span></div>
-          <div class="detail-row"><span class="detail-label">Price per ${unitOfSale}:</span><span class="detail-value" style="font-weight: bold; color: #4a148c;">₹${item.unitPrice.toFixed(2)}</span></div>
+          <div class="detail-row"><span class="detail-label">Price per ${unitOfSale}:</span><span class="detail-value" style="font-weight: bold; color: #228B22;">₹${item.unitPrice.toFixed(2)}</span></div>
         </div>
         ${reviewsHTML}
         <div class="dealer-info">Sold by: ${item.dealerName} | ☎️ ${item.dealerMobile}</div>
@@ -263,36 +287,12 @@ async function displayOrders() {
                 ordersGrid.innerHTML = `<div class="empty-state"><h3>You have no orders.</h3></div>`;
                 return;
             }
-            ordersGrid.innerHTML = orders.map(order => `
-                <div class="inventory-card" style="border-left-color: ${order.paymentDetails.status === 'Completed' ? '#10b981' : '#f59e0b'};">
-                    <div class="inventory-content">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
-                            <div>
-                                <h3>Order from: ${order.dealerInfo.businessName}</h3>
-                                <p class="inventory-type">Status: <strong>${order.orderStatus}</strong></p>
-                            </div>
-                            <p style="font-size: 18px; font-weight: bold; color: #4a148c;">Total: ₹${order.totalAmount.toFixed(2)}</p>
-                        </div>
-                        <div class="inventory-details" style="margin-top:15px;">
-                            ${order.products.map(p => `<div class="detail-row"><span>${p.productName} (x${p.quantity})</span><span>₹${(p.quantity * p.unitPrice).toFixed(2)}</span></div>`).join('')}
-                        </div>
-                        <div class="dealer-info"><strong>Dealer Address:</strong> ${order.dealerInfo.warehouseAddress}</div>
-                        <div class="add-to-cart-section">
-                           <p><strong>Payment Status: </strong><span style="color:${order.paymentDetails.status === 'Completed' ? '#00c853' : '#f59e0b'}; font-weight: bold;">${order.paymentDetails.status}</span></p>
-                           ${
-                             order.paymentDetails.status === 'Completed'
-                               ? `
-                               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                 <button class="btn-primary" onclick="openReceiptModal('${order._id}')" style="background:#3b82f6;">View Receipt</button>
-                                 ${!order.reviewSubmitted ? `<button class="btn-primary" onclick="openReviewModal('${order._id}')" style="background:#10b981;">⭐ Add Review</button>` : `<span style="color: #10b981; font-size: 14px;">✓ Review Submitted</span>`}
-                               </div>
-                               `
-                               : `<button class="btn-primary" onclick="openPaymentModal('${order._id}')">Pay Now</button>`
-                           }
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            // Clear the grid before adding new cards
+            ordersGrid.innerHTML = ''; 
+            orders.forEach(order => {
+                const orderCard = createOrderCard(order);
+                ordersGrid.innerHTML += orderCard;
+            });
         } else {
             ordersGrid.innerHTML = `<p style="color:red;">Error loading orders: ${orders.msg}</p>`;
         }
@@ -300,6 +300,68 @@ async function displayOrders() {
         console.error('Failed to fetch orders:', error);
         ordersGrid.innerHTML = `<p style="color:red;">Network error while fetching orders.</p>`;
     }
+}
+
+function createOrderCard(order) {
+    const orderDate = new Date(order.createdAt).toLocaleDateString();
+    const totalQuantity = order.products.reduce((sum, p) => sum + p.quantity, 0);
+    const productNames = order.products.map(p => p.productName).join(', ');
+    const statusClass = order.orderStatus.toLowerCase();
+
+    let actionPanelHTML = '';
+    if (order.paymentDetails.status === 'Completed') {
+        actionPanelHTML = `
+            <div class="order-action-panel completed">
+                <h4>✓ Payment Completed</h4>
+                <p><strong>Payment Method:</strong> ${order.paymentDetails.method}</p>
+                <p><strong>Total Paid:</strong> ₹${order.totalAmount.toFixed(2)}</p>
+                ${!order.reviewSubmitted 
+                    ? `<button class="btn-primary" onclick="openReviewModal('${order._id}')" style="background:#10b981; margin-right: 10px;">⭐ Add Review</button>` 
+                    : `<p style="color: #065f46; font-weight: bold; margin-top: 10px;">✓ Review Submitted</p>`}
+                <button class="btn-secondary" onclick="openReceiptModal('${order._id}')" style="margin-top: 15px;">View Receipt</button>
+            </div>
+        `;
+    } else {
+        actionPanelHTML = `
+            <div class="order-action-panel pending">
+                <h4>⌛ Payment Pending</h4>
+                <p>Your order is confirmed. Please complete the payment to proceed.</p>
+                <button class="btn-primary" onclick="openPaymentModal('${order._id}')">Pay Now</button>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="retailer-order-card">
+            <span class="order-status-badge status-${statusClass}">${order.orderStatus}</span>
+            <div class="order-product-info">
+                <h3>${productNames}</h3>
+                <p>${order.products.length} item(s) in this order</p>
+            </div>
+            <div class="order-details-grid">
+                <div class="order-detail-item">
+                    <div class="order-detail-label">Total Quantity</div>
+                    <div class="order-detail-value">${totalQuantity} units</div>
+                </div>
+                 <div class="order-detail-item">
+                    <div class="order-detail-label">Dealer</div>
+                    <div class="order-detail-value">${order.dealerInfo.businessName}</div>
+                </div>
+                <div class="order-detail-item">
+                    <div class="order-detail-label">Total Amount</div>
+                    <div class="order-detail-value">₹${order.totalAmount.toFixed(2)}</div>
+                </div>
+                <div class="order-detail-item">
+                    <div class="order-detail-label">Order Date</div>
+                    <div class="order-detail-value">${orderDate}</div>
+                </div>
+            </div>
+            <div class="dealer-info-panel">
+                <span><strong>Contact:</strong> ${order.dealerInfo.email}</span>
+            </div>
+            ${actionPanelHTML}
+        </div>
+    `;
 }
 
 function openPaymentModal(orderId) {
@@ -569,7 +631,7 @@ function openViewReviewsModal(productId) {
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding: 15px; background: #f3f4f6; border-radius: 6px;">
                 <div>
                     <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 14px;">Total Reviews</h4>
-                    <p style="margin: 0; font-size: 24px; font-weight: bold; color: #4a148c;">${reviews.length}</p>
+                    <p style="margin: 0; font-size: 24px; font-weight: bold; color: #228B22;">${reviews.length}</p>
                 </div>
                 ${avgRatingHTML}
             </div>
@@ -697,4 +759,5 @@ async function loadProfile() {
 document.addEventListener('DOMContentLoaded', () => {
   loadInventory();
   updateCartCount();
+  showSection(browseSection, browseBtn);
 });

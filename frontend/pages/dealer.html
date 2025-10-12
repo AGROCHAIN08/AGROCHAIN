@@ -2,220 +2,249 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Dealer Dashboard</title>
+  <link rel="icon" href="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh"/>
+  <title>Dealer Dashboard - AgroChain</title>
   <link rel="stylesheet" href="../assets/css/dealer.css">
-  <style>
-    .bid-pending { 
-      background: #fef3c7; 
-      color: #d97706; 
-      padding: 8px 16px; 
-      border-radius: 6px; 
-      font-weight: 500;
-    }
-    .bid-accepted { 
-      background: #d1fae5; 
-      color: #059669; 
-      padding: 8px 16px; 
-      border-radius: 6px; 
-      font-weight: 500;
-    }
-    .bid-rejected { 
-      background: #fee2e2; 
-      color: #dc2626; 
-      padding: 8px 16px; 
-      border-radius: 6px; 
-      font-weight: 500;
-    }
-    .btn-bid {
-      background: #10b981;
-      color: white;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-bid:hover {
-      background: #059669;
-    }
-    .btn-receipt {
-      background: #3b82f6;
-      color: white;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      margin-top: 8px;
-    }
-    .btn-receipt:hover {
-      background: #2563eb;
-    }
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-      #receiptContent, #receiptContent * {
-        visibility: visible;
-      }
-      #receiptContent {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-      }
-      .modal-content button {
-        display: none !important;
-      }
-    }
-  </style>
 </head>
 <body>
-  <div class="sidebar">
-    <h2>🚛 Dealer Panel</h2>
-    <button id="browseBtn" class="active">🌾 Browse Products</button>
-    <button id="cartBtn">🛒 My Cart</button>
-    <button id="ordersBtn">📦 My Orders</button>
-    <button id="inventoryBtn">📦 Inventory Management</button>
-    <button id="retailerOrdersBtn">🛍️ Retailer Orders</button>
-    <button id="vehiclesBtn">🚗 Vehicle Management</button> <button id="profileBtn">👤 Profile</button>
-    <button id="signoutBtn">🚪 Sign Out</button>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div href="./dealer.html" class="nav-left">
+      <img src="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh" alt="AgroChain Logo" class="logo">
+      <span class="brand-name">Agro<span class="chain-text">Chain</span></span>
+    </div>
+    
+    <div class="navbar-center">
+      <button id="navBrowseBtn" class="active">🌾 Products</button>
+      <button id="navInventoryBtn">📦 Inventory</button>
+      <button id="navOrdersBtn">📦 Orders</button>
+      <button id="navVehiclesBtn">🚗 Vehicles</button>
+      <button id="navRetailerOrdersBtn">🛍️ Retailer Orders</button>
+    </div>
+    
+    <div class="navbar-right">
+      <button class="cart-btn" id="navCartBtn">
+        🛒
+        <span class="cart-badge" id="cartBadge">0</span>
+      </button>
+      
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">
+          <span id="profileName">DEALER</span> ▼
+        </button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="viewProfileBtn">👤 My Profile</button>
+          <button id="signoutBtn">🚪 Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Sidebar Filters (Only for Browse Products) -->
+    <aside class="sidebar-filters" id="sidebarFilters">
+      <h3>🔍 Filter Products</h3>
+      
+      <div class="filter-group">
+        <label>Product Type</label>
+        <select id="filterProductType">
+          <option value="">All Types</option>
+          <option value="Fruit">Fruit</option>
+          <option value="Vegetable">Vegetable</option>
+          <option value="Cereal">Cereal</option>
+          <option value="Spices">Spices</option>
+          <option value="Pulses">Pulses</option>
+          <option value="Oil Seeds">Oil Seeds</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>Variety</label>
+        <input type="text" id="filterVariety" placeholder="e.g., Alphonso Mango">
+      </div>
+      
+      <div class="filter-group">
+        <label>Max Price (₹)</label>
+        <input type="number" id="filterPrice" placeholder="Enter max price">
+      </div>
+      
+      <button class="apply-filters-btn" onclick="applyFilters()">Apply Filters</button>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="content-area">
+      <!-- Browse Products Section -->
+      <section id="browseSection" class="section active">
+        <!-- <div class="section-header">
+          <h1 class="section-title">Browse Farmer Products</h1>
+        </div> -->
+        <div id="browseMessage"></div>
+        <div id="productsGrid" class="products-grid"></div>
+      </section>
+
+      <!-- Cart Section -->
+      <section id="cartSection" class="section">
+        <div class="section-header">
+          <h1 class="section-title">🛒 My Cart</h1>
+        </div>
+        <div id="cartGrid" class="orders-grid"></div>
+      </section>
+
+      <!-- Orders Section -->
+      <section id="ordersSection" class="section">
+        <div class="section-header">
+          <h1 class="section-title">📦 My Orders</h1>
+        </div>
+        <div id="ordersGrid" class="orders-grid"></div>
+      </section>
+
+      <!-- Inventory Section -->
+      <section id="inventorySection" class="section">
+        <div class="section-header">
+          <h1 class="section-title">📦 Inventory Management</h1>
+        </div>
+        <div class="inventory-stats">
+          <div class="stat-card">
+            <div class="stat-label">Total Items</div>
+            <div class="stat-value" id="totalItems">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Value</div>
+            <div class="stat-value" id="totalValue">₹0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Product Types</div>
+            <div class="stat-value" id="productTypes">0</div>
+          </div>
+        </div>
+        <div id="inventoryMessage"></div>
+        <div id="inventoryGrid" class="inventory-grid"></div>
+      </section>
+
+      <!-- Vehicles Section -->
+      <section id="vehiclesSection" class="section">
+        <div class="section-header">
+          <h1 class="section-title">🚗 Vehicle Management</h1>
+        </div>
+        <div class="vehicle-form">
+          <h3>Add New Vehicle</h3>
+          <form id="vehicleForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Vehicle ID *</label>
+                <input type="text" id="vehicleId" placeholder="e.g., DL-14-RE-5678" required>
+              </div>
+              <div class="form-group">
+                <label>Vehicle Type *</label>
+                <select id="vehicleType" required>
+                  <option value="">Select Vehicle Type</option>
+                  <option value="Reefer Truck (5 MT)">Reefer Truck (5 MT)</option>
+                  <option value="Insulated Van (2 MT)">Insulated Van (2 MT)</option>
+                  <option value="Inspection Van">Inspection Van</option>
+                  <option value="Heavy Truck (10 MT)">Heavy Truck (10 MT)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Temperature Capacity *</label>
+                <input type="text" id="temperatureCapacity" placeholder="e.g., -18°C to 0°C" required>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">Add Vehicle</button>
+          </form>
+        </div>
+        <div id="vehicleMessage"></div>
+        <div id="vehiclesGrid" class="vehicles-grid"></div>
+      </section>
+
+      <!-- Retailer Orders Section -->
+      <section id="retailerOrdersSection" class="section">
+        <div class="section-header">
+          <h1 class="section-title">🛍️ Retailer Orders</h1>
+        </div>
+        <div id="retailerOrdersGrid"></div>
+      </section>
+
+      <!-- Profile Section -->
+      <section id="profileSection" class="section">
+        <div class="section-header">
+          <h1 class="section-title">👤 My Profile</h1>
+        </div>
+        <div id="profileInfo"></div>
+      </section>
+    </main>
   </div>
 
-  <div class="content">
-    <section id="vehiclesSection" class="section">
-      <div class="section-header">
-        <h1 class="section-title">Vehicle Management</h1>
-      </div>
-      <div class="vehicle-form">
-        <h3>Add New Vehicle</h3>
-        <form id="vehicleForm">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Vehicle ID *</label>
-              <input type="text" id="vehicleId" placeholder="e.g., DL-14-RE-5678" required>
-            </div>
-            <div class="form-group">
-              <label>Vehicle Type *</label>
-              <select id="vehicleType" required>
-                <option value="">Select Vehicle Type</option>
-                <option value="Reefer Truck (5 MT)">Reefer Truck (5 MT)</option>
-                <option value="Insulated Van (2 MT)">Insulated Van (2 MT)</option>
-                <option value="Inspection Van">Inspection Van</option>
-                <option value="Heavy Truck (10 MT)">Heavy Truck (10 MT)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Temperature Capacity *</label>
-              <input type="text" id="temperatureCapacity" placeholder="e.g., -18°C to 0°C" required>
-            </div>
-          </div>
-          <button type="submit" class="btn-primary">Add Vehicle</button>
-        </form>
-      </div>
-      <div id="vehicleMessage"></div>
-      <div id="vehiclesGrid" class="vehicles-grid"></div>
-    </section>
-
-    <section id="browseSection" class="section active">
-      <div class="section-header">
-        <h1 class="section-title">Browse Farmer Products</h1>
-      </div>
-      <div class="filters">
-        <div class="filters-grid">
-          <div class="form-group">
-            <label>Product Type</label>
-            <select id="filterProductType">
-              <option value="">All Types</option>
-              <option value="Fruit">Fruit</option>
-              <option value="Vegetable">Vegetable</option>
-              <option value="Cereal">Cereal</option>
-              <option value="Spices">Spices</option>
-              <option value="Pulses">Pulses</option>
-              <option value="Oil Seeds">Oil Seeds</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Variety</label>
-            <input type="text" id="filterVariety" placeholder="e.g., Alphonso Mango">
-          </div>
-          <div class="form-group">
-            <label>Max Price (₹)</label>
-            <input type="number" id="filterPrice" placeholder="Enter max price">
-          </div>
-          <div class="form-group">
-            <label>Status</label>
-            <select id="filterStatus">
-              <option value="">All Status</option>
-              <option value="Available">Available</option>
-              <option value="Inspection Initiated">Inspection Initiated</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <button class="btn-primary" onclick="applyFilters()">Apply Filters</button>
-          </div>
-        </div>
-      </div>
-      <div id="browseMessage"></div>
-      <div id="productsGrid" class="products-grid"></div>
-    </section>
-
-    <section id="ordersSection" class="section">
-      <div class="section-header">
-        <h1 class="section-title">📦 My Orders</h1>
-      </div>
-      <div id="ordersGrid" class="orders-grid"></div>
-    </section>
-
-    <section id="cartSection" class="section">
-      <div class="section-header">
-        <h1 class="section-title">🛒 My Cart</h1>
-      </div>
-      <div id="cartGrid" class="orders-grid"></div>
-    </section>
-
-    <section id="inventorySection" class="section">
-      <div class="section-header">
-        <h1 class="section-title">📦 Inventory Management</h1>
-      </div>
-      <div class="inventory-stats">
-        <div class="stat-card">
-          <div class="stat-label">Total Items</div>
-          <div class="stat-value" id="totalItems">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Value</div>
-          <div class="stat-value" id="totalValue">₹0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Product Types</div>
-          <div class="stat-value" id="productTypes">0</div>
-        </div>
-      </div>
-      <div id="inventoryMessage"></div>
-      <div id="inventoryGrid" class="inventory-grid"></div>
-    </section>
-
-    <section id="retailerOrdersSection" class="section">
-      <div class="section-header">
-        <h1 class="section-title">Retailer Orders</h1>
-      </div>
-      <div id="retailerOrdersGrid"></div>
-    </section>
-
-    <section id="profileSection" class="section">
-      <div class="section-header">
-        <h1 class="section-title">My Profile</h1>
-      </div>
-      <div id="profileInfo"></div>
-    </section>
+  <!-- Modals -->
+  <div id="farmerModal" class="modal">
+    <div class="modal-content">
+      <span id="closeFarmerModal" class="close">&times;</span>
+      <h3>Farmer Profile</h3>
+      <div id="farmerProfileDetails"></div>
+    </div>
   </div>
 
-  <div id="farmerModal" class="modal"><div class="modal-content"><span id="closeFarmerModal" class="close">&times;</span><h3>Farmer Profile</h3><div id="farmerProfileDetails"></div></div></div>
-  <div id="assignVehicleModal" class="modal"><div class="modal-content"><span class="close" onclick="closeAssignVehicleModal()">&times;</span><h3>Assign Vehicle to Product</h3><label>Select Vehicle:</label><select id="vehicleSelect"></select><label>Enter Tentative Arrival Date:</label><input type="date" id="tentativeDate" /><button onclick="confirmAssignVehicle()">Assign Vehicle</button></div></div>
-  <div id="reviewModal" class="modal"><div class="modal-content"><span class="close" onclick="closeReviewModal()">&times;</span><h3 id="reviewModalTitle">Submit Product Review</h3><form id="reviewForm"><label>Product Quality *</label><select id="reviewQuality" required><option value="">-- Select Quality --</option><option value="Excellent">Excellent</option><option value="Good">Good</option><option value="Average">Average</option><option value="Poor">Poor</option></select><label>Comments *</label><textarea id="reviewComments" placeholder="Describe product quality, packaging, freshness..." required rows="4"></textarea><label>Rating (1-5) *</label><input type="number" id="reviewRating" min="1" max="5" required /><button type="submit" class="btn-primary">Submit Review</button></form></div></div>
-  <div id="bidModal" class="modal"><div class="modal-content"><span class="close" onclick="closeBidModal()">&times;</span><h3>Place Your Bid</h3><div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;"><p><strong>Product:</strong> <span id="bidProductName"></span></p><p><strong>Original Price:</strong> <span id="bidOriginalPrice"></span></p></div><form id="bidForm"><label>Your Bid Price (per <span id="bidUnitOfSale"></span>) *</label><input type="number" id="bidPrice" step="0.01" placeholder="Enter your bid price" required /><p style="color: #6b7280; font-size: 14px; margin-top: 10px;">💡 The farmer will review your bid and can accept or reject it.</p><button type="submit" class="btn-primary">Submit Bid</button></form></div></div>
-  <div id="receiptModal" class="modal"><div class="modal-content" style="max-width: 700px;"><span class="close" onclick="closeReceiptModal()">&times;</span><div id="receiptContent"></div><div style="text-align: center; margin-top: 20px;"><button class="btn-primary" onclick="printReceipt()">🖨️ Print Receipt</button><button class="btn-secondary" onclick="closeReceiptModal()" style="margin-left: 10px;">Close</button></div></div></div>
+  <div id="assignVehicleModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeAssignVehicleModal()">&times;</span>
+      <h3>Assign Vehicle to Product</h3>
+      <label>Select Vehicle:</label>
+      <select id="vehicleSelect"></select>
+      <label>Enter Tentative Arrival Date:</label>
+      <input type="date" id="tentativeDate" />
+      <button onclick="confirmAssignVehicle()">Assign Vehicle</button>
+    </div>
+  </div>
+
+  <div id="reviewModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeReviewModal()">&times;</span>
+      <h3 id="reviewModalTitle">Submit Product Review</h3>
+      <form id="reviewForm">
+        <label>Product Quality *</label>
+        <select id="reviewQuality" required>
+          <option value="">-- Select Quality --</option>
+          <option value="Excellent">Excellent</option>
+          <option value="Good">Good</option>
+          <option value="Average">Average</option>
+          <option value="Poor">Poor</option>
+        </select>
+        <label>Comments *</label>
+        <textarea id="reviewComments" placeholder="Describe product quality, packaging, freshness..." required rows="4"></textarea>
+        <label>Rating (1-5) *</label>
+        <input type="number" id="reviewRating" min="1" max="5" required />
+        <button type="submit" class="btn-primary">Submit Review</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="bidModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeBidModal()">&times;</span>
+      <h3>Place Your Bid</h3>
+      <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <p><strong>Product:</strong> <span id="bidProductName"></span></p>
+        <p><strong>Original Price:</strong> <span id="bidOriginalPrice"></span></p>
+      </div>
+      <form id="bidForm">
+        <label>Your Bid Price (per <span id="bidUnitOfSale"></span>) *</label>
+        <input type="number" id="bidPrice" step="0.01" placeholder="Enter your bid price" required />
+        <p style="color: #6b7280; font-size: 14px; margin-top: 10px;">💡 The farmer will review your bid and can accept or reject it.</p>
+        <button type="submit" class="btn-primary">Submit Bid</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="receiptModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+      <span class="close" onclick="closeReceiptModal()">&times;</span>
+      <div id="receiptContent"></div>
+      <div style="text-align: center; margin-top: 20px;">
+        <button class="btn-primary" onclick="printReceipt()">🖨️ Print Receipt</button>
+        <button class="btn-secondary" onclick="closeReceiptModal()" style="margin-left: 10px;">Close</button>
+      </div>
+    </div>
+  </div>
 
   <script src="../assets/js/dealer.js"></script>
 </body>

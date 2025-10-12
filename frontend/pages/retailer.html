@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Retailer Dashboard</title>
+  <title>Retailer Dashboard - AgroChain</title>
   <link rel="stylesheet" href="../assets/css/retailer.css">
   <style>
     .product-reviews {
@@ -31,47 +31,78 @@
   </style>
 </head>
 <body>
-  <div class="sidebar">
-    <h2>🏪 Retailer Panel</h2>
-    <button id="browseBtn" class="active">🛍️ Browse Products</button>
-    <button id="cartBtn">🛒 My Cart <span id="cartCount" class="cart-count">0</span></button>
-    <button id="ordersBtn">📦 My Orders</button>
-    <button id="profileBtn">👤 Profile</button>
-    <button id="signoutBtn">🚪 Sign Out</button>
-  </div>
+    <nav class="navbar">
+        <div class="nav-left">
+            <img src="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh" alt="AgroChain Logo" class="logo">
+            <span class="brand-name">Agro<span class="chain-text">Chain</span></span>
+        </div>
+        <div class="nav-center">
+            <a href="#" class="nav-link active" id="browseBtn">
+                <span class="nav-icon">🛍️</span> Browse Products
+            </a>
+            <a href="#" class="nav-link" id="ordersBtn">
+                <span class="nav-icon">📦</span> My Orders
+            </a>
+        </div>
+        <div class="nav-right">
+            <a href="#" class="nav-link" id="cartBtn">
+                <span class="nav-icon">🛒</span> Cart 
+                <span id="cartCount" class="cart-count">0</span>
+            </a>
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileDropdownBtn">
+                    <span class="profile-icon">👤</span>
+                    <span id="retailerNameDisplay">Retailer</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+                <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                    <a href="#" class="dropdown-item" id="profileBtn">
+                        <span class="dropdown-icon">👤</span> My Profile
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item logout-item" id="signoutBtn">
+                        <span class="dropdown-icon">🚪</span> Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
   <div class="content">
     <section id="browseSection" class="section active">
-        <div class="filters">
-            <h3>Filter Products</h3>
-            <div class="filters-grid">
-              <div class="form-group">
-                <label>Product Name</label>
-                <input type="text" id="filterName" placeholder="e.g., Alphonso Mango">
-              </div>
-              <div class="form-group">
-                <label>Max Price (₹)</label>
-                <input type="number" id="filterPrice" placeholder="Enter max price">
-                <div id="filterError" class="error-message"></div>
-              </div>
-              <div class="form-group">
-                <label>Product Type</label>
-                <select id="filterType">
-                  <option value="">All Types</option>
-                  <option value="Fruit">Fruit</option>
-                  <option value="Vegetable">Vegetable</option>
-                  <option value="Cereal">Cereal</option>
-                  <option value="Spices">Spices</option>
-                  <option value="Pulses">Pulses</option>
-                  <option value="Oil Seeds">Oil Seeds</option>
-                </select>
-              </div>
-              <div class="form-group">
+        <div class="browse-layout-container">
+            <aside class="filter-panel">
+                <h3 class="filter-title">🔍 Filter Products</h3>
+                <div class="form-group">
+                    <label>Product Type</label>
+                    <select id="filterType">
+                        <option value="">All Types</option>
+                        <option value="Fruit">Fruit</option>
+                        <option value="Vegetable">Vegetable</option>
+                        <option value="Cereal">Cereal</option>
+                        <option value="Spices">Spices</option>
+                        <option value="Pulses">Pulses</option>
+                        <option value="Oil Seeds">Oil Seeds</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Variety</label>
+                    <input type="text" id="filterName" placeholder="e.g., Alphonso Mango">
+                </div>
+                <div class="form-group">
+                    <label>Max Price (₹)</label>
+                    <input type="number" id="filterPrice" placeholder="Enter max price">
+                    <div id="filterError" class="error-message"></div>
+                </div>
                 <button class="btn-primary" onclick="applyFilters()">Apply Filters</button>
-              </div>
-            </div>
-          </div>
-        <div id="inventoryGrid" class="inventory-grid"></div>
+            </aside>
+            <main class="product-listing">
+                <div class="section-header">
+                    <h1 class="section-title">Browse Farmer Products</h1>
+                </div>
+                <div id="inventoryGrid" class="inventory-grid"></div>
+            </main>
+        </div>
     </section>
 
     <section id="cartSection" class="section">
