@@ -626,3 +626,154 @@ button[disabled] {
         max-width: 140px;
     }
 }
+/* Mobile Menu Toggle Button - FIXED */
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    color: #FFD700; /* Gold color to match brand */
+    cursor: pointer;
+    padding: 8px;
+    transition: color 0.3s ease;
+}
+
+
+.mobile-menu-toggle:focus {
+    outline: 2px solid #4caf50;
+    outline-offset: 2px;
+}
+
+/* Show toggle button on mobile */
+@media (max-width: 900px) {
+    .mobile-menu-toggle {
+        display: block;
+        order: 3;
+    }
+}
+
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    color: #FFD700;
+    cursor: pointer;
+    padding: 8px;
+    transition: all 0.3s ease;
+    z-index: 1001;
+}
+
+.mobile-menu-toggle:hover {
+    /* color: #81c784; */
+    transform: scale(1.1);
+}
+
+.mobile-menu-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Small Tablet/Large Mobile - 900px and below */
+@media (max-width: 900px) {
+    .navbar {
+        padding: 15px 20px;
+        position: relative;
+    }
+    
+    .mobile-menu-toggle {
+        display: block;
+        order: 3;
+    }
+    
+    .nav-center {
+        display: none;
+        flex-basis: 100%;
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px 0;
+        order: 4;
+        width: 100%;
+        background-color: whitesmoke;
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    .nav-center.active {
+        display: flex;
+    }
+    
+    .nav-center .nav-link {
+        padding: 10px 20px;
+        text-align: center;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-center .nav-link:hover {
+        background-color: rgba(129, 199, 132, 0.1);
+    }
+    
+    .nav-right {
+        order: 2;
+        gap: 8px;
+    }
+    
+    .nav-right .btn {
+        padding: 8px 15px;
+        font-size: 0.9em;
+    }
+}
+
+/* Slide down animation */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile View - 768px and below */
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        font-size: 1.6em;
+    }
+    
+    .nav-center {
+        gap: 12px;
+        padding: 15px 0;
+    }
+    
+    .nav-center .nav-link {
+        padding: 8px 15px;
+        font-size: 1em;
+    }
+}
+
+/* Small Mobile - 600px and below */
+@media (max-width: 600px) {
+    .mobile-menu-toggle {
+        font-size: 1.5em;
+        padding: 6px;
+    }
+    
+    .nav-center {
+        gap: 10px;
+        padding: 12px 0;
+    }
+    
+    .nav-center .nav-link {
+        padding: 8px 12px;
+        font-size: 0.95em;
+    }
+}
+
+/* Extra Small Mobile - 400px and below */
+@media (max-width: 400px) {
+    .mobile-menu-toggle {
+        font-size: 1.4em;
+    }
+}

@@ -1,6 +1,56 @@
 let otpTimer;
 let googleCredential = null;
 
+// Mobile menu toggle functionality - MUST BE AT THE TOP
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.querySelector('.mobile-menu-toggle');
+    const navCenter = document.querySelector('.nav-center');
+    
+    if (toggleBtn && navCenter) {
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            navCenter.classList.toggle('active');
+            
+            // Toggle between hamburger and X icon
+            const icon = this.querySelector('i');
+            if (icon) {
+                if (icon.classList.contains('fa-bars')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            }
+        });
+
+        // Close menu when clicking on a nav link
+        const navLinks = document.querySelectorAll('.nav-center .nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                navCenter.classList.remove('active');
+                const icon = toggleBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!toggleBtn.contains(e.target) && !navCenter.contains(e.target)) {
+                navCenter.classList.remove('active');
+                const icon = toggleBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            }
+        });
+    }
+});
+
 // Role-based redirect function
 function redirectToRolePage(role, email) {
   if (email === "agrochain08@gmail.com") {
