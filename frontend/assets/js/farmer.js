@@ -44,6 +44,10 @@ const profileInfo = document.getElementById("profileInfo");
 const notificationsList = document.getElementById("notificationsList");
 const farmerOrdersGrid = document.getElementById("farmerOrdersGrid");
 
+// Store current crops for reference
+let allCrops = [];
+let editingCropId = null;
+
 
 // ===========================
 // NAVBAR & MOBILE TOGGLE FUNCTIONALITY
@@ -58,7 +62,6 @@ if (storedUser && storedUser.firstName) {
 if (menuToggleBtn) {
     menuToggleBtn.addEventListener('click', () => {
         navLinksContainer.classList.toggle('active');
-        // Change the hamburger icon to an X (and vice-versa)
         menuToggleBtn.textContent = navLinksContainer.classList.contains('active') ? '✖' : '☰';
     });
 }
@@ -242,11 +245,14 @@ async function loadCrops() {
     const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}`);
     const crops = await res.json();
 
+    // Store all crops for reference
+    allCrops = crops;
+
     productsGrid.innerHTML = "";
     if (res.ok && crops.length > 0) {
       const availableCrops = crops.filter(c => c.harvestQuantity > 0);
       if (availableCrops.length > 0) {
-        availableCrops.forEach((crop, i) => addCropToGrid(crop, i));
+        availableCrops.forEach((crop) => addCropToGrid(crop));
       } else {
         productsGrid.innerHTML = `
           <div class="empty-state">
@@ -291,24 +297,41 @@ cropForm.addEventListener("submit", async (e) => {
   formData.append("harvestQuantity", document.getElementById("harvestQuantity").value);
   formData.append("unitOfSale", document.getElementById("unitOfSale").value);
   formData.append("targetPrice", document.getElementById("targetPrice").value);
-  formData.append("image", document.getElementById("image").files[0]);
+  
+  // Only append image if it's a new upload
+  const imageInput = document.getElementById("image");
+  if (imageInput.files[0]) {
+    formData.append("image", imageInput.files[0]);
+  }
 
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}`, {
-      method: "POST",
+    const endpoint = editingCropId 
+      ? `http://localhost:3000/api/farmer/crops/${userEmail}/${editingCropId}`
+      : `http://localhost:3000/api/farmer/crops/${userEmail}`;
+    
+    const method = editingCropId ? "PUT" : "POST";
+
+    const res = await fetch(endpoint, {
+      method: method,
       body: formData,
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      successMsg.textContent = "✅ Product added successfully!";
+      const action = editingCropId ? "updated" : "added";
+      successMsg.textContent = `✅ Product ${action} successfully!`;
       cropForm.reset();
       cropForm.style.display = "none";
       addCropToggleBtn.textContent = "+ Add New Product";
+      editingCropId = null;
+      
+      // Reset image input requirement
+      document.getElementById("image").required = true;
+      
       loadCrops();
     } else {
-      cropError.textContent = data.msg || "Error adding product";
+      cropError.textContent = data.msg || "Error processing product";
     }
   } catch (err) {
     cropError.textContent = "Network error. Please try again.";
@@ -323,7 +346,7 @@ unitSelect.addEventListener("change", () => {
   priceUnitLabel.textContent = unit ? `per ${unit}` : "";
 });
 
-function addCropToGrid(crop, index) {
+function addCropToGrid(crop) {
   if (crop.harvestQuantity <= 0) {
     removeCropCardIfOutOfStock(crop._id);
     return;
@@ -384,10 +407,10 @@ function addCropToGrid(crop, index) {
       ${reviewsHTML}
       
       <div class="product-actions">
-        <button class="action-btn edit-btn" onclick="editCrop('${index}')">
+        <button class="action-btn edit-btn" onclick="editCrop('${crop._id}')">
           📝 Edit
         </button>
-        <button class="action-btn delete-btn" onclick="deleteCrop('${index}')">
+        <button class="action-btn delete-btn" onclick="deleteCrop('${crop._id}')">
           🗑️ Delete
         </button>
       </div>
@@ -404,15 +427,47 @@ function removeCropCardIfOutOfStock(cropId) {
   }
 }
 
-function editCrop(id) {
-  alert("Edit functionality coming soon!");
+function editCrop(cropId) {
+  const crop = allCrops.find(c => c._id === cropId);
+  if (!crop) {
+    alert("Product not found");
+    return;
+  }
+
+  // Populate form with crop data
+  document.getElementById("productType").value = crop.productType;
+  document.getElementById("varietySpecies").value = crop.varietySpecies;
+  document.getElementById("harvestQuantity").value = crop.harvestQuantity;
+  document.getElementById("unitOfSale").value = crop.unitOfSale;
+  document.getElementById("targetPrice").value = crop.targetPrice;
+  
+  // Make image optional for editing
+  document.getElementById("image").required = false;
+  
+  // Update button text
+  addCropToggleBtn.textContent = "Cancel";
+  
+  // Set editing mode
+  editingCropId = cropId;
+  
+  // Show form
+  cropForm.style.display = "block";
+  
+  // Scroll to form
+  cropForm.scrollIntoView({ behavior: "smooth" });
+  
+  // Update submit button text
+  const submitBtn = cropForm.querySelector("button[type='submit']");
+  if (submitBtn) {
+    submitBtn.textContent = "💾 Update Product";
+  }
 }
 
-async function deleteCrop(id) {
+async function deleteCrop(cropId) {
   if (!confirm("Are you sure you want to delete this product?")) return;
   
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}/${id}`, { 
+    const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}/${cropId}`, { 
       method: "DELETE" 
     });
     
@@ -438,6 +493,14 @@ addCropToggleBtn.onclick = () => {
     cropForm.reset();
     cropError.textContent = "";
     successMsg.textContent = "";
+    editingCropId = null;
+    document.getElementById("image").required = true;
+    
+    // Reset submit button text
+    const submitBtn = cropForm.querySelector("button[type='submit']");
+    if (submitBtn) {
+      submitBtn.textContent = "✨ List Product";
+    }
   }
 };
 
@@ -504,18 +567,18 @@ function createFarmerOrderCard(order) {
     bidSection = `
       <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 15px; margin-top: 15px;">
         <h4 style="margin-top: 0; color: #d97706;">💰 New Bid Received</h4>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
           <div>
             <p style="margin: 5px 0;"><strong>Original Price:</strong> ₹${order.originalPrice} per ${order.productDetails.unitOfSale}</p>
             <p style="margin: 5px 0;"><strong>Bid Price:</strong> ₹${order.bidPrice} per ${order.productDetails.unitOfSale}</p>
             <p style="margin: 5px 0;"><strong>Total Amount:</strong> ₹${order.totalAmount.toFixed(2)}</p>
           </div>
         </div>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <button onclick="acceptBid('${order._id}')" style="flex: 1; background: #10b981; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+        <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+          <button onclick="acceptBid('${order._id}')" style="flex: 1; min-width: 150px; background: #10b981; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
             ✓ Accept Bid
           </button>
-          <button onclick="rejectBid('${order._id}')" style="flex: 1; background: #ef4444; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+          <button onclick="rejectBid('${order._id}')" style="flex: 1; min-width: 150px; background: #ef4444; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
             ✗ Reject Bid
           </button>
         </div>
@@ -644,7 +707,6 @@ async function rejectBid(orderId) {
 async function viewFarmerReceipt(orderId) {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/orders/${userEmail}`);
-    // Check if the response is JSON before parsing
     const contentType = res.headers.get("content-type");
     let orders;
     if (contentType && contentType.indexOf("application/json") !== -1) {
@@ -679,14 +741,14 @@ async function viewFarmerReceipt(orderId) {
         </table>
       </div>
 
-      <div style="display: flex; justify-content: space-between; gap: 20px;">
-        <div style="flex: 1; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background-color: #fff;">
+      <div style="display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 250px; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background-color: #fff;">
           <h4 style="margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #3b82f6;">Sold To (Dealer)</h4>
           <p><strong>Name:</strong> ${order.dealerDetails.businessName || `${order.dealerDetails.firstName} ${order.dealerDetails.lastName}`}</p>
           <p><strong>Email:</strong> ${order.dealerDetails.email}</p>
           <p><strong>Mobile:</strong> ${order.dealerDetails.mobile}</p>
         </div>
-        <div style="flex: 1; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background-color: #fff;">
+        <div style="flex: 1; min-width: 250px; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background-color: #fff;">
           <h4 style="margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #3b82f6;">Seller (Farmer)</h4>
           <p><strong>Name:</strong> ${storedUser.firstName} ${storedUser.lastName}</p>
           <p><strong>Email:</strong> ${storedUser.email}</p>
@@ -721,10 +783,8 @@ function closeFarmerReceiptModal() {
 // Helper function to mark notifications as read
 async function markNotificationsAsRead() {
   try {
-    // 1. Fetch current list to populate the UI (in case new ones arrived)
     await loadNotifications();
     
-    // 2. Send request to mark them as read
     const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}/mark-read`, {
       method: 'POST',
       headers: {
@@ -739,7 +799,6 @@ async function markNotificationsAsRead() {
     console.error("Network error while marking notifications as read:", error);
   }
 
-  // 3. Reload again to update the badge count (which should now be 0)
   loadNotifications();
 }
 
@@ -848,7 +907,6 @@ document.addEventListener('DOMContentLoaded', () => {
     case 'notifications':
       activeSection = notificationsSection;
       activeNavButton = navNotificationBtn;
-      // Load and then mark as read if it was the last viewed section on refresh
       markNotificationsAsRead(); 
       break;
     case 'profile':
@@ -869,8 +927,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setActiveNavLink(activeNavButton);
 
   // 3. Load general data and set up refresh
-  // This ensures the badge count is always current, regardless of the active tab
   loadNotifications();
-  // Set up auto-refresh for notifications (e.g., every 60 seconds)
   setInterval(loadNotifications, 60000); 
 });

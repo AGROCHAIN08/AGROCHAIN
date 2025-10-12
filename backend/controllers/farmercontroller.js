@@ -12,7 +12,7 @@ function generateReceiptNumber() {
   return `RCP-${year}${month}${day}-${random}`;
 }
 
-// ---------------- Get Farmer Profile ----------------
+// ---------- Get Farmer Profile ----------
 exports.getFarmerProfile = async (req, res) => {
   try {
     const farmer = await User.findOne({ email: req.params.email, role: "farmer" });
@@ -24,7 +24,7 @@ exports.getFarmerProfile = async (req, res) => {
   }
 };
 
-// ---------------- Update Farmer Profile ----------------
+// ---------- Update Farmer Profile ----------
 exports.updateFarmerProfile = async (req, res) => {
   try {
     const farmer = await User.findOneAndUpdate(
@@ -40,7 +40,7 @@ exports.updateFarmerProfile = async (req, res) => {
   }
 };
 
-// ---------------- Add Crop ----------------
+// ---------- Add Crop ----------
 exports.addCrop = async (req, res) => {
   try {
     const farmer = await User.findOne({ email: req.params.email, role: "farmer" });
@@ -103,7 +103,7 @@ exports.addCrop = async (req, res) => {
   }
 };
 
-// ---------------- Get Crops ----------------
+// ---------- Get Crops ----------
 exports.getCrops = async (req, res) => {
   try {
     const farmer = await User.findOne({ email: req.params.email, role: "farmer" });
@@ -119,14 +119,16 @@ exports.getCrops = async (req, res) => {
   }
 };
 
-// ---------------- Update Crop ----------------
+// ---------- Update Crop (FIXED: Now uses MongoDB _id) ----------
 exports.updateCrop = async (req, res) => {
   try {
     const farmer = await User.findOne({ email: req.params.email, role: "farmer" });
     if (!farmer) return res.status(404).json({ msg: "Farmer not found" });
 
-    const cropIndex = parseInt(req.params.id);
-    if (cropIndex < 0 || cropIndex >= farmer.crops.length) {
+    const cropId = req.params.id; // This is now a MongoDB ObjectId string
+    const cropIndex = farmer.crops.findIndex(c => c._id.toString() === cropId);
+    
+    if (cropIndex === -1) {
       return res.status(404).json({ msg: "Product not found" });
     }
 
@@ -140,6 +142,7 @@ exports.updateCrop = async (req, res) => {
     } = req.body;
 
     const crop = farmer.crops[cropIndex];
+    
     if (productType) crop.productType = productType;
     if (varietySpecies) crop.varietySpecies = varietySpecies;
     if (harvestQuantity) crop.harvestQuantity = parseFloat(harvestQuantity);
@@ -171,18 +174,22 @@ exports.updateCrop = async (req, res) => {
   }
 };
 
-// ---------------- Delete Crop ----------------
+// ---------- Delete Crop (FIXED: Now uses MongoDB _id) ----------
 exports.deleteCrop = async (req, res) => {
   try {
     const farmer = await User.findOne({ email: req.params.email, role: "farmer" });
     if (!farmer) return res.status(404).json({ msg: "Farmer not found" });
 
-    const cropIndex = parseInt(req.params.id);
-    if (cropIndex < 0 || cropIndex >= farmer.crops.length) {
+    const cropId = req.params.id; // This is now a MongoDB ObjectId string
+    const cropIndex = farmer.crops.findIndex(c => c._id.toString() === cropId);
+    
+    if (cropIndex === -1) {
       return res.status(404).json({ msg: "Product not found" });
     }
 
     const crop = farmer.crops[cropIndex];
+    
+    // Check if there's an active order for this crop
     const activeOrder = await Order.findOne({ 
       farmerEmail: farmer.email, 
       productId: crop._id.toString(),
@@ -206,11 +213,11 @@ exports.deleteCrop = async (req, res) => {
   }
 };
 
-// ---------------- Accept Bid ----------------
+// ---------- Accept Bid ----------
 exports.acceptBid = async (req, res) => {
   try {
     const { orderId } = req.body;
-    const { email } = req.params; // farmer email
+    const { email } = req.params;
 
     if (!orderId) {
       return res.status(400).json({ msg: "Order ID is required" });
@@ -225,12 +232,10 @@ exports.acceptBid = async (req, res) => {
       return res.status(400).json({ msg: "Bid already processed" });
     }
 
-    // Update order to accepted
     order.bidStatus = "Accepted";
     order.status = "Bid Accepted";
     order.bidResponseDate = new Date();
 
-    // Generate receipt
     const date = new Date();
     const receiptNumber = `RCP-${date.getFullYear()}${String(
       date.getMonth() + 1
@@ -245,7 +250,6 @@ exports.acceptBid = async (req, res) => {
     
     await order.save();
 
-    // ========== NEW: Add to Dealer Inventory ==========
     const dealer = await User.findOne({
       email: order.dealerEmail,
       role: "dealer",
@@ -265,7 +269,6 @@ exports.acceptBid = async (req, res) => {
 
     if (farmer && productIndex !== -1) {
       const product = farmer.crops[productIndex];
-      // Decrease farmer's stock
       product.harvestQuantity -= order.quantity;
 
       const inventoryItem = {
@@ -288,10 +291,9 @@ exports.acceptBid = async (req, res) => {
       await dealer.save();
       await farmer.save(); 
 
-      console.log("✅ Product added to dealer inventory and farmer stock updated:", inventoryItem);
+      console.log("✅ Product added to dealer inventory:", inventoryItem);
     }
 
-    // ========== Notify dealer ==========
     if (!dealer.notifications) dealer.notifications = [];
     dealer.notifications.push({
       title: "Bid Accepted!",
@@ -301,7 +303,7 @@ exports.acceptBid = async (req, res) => {
     await dealer.save();
 
     res.json({
-      msg: "Bid accepted successfully, product moved to dealer inventory",
+      msg: "Bid accepted successfully",
       receiptNumber,
     });
 
@@ -311,7 +313,7 @@ exports.acceptBid = async (req, res) => {
   }
 };
 
-// ---------------- Reject Bid ----------------
+// ---------- Reject Bid ----------
 exports.rejectBid = async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -334,14 +336,12 @@ exports.rejectBid = async (req, res) => {
       return res.status(400).json({ msg: "Bid already processed" });
     }
 
-    // Update order
     order.bidStatus = 'Rejected';
     order.bidResponseDate = new Date();
     order.status = 'Bid Rejected';
     
     await order.save();
 
-    // Update product availability back to Available
     const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
     if (farmer && farmer.crops) {
       const productIndex = farmer.crops.findIndex(c => c._id.toString() === order.productId.toString());
@@ -351,7 +351,6 @@ exports.rejectBid = async (req, res) => {
       }
     }
 
-    // Make vehicle available again
     const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
     if (dealer && dealer.vehicles) {
       const vehicleIndex = dealer.vehicles.findIndex(v => v._id.toString() === order.vehicleId.toString());
@@ -360,7 +359,6 @@ exports.rejectBid = async (req, res) => {
         dealer.vehicles[vehicleIndex].assignedTo = undefined;
       }
       
-      // Notify dealer
       if (!dealer.notifications) dealer.notifications = [];
       dealer.notifications.push({
         title: "Bid Rejected",
@@ -382,7 +380,7 @@ exports.rejectBid = async (req, res) => {
   }
 };
 
-// ---------------- Get Farmer Orders ----------------
+// ---------- Get Farmer Orders ----------
 exports.getFarmerOrders = async (req, res) => {
   try {
     const orders = await Order.find({ farmerEmail: req.params.email })
@@ -428,7 +426,7 @@ exports.getFarmerOrders = async (req, res) => {
   }
 };
 
-// ---------------- Get Farmer Notifications ----------------
+// ---------- Get Farmer Notifications ----------
 exports.getFarmerNotifications = async (req, res) => {
   try {
     const farmerEmail = req.params.email;

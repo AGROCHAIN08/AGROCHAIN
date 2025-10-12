@@ -737,7 +737,7 @@ function orderFromCart(productId) {
 
   orderItems.push(newOrder);
   localStorage.setItem("dealerOrders", JSON.stringify(orderItems));
-  alert("✅ Order placed successfully!");
+  alert("✅ Proceed to My Orders to Assign a Vehicle!");
   removeFromCart(productId);
 
   const ordersSection = document.getElementById('ordersSection');
@@ -851,7 +851,8 @@ function closeAssignVehicleModal() {
 }
 
 async function confirmAssignVehicle() {
-  const vehicleId = document.getElementById("tentativeDate").value;
+  const vehicleId = document.getElementById("vehicleSelect").value;  // ← FIX: Read from vehicleSelect dropdown
+  const tentativeDate = document.getElementById("tentativeDate").value;  // ← FIX: Read from date input
 
   if (!vehicleId || !tentativeDate) {
     alert("Please select vehicle and tentative date!");
@@ -881,9 +882,9 @@ async function confirmAssignVehicle() {
         dealerEmail: currentUser.email,
         productId: selectedProductId,
         farmerEmail: selectedFarmerEmail,
-        vehicleId,
+        vehicleId: vehicleId,  // Now correctly reading from dropdown
         quantity: orderItem.quantity,
-        tentativeDate
+        tentativeDate: tentativeDate  // Now correctly reading from date input
       })
     });
 
@@ -901,7 +902,7 @@ async function confirmAssignVehicle() {
       loadOrders();
       loadVehicles();
     } else {
-      alert("⌛ Error assigning vehicle: " + result.msg);
+      alert("❌ Error assigning vehicle: " + result.msg);
     }
   } catch (error) {
     console.error("Error in confirmAssignVehicle:", error);
