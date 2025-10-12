@@ -22,6 +22,111 @@ if (!currentUser || currentUser.role !== 'dealer') {
   window.location.href = "login.html";
 }
 
+
+// Profile dropdown toggle
+document.getElementById('profileBtn').addEventListener('click', function(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('profileMenu');
+  menu.classList.toggle('show');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function() {
+  const menu = document.getElementById('profileMenu');
+  if (menu.classList.contains('show')) {
+    menu.classList.remove('show');
+  }
+});
+
+document.getElementById('navBrowseBtn').addEventListener('click', function() {
+  showSection(document.getElementById('browseSection'), this);
+  showSidebar();  // Show filters for browse section
+  updateNavButtons(this);
+  loadProducts();
+});
+
+// NEW: Navbar navigation handlers (replacing old sidebar buttons)
+document.getElementById('navInventoryBtn').addEventListener('click', function() {
+  showSection(document.getElementById('inventorySection'), this);
+  hideSidebar();
+  updateNavButtons(this);
+  loadInventory();
+});
+
+document.getElementById('navOrdersBtn').addEventListener('click', function() {
+  showSection(document.getElementById('ordersSection'), this);
+  hideSidebar();
+  updateNavButtons(this);
+  loadOrders();
+});
+
+document.getElementById('navVehiclesBtn').addEventListener('click', function() {
+  showSection(document.getElementById('vehiclesSection'), this);
+  hideSidebar();
+  updateNavButtons(this);
+  loadVehicles();
+});
+
+document.getElementById('navRetailerOrdersBtn').addEventListener('click', function() {
+  showSection(document.getElementById('retailerOrdersSection'), this);
+  hideSidebar();
+  updateNavButtons(this);
+  loadRetailerOrders();
+});
+
+document.getElementById('navCartBtn').addEventListener('click', function() {
+  showSection(document.getElementById('cartSection'), this);
+  hideSidebar();
+  updateNavButtons(null);
+  loadCart();
+});
+
+document.getElementById('viewProfileBtn').addEventListener('click', function() {
+  showSection(document.getElementById('profileSection'), this);
+  hideSidebar();
+  updateNavButtons(null);
+  loadProfile();
+  document.getElementById('profileMenu').classList.remove('show');
+});
+
+// NEW: Helper function to show/hide sidebar
+function hideSidebar() {
+  const sidebar = document.getElementById('sidebarFilters');
+  if (sidebar) {
+    sidebar.style.display = 'none';
+  }
+  document.body.classList.add('sidebar-hidden');
+  document.body.classList.remove('sidebar-visible');
+}
+
+function showSidebar() {
+  const sidebar = document.getElementById('sidebarFilters');
+  if (sidebar) {
+    sidebar.style.display = 'block';
+  }
+  document.body.classList.add('sidebar-visible');
+  document.body.classList.remove('sidebar-hidden');
+}
+
+
+// NEW: Helper function to update active nav buttons
+function updateNavButtons(activeBtn) {
+  const navButtons = document.querySelectorAll('.navbar-center button');
+  navButtons.forEach(btn => btn.classList.remove('active'));
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+  }
+}
+
+// NEW: Update cart badge count
+function updateCartBadge() {
+  const badge = document.getElementById('cartBadge');
+  const count = cartItems ? cartItems.length : 0;
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'flex' : 'none';
+}
+
+
 // ===========================
 // SIDEBAR NAVIGATION
 // ===========================
@@ -29,59 +134,21 @@ const sections = document.querySelectorAll(".section");
 const buttons = document.querySelectorAll(".sidebar button");
 
 function showSection(sectionToShow, activeBtn) {
+  const sections = document.querySelectorAll(".section");
   sections.forEach(s => s.classList.remove("active"));
-  buttons.forEach(b => b.classList.remove("active"));
   sectionToShow.classList.add("active");
-  activeBtn.classList.add("active");
+  
+  // Show sidebar only for browse section
+  if (sectionToShow.id === 'browseSection') {
+    showSidebar();
+  } else {
+    hideSidebar();
+  }
 }
 
 function generateUniqueOrderId() {
   return 'local-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 }
-
-const vehiclesBtn = document.getElementById("vehiclesBtn");
-const browseBtn = document.getElementById("browseBtn");
-const cartBtn = document.getElementById("cartBtn");
-const ordersBtn = document.getElementById("ordersBtn");
-const inventoryBtn = document.getElementById("inventoryBtn");
-const retailerOrdersBtn = document.getElementById("retailerOrdersBtn");
-const profileBtn = document.getElementById("profileBtn");
-const signoutBtn = document.getElementById("signoutBtn");
-
-const vehiclesSection = document.getElementById("vehiclesSection");
-const browseSection = document.getElementById("browseSection");
-const cartSection = document.getElementById("cartSection");
-const inventorySection = document.getElementById("inventorySection");
-const retailerOrdersSection = document.getElementById("retailerOrdersSection");
-const ordersSection = document.getElementById("ordersSection");
-const profileSection = document.getElementById("profileSection");
-
-vehiclesBtn.onclick = () => showSection(vehiclesSection, vehiclesBtn);
-browseBtn.onclick = () => {
-  showSection(browseSection, browseBtn);
-  loadProducts();
-};
-cartBtn.onclick = () => {
-  showSection(cartSection, cartBtn);
-  loadCart();
-};
-ordersBtn.onclick = () => {
-  showSection(ordersSection, ordersBtn);
-  loadOrders();
-};
-profileBtn.onclick = () => {
-  showSection(profileSection, profileBtn);
-  loadProfile();
-};
-inventoryBtn.onclick = () => {
-  showSection(inventorySection, inventoryBtn);
-  loadInventory();
-};
-
-retailerOrdersBtn.onclick = () => {
-    showSection(retailerOrdersSection, retailerOrdersBtn);
-    loadRetailerOrders();
-};
 
 // ===========================
 // VEHICLE MANAGEMENT
@@ -399,7 +466,6 @@ function applyFilters() {
   const productType = document.getElementById('filterProductType').value;
   const variety = document.getElementById('filterVariety').value.toLowerCase();
   const maxPrice = parseFloat(document.getElementById('filterPrice').value) || Infinity;
-  const status = document.getElementById('filterStatus').value;
 
   const filtered = allProducts.filter(product => {
     return (!productType || product.productType === productType) &&
@@ -587,6 +653,8 @@ function addToCart(productId) {
   localStorage.setItem("dealerCart", JSON.stringify(cartItems));
   alert("✅ Product added to cart!");
   qtyInput.value = '';
+
+  updateCartBadge();
 }
 
 function loadCart() {
@@ -623,6 +691,7 @@ function removeFromCart(productId) {
   cartItems = cartItems.filter(item => item._id !== productId);
   localStorage.setItem("dealerCart", JSON.stringify(cartItems));
   loadCart();
+  updateCartBadge(); 
 }
 
 function orderFromCart(productId) {
@@ -662,6 +731,8 @@ function orderFromCart(productId) {
   if (ordersSection.classList.contains('active')) {
     loadOrders();
   }
+
+  updateCartBadge();
 }
 
 // ===========================
@@ -1616,12 +1687,6 @@ async function checkBidUpdates() {
 
 setInterval(checkBidUpdates, 10000);
 
-ordersBtn.onclick = async () => {
-  showSection(ordersSection, ordersBtn);
-  loadOrders();
-  await checkBidUpdates();
-};
-
 setInterval(async () => {
   if (browseSection.classList.contains('active')) {
     try {
@@ -1650,20 +1715,18 @@ setInterval(async () => {
 }, 15000);
 
 // ===========================
-// SIGN OUT
-// ===========================
-signoutBtn.onclick = () => {
-  if (confirm("Are you sure you want to sign out?")) {
-    localStorage.clear();
-    window.location.href = "login.html";
-  }
-};
-
-// ===========================
 // INITIALIZATION
 // ===========================
-document.addEventListener('DOMContentLoaded', () => {
-  showSection(browseSection, browseBtn);
-  loadVehicles();
+window.addEventListener('DOMContentLoaded', function() {
+  showSection(document.getElementById('browseSection'), null);
+  showSidebar();
   loadProducts();
+  loadVehicles();
+  updateCartBadge();
+  
+  // Set profile name
+  if (currentUser) {
+    const profileName = currentUser.businessName || currentUser.firstName || 'DEALER';
+    document.getElementById('profileName').textContent = profileName.toUpperCase();
+  }
 });
