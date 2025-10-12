@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <link rel="icon" href="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh"/>
   <title>Dealer Dashboard - AgroChain</title>
   <link rel="stylesheet" href="../assets/css/dealer.css">
@@ -9,7 +10,9 @@
 <body>
   <!-- Navigation Bar -->
   <nav class="navbar">
-    <div href="./dealer.html" class="nav-left">
+    <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+    
+    <div class="nav-left">
       <img src="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh" alt="AgroChain Logo" class="logo">
       <span class="brand-name">Agro<span class="chain-text">Chain</span></span>
     </div>
@@ -39,6 +42,19 @@
       </div>
     </div>
   </nav>
+
+  <!-- Mobile Navigation Overlay -->
+  <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+  
+  <!-- Mobile Navigation Menu -->
+  <div class="mobile-nav-menu" id="mobileNavMenu">
+    <button id="mobileBrowseBtn" class="active">🌾 Browse Products</button>
+    <button id="mobileInventoryBtn">📦 Inventory</button>
+    <button id="mobileOrdersBtn">📦 My Orders</button>
+    <button id="mobileVehiclesBtn">🚗 Vehicles</button>
+    <button id="mobileRetailerOrdersBtn">🛍️ Retailer Orders</button>
+    <button id="mobileCartBtn">🛒 My Cart</button>
+  </div>
 
   <!-- Main Container -->
   <div class="main-container">
@@ -76,9 +92,6 @@
     <main class="content-area">
       <!-- Browse Products Section -->
       <section id="browseSection" class="section active">
-        <!-- <div class="section-header">
-          <h1 class="section-title">Browse Farmer Products</h1>
-        </div> -->
         <div id="browseMessage"></div>
         <div id="productsGrid" class="products-grid"></div>
       </section>
