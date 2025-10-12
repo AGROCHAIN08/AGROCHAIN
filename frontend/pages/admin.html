@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - AgroChain</title>
+  <link rel="icon" href="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh"/>
+  <link rel="stylesheet" href="../assets/css/admin.css" />
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <img src="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh" class="logo" alt="AgroChain Logo" />
+      <span class="brand-name">Agro<span class="chain-text">Chain</span></span>
+    </div>
+    <div class="nav-center">
+      <button id="analyticsTab" class="nav-btn active">📊 System Analytics</button>
+      <button id="coreTab" class="nav-btn">⚙️ User Management</button>
+      <button id="activityTab" class="nav-btn">📜 Activity Logs</button>
+    </div>
+    <div class="nav-right">
+      <span class="admin-badge">👤 Admin</span>
+      <button id="signoutBtn" class="logout-btn">🚪 Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- Main Sections -->
+  <main class="main-container">
+    <!-- System Analytics -->
+    <section id="analyticsSection" class="section active">
+      <h2>📊 System Analytics & Insights</h2>
+      
+      <!-- Quick Stats Cards -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card stat-farmers">
+          <div class="stat-icon">👨‍🌾</div>
+          <div class="stat-content">
+            <h3>Farmers</h3>
+            <p id="farmerCount" class="stat-number">0</p>
+            <span class="stat-change positive" id="farmerChange">+0% this month</span>
+          </div>
+        </div>
+        
+        <div class="stat-card stat-dealers">
+          <div class="stat-icon">🏢</div>
+          <div class="stat-content">
+            <h3>Dealers</h3>
+            <p id="dealerCount" class="stat-number">0</p>
+            <span class="stat-change positive" id="dealerChange">+0% this month</span>
+          </div>
+        </div>
+        
+        <div class="stat-card stat-retailers">
+          <div class="stat-icon">🏪</div>
+          <div class="stat-content">
+            <h3>Retailers</h3>
+            <p id="retailerCount" class="stat-number">0</p>
+            <span class="stat-change positive" id="retailerChange">+0% this month</span>
+          </div>
+        </div>
+        
+        <div class="stat-card stat-products">
+          <div class="stat-icon">📦</div>
+          <div class="stat-content">
+            <h3>Total Products</h3>
+            <p id="productCount" class="stat-number">0</p>
+            <span class="stat-label">Active Listings</span>
+          </div>
+        </div>
+        
+        <div class="stat-card stat-orders">
+          <div class="stat-icon">🛒</div>
+          <div class="stat-content">
+            <h3>Total Orders</h3>
+            <p id="orderCount" class="stat-number">0</p>
+            <span class="stat-label">All Time</span>
+          </div>
+        </div>
+        
+        <div class="stat-card stat-revenue">
+          <div class="stat-icon">💰</div>
+          <div class="stat-content">
+            <h3>Total Revenue</h3>
+            <p id="totalAmount" class="stat-number">₹0</p>
+            <span class="stat-change positive" id="revenueChange">+0% this month</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-container">
+        <div class="chart-card">
+          <h3>📈 User Distribution</h3>
+          <canvas id="userDistributionChart"></canvas>
+        </div>
+        
+        <div class="chart-card">
+          <h3>📊 Monthly Orders Trend</h3>
+          <canvas id="ordersTrendChart"></canvas>
+        </div>
+        
+        <div class="chart-card full-width">
+          <h3>💹 Revenue Analytics (Last 6 Months)</h3>
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Detailed Analytics -->
+      <div class="detailed-analytics">
+        <div class="analytics-card">
+          <h3>🎯 Platform Performance</h3>
+          <div class="performance-metrics">
+            <div class="metric-item">
+              <span class="metric-label">Active Users Today</span>
+              <span class="metric-value" id="activeUsersToday">0</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Pending Orders</span>
+              <span class="metric-value" id="pendingOrders">0</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Completed Today</span>
+              <span class="metric-value success" id="completedToday">0</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Average Order Value</span>
+              <span class="metric-value" id="avgOrderValue">₹0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <h3>🔥 Top Products by Category</h3>
+          <div id="topProducts" class="top-products-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Monitoring -->
+    <section id="coreSection" class="section">
+      <h2>⚙️ User Management & Control</h2>
+      
+      <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Search by name or email" />
+        <select id="roleFilter">
+          <option value="">All Roles</option>
+          <option value="farmer">👨‍🌾 Farmer</option>
+          <option value="dealer">🏢 Dealer</option>
+          <option value="retailer">🏪 Retailer</option>
+        </select>
+        <select id="statusFilter">
+          <option value="">All Status</option>
+          <option value="active">✅ Active</option>
+          <option value="inactive">❌ Inactive</option>
+        </select>
+        <button id="exportUsersBtn" class="export-btn">📥 Export CSV</button>
+      </div>
+
+      <div class="users-stats-summary">
+        <div class="summary-item">
+          <span>Total Users:</span>
+          <strong id="totalUsersCount">0</strong>
+        </div>
+        <div class="summary-item">
+          <span>Active:</span>
+          <strong id="activeUsersCount" class="success">0</strong>
+        </div>
+        <div class="summary-item">
+          <span>Inactive:</span>
+          <strong id="inactiveUsersCount" class="warning">0</strong>
+        </div>
+      </div>
+
+      <div id="usersTableContainer" class="table-container">
+        <p class="loading-text">Loading users...</p>
+      </div>
+    </section>
+
+    <!-- Activity Logs -->
+    <section id="activitySection" class="section">
+      <h2>📜 User Activity Logs</h2>
+      
+      <div class="filter-bar">
+        <input type="text" id="logUserFilter" placeholder="🔍 Filter by user email" />
+        <input type="date" id="logDateFilter" />
+        <select id="logActionFilter">
+          <option value="">All Actions</option>
+          <option value="login">🔐 Login</option>
+          <option value="addProduct">➕ Added Product</option>
+          <option value="orderPlaced">🛒 Order Placed</option>
+          <option value="updateProfile">✏️ Profile Update</option>
+          <option value="deleteUser">🗑️ Delete User</option>
+        </select>
+        <button id="refreshLogsBtn" class="refresh-btn">🔄 Refresh</button>
+        <button id="exportLogsBtn" class="export-btn">📥 Export Logs</button>
+      </div>
+
+      <div class="logs-stats">
+        <div class="log-stat-item">
+          <span class="log-stat-icon">📝</span>
+          <div>
+            <strong id="totalLogsCount">0</strong>
+            <span>Total Activities</span>
+          </div>
+        </div>
+        <div class="log-stat-item">
+          <span class="log-stat-icon">👤</span>
+          <div>
+            <strong id="uniqueUsersCount">0</strong>
+            <span>Unique Users</span>
+          </div>
+        </div>
+        <div class="log-stat-item">
+          <span class="log-stat-icon">🕐</span>
+          <div>
+            <strong id="todayLogsCount">0</strong>
+            <span>Today's Activities</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="logsTableContainer" class="table-container">
+        <p class="loading-text">Loading activity logs...</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="../assets/js/admin.js"></script>
+</body>
+</html>

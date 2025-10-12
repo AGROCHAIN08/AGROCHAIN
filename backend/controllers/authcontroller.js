@@ -249,49 +249,77 @@ exports.verifyGoogleToken = async (req, res) => {
 };
 
 // Verify Google token for login
+// Verify Google token for login
 exports.verifyGoogleLogin = async (req, res) => {
   try {
     const { token } = req.body;
-    
+
     if (!token) {
       return res.status(400).json({ msg: "Google token is required" });
     }
 
-    // Verify the token with Google
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-    
+
     const payload = ticket.getPayload();
-    const { email, email_verified } = payload;
-    
+    const { email, given_name, family_name, email_verified } = payload;
+
     if (!email_verified) {
       return res.status(400).json({ msg: "Google email not verified" });
     }
 
-    // Find user
+    // 🔹 Admin auto-register
+    if (email === "agrochain08@gmail.com") {
+      let adminUser = await User.findOne({ email });
+      if (!adminUser) {
+        adminUser = new User({
+          role: "admin",
+          firstName: given_name || "Admin",
+          lastName: family_name || "",
+          mobile: "0000000000",
+          email,
+          emailVerified: true,
+          googleAuth: true,
+        });
+        await adminUser.save();
+      }
+
+      return res.json({
+        msg: "Google login successful",
+        role: "admin",
+        user: {
+          id: adminUser._id,
+          email: adminUser.email,
+          firstName: adminUser.firstName,
+          role: "admin",
+        },
+      });
+    }
+
+    // 🔹 Regular users
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ msg: "Email not registered. Please signup first." });
     }
 
-    res.json({ 
-      msg: "Google login successful", 
+    res.json({
+      msg: "Google login successful",
       role: user.role,
       user: {
         id: user._id,
         email: user.email,
         firstName: user.firstName,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
-
   } catch (err) {
-    console.error('Google login error:', err);
+    console.error("Google login error:", err);
     res.status(400).json({ msg: "Invalid Google token" });
   }
 };
+
 
 // Regular signup with email OTP
 exports.signup = async (req, res) => {

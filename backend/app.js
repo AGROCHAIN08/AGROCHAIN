@@ -21,7 +21,7 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/farmer", require("./routes/farmer"));
 app.use("/api/dealer", require("./routes/dealer"));
 app.use("/api/retailer", require("./routes/retailer"));
-
+app.use("/api/admin", require("./routes/admin"));
 
 
 // Health check route
