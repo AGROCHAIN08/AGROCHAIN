@@ -23,6 +23,10 @@ const profileDropdownMenu = document.getElementById("profileDropdownMenu");
 const farmerNameDisplay = document.getElementById("farmerNameDisplay");
 const notificationBadge = document.getElementById("notificationBadge");
 
+// Mobile toggle elements
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const navLinksContainer = document.getElementById("navLinksContainer");
+
 // Sections
 const inventorySection = document.getElementById("inventorySection");
 const notificationsSection = document.getElementById("notificationsSection");
@@ -39,15 +43,32 @@ const addCropToggleBtn = document.getElementById("addCropToggleBtn");
 const profileInfo = document.getElementById("profileInfo");
 const notificationsList = document.getElementById("notificationsList");
 const farmerOrdersGrid = document.getElementById("farmerOrdersGrid");
-// markAllReadBtn is no longer needed
+
 
 // ===========================
-// NAVBAR FUNCTIONALITY
+// NAVBAR & MOBILE TOGGLE FUNCTIONALITY
 // ===========================
 
 // Update farmer name in navbar
 if (storedUser && storedUser.firstName) {
   farmerNameDisplay.textContent = storedUser.firstName;
+}
+
+// Toggle the mobile menu event listener
+if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+        navLinksContainer.classList.toggle('active');
+        // Change the hamburger icon to an X (and vice-versa)
+        menuToggleBtn.textContent = navLinksContainer.classList.contains('active') ? '✖' : '☰';
+    });
+}
+
+// Helper function to close the mobile menu
+function closeMobileMenu() {
+    if(navLinksContainer && navLinksContainer.classList.contains('active')) {
+        navLinksContainer.classList.remove('active');
+        if (menuToggleBtn) menuToggleBtn.textContent = '☰';
+    }
 }
 
 // Profile dropdown toggle
@@ -77,59 +98,51 @@ function setActiveNavLink(activeLink) {
 
 navHomeBtn.onclick = (e) => {
   e.preventDefault();
-  showSection(inventorySection);
+  showSection(inventorySection, 'inventory'); 
   setActiveNavLink(navHomeBtn);
+  closeMobileMenu();
 };
 
-// ** MODIFIED CODE BLOCK **
-// This function now handles marking notifications as read automatically.
 navNotificationBtn.onclick = async (e) => {
   e.preventDefault();
-  showSection(notificationsSection);
+  showSection(notificationsSection, 'notifications'); 
   setActiveNavLink(navNotificationBtn);
-
-  // Automatically mark notifications as read when the panel is opened
-  try {
-    const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}/mark-read`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!res.ok) {
-      console.error("Backend failed to mark notifications as read.");
-    }
-  } catch (error) {
-    console.error("Network error while marking notifications as read:", error);
-  }
-
-  // Reload notifications, which will now be read and hide the badge
-  loadNotifications();
+  closeMobileMenu();
+  
+  // Navigate to notification section and mark as read
+  markNotificationsAsRead();
 };
-// ** END OF MODIFIED CODE BLOCK **
 
 navOrdersBtn.onclick = (e) => {
   e.preventDefault();
-  showSection(ordersSection);
+  showSection(ordersSection, 'orders'); 
   setActiveNavLink(navOrdersBtn);
+  closeMobileMenu();
   loadFarmerOrders();
 };
 
 viewProfileBtn.onclick = (e) => {
   e.preventDefault();
-  showSection(profileSection);
+  showSection(profileSection, 'profile'); 
   setActiveNavLink(null);
   profileDropdownMenu.classList.remove('show');
   profileDropdownBtn.classList.remove('active');
+  closeMobileMenu();
   loadProfile();
 };
 
-function showSection(section) {
+// This function now saves the current section to localStorage
+function showSection(section, sectionName) {
   [inventorySection, notificationsSection, ordersSection, profileSection].forEach(sec => {
     sec.style.display = "none";
   });
-  section.style.display = "block";
+  
+  if (section) {
+    section.style.display = "block";
+    if (sectionName) {
+      localStorage.setItem('farmerDashboardSection', sectionName);
+    }
+  }
 }
 
 // ===========================
@@ -442,25 +455,41 @@ document.querySelectorAll('#cropForm input, #cropForm select, #cropForm textarea
 async function loadFarmerOrders() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/orders/${userEmail}`);
-    const orders = await res.json();
+    
+    const data = await res.json(); 
 
-    if (res.ok && orders.length > 0) {
+    if (!res.ok) {
+        farmerOrdersGrid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">❌</div>
+            <h3>Failed to Load Orders</h3>
+            <p>Server Error: ${data.msg || 'The server returned an unexpected error.'}</p>
+          </div>
+        `;
+        console.error("Server Error on Orders Fetch:", data);
+        return;
+    }
+    
+    const orders = data; 
+
+    if (orders && orders.length > 0) {
       farmerOrdersGrid.innerHTML = orders.map(order => createFarmerOrderCard(order)).join('');
     } else {
       farmerOrdersGrid.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">📦</div>
           <h3>No Orders Yet</h3>
-          <p>Vehicle assignments for your products will appear here</p>
+          <p>Orders assigned to you by dealers will appear here.</p>
         </div>
       `;
     }
   } catch (error) {
+    console.error("Orders Fetch Network/Parsing Error:", error);
     farmerOrdersGrid.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">⚠️</div>
         <h3>Error Loading Orders</h3>
-        <p>Please try again later</p>
+        <p>A network error occurred or the server response was unreadable. Please try refreshing.</p>
       </div>
     `;
   }
@@ -615,7 +644,14 @@ async function rejectBid(orderId) {
 async function viewFarmerReceipt(orderId) {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/orders/${userEmail}`);
-    const orders = await res.json();
+    // Check if the response is JSON before parsing
+    const contentType = res.headers.get("content-type");
+    let orders;
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        orders = await res.json();
+    } else {
+        throw new Error("Received non-JSON response from orders API.");
+    }
     
     const order = orders.find(o => o._id === orderId);
     
@@ -629,122 +665,146 @@ async function viewFarmerReceipt(orderId) {
     
     receiptContent.innerHTML = `
       <div style="text-align: center; border-bottom: 2px solid #1f2937; padding-bottom: 20px; margin-bottom: 20px;">
-        <h2 style="margin: 0; color: #1f2937;">ORDER RECEIPT</h2>
-        <p style="margin: 5px 0; color: #6b7280;">AgroChain Platform</p>
+        <h2 style="color: #4caf50;">AgroChain Sale Receipt</h2>
+        <p style="font-size: 1.2em;">Receipt No: <strong>${order.receiptNumber}</strong></p>
       </div>
       
-      <div style="margin-bottom: 20px;">
-        <p><strong>Receipt Number:</strong> ${order.receiptNumber}</p>
-        <p><strong>Date:</strong> ${new Date(order.receiptGeneratedAt).toLocaleDateString()}</p>
+      <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 20px; background-color: #f9f9f9;">
+        <h3 style="margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 15px;">Transaction Summary</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding: 8px 0;"><strong>Product:</strong></td><td style="text-align: right;">${order.productDetails.varietySpecies}</td></tr>
+          <tr><td style="padding: 8px 0;"><strong>Quantity Sold:</strong></td><td style="text-align: right;">${order.quantity} ${order.productDetails.unitOfSale}</td></tr>
+          <tr><td style="padding: 8px 0;"><strong>Price per Unit:</strong></td><td style="text-align: right;">₹${order.bidPrice || order.originalPrice}</td></tr>
+          <tr><td style="padding: 8px 0; border-top: 1px solid #ccc;"><strong>TOTAL AMOUNT:</strong></td><td style="text-align: right; border-top: 1px solid #ccc; font-size: 1.1em; font-weight: bold;">₹${order.totalAmount.toFixed(2)}</td></tr>
+        </table>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; gap: 20px;">
+        <div style="flex: 1; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background-color: #fff;">
+          <h4 style="margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #3b82f6;">Sold To (Dealer)</h4>
+          <p><strong>Name:</strong> ${order.dealerDetails.businessName || `${order.dealerDetails.firstName} ${order.dealerDetails.lastName}`}</p>
+          <p><strong>Email:</strong> ${order.dealerDetails.email}</p>
+          <p><strong>Mobile:</strong> ${order.dealerDetails.mobile}</p>
+        </div>
+        <div style="flex: 1; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background-color: #fff;">
+          <h4 style="margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #3b82f6;">Seller (Farmer)</h4>
+          <p><strong>Name:</strong> ${storedUser.firstName} ${storedUser.lastName}</p>
+          <p><strong>Email:</strong> ${storedUser.email}</p>
+          <p><strong>Mobile:</strong> ${storedUser.mobile}</p>
+        </div>
       </div>
       
-      <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-        <h3 style="margin-top: 0; color: #1f2937;">Product Details</h3>
-        <p><strong>Product:</strong> ${order.productDetails.varietySpecies}</p>
-        <p><strong>Type:</strong> ${order.productDetails.productType}</p>
-        <p><strong>Quantity:</strong> ${order.quantity} ${order.productDetails.unitOfSale}</p>
-        <p><strong>Original Price:</strong> ₹${order.originalPrice} per ${order.productDetails.unitOfSale}</p>
-        <p><strong>Agreed Price:</strong> ₹${order.bidPrice} per ${order.productDetails.unitOfSale}</p>
-        <p style="font-size: 18px; font-weight: bold; color: #059669;"><strong>Total Amount:</strong> ₹${order.totalAmount.toFixed(2)}</p>
-      </div>
-      
-      <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-        <h3 style="margin-top: 0; color: #1f2937;">Dealer Details</h3>
-        <p><strong>Name:</strong> ${order.dealerDetails.businessName || `${order.dealerDetails.firstName} ${order.dealerDetails.lastName}`}</p>
-        <p><strong>Email:</strong> ${order.dealerDetails.email}</p>
-        <p><strong>Mobile:</strong> ${order.dealerDetails.mobile}</p>
-      </div>
-      
-      <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;">
-        <h3 style="margin-top: 0; color: #1f2937;">Farmer Details</h3>
-        <p><strong>Name:</strong> ${storedUser.firstName} ${storedUser.lastName || ''}</p>
-        <p><strong>Email:</strong> ${storedUser.email}</p>
-        <p><strong>Mobile:</strong> ${storedUser.mobile}</p>
-      </div>
-      
-      <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #1f2937;">
-        <p style="color: #6b7280; font-size: 14px;">Thank you for your business!</p>
-        <p style="color: #6b7280; font-size: 12px;">This is a computer-generated receipt</p>
+      <div style="text-align: center; margin-top: 30px; font-size: 0.9em; color: #6b7280; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+        <p>This transaction was securely recorded on ${new Date(order.assignedDate).toLocaleDateString()}.</p>
       </div>
     `;
-    
     modal.style.display = 'block';
   } catch (error) {
-    alert('Error loading receipt');
+    alert("Error fetching receipt.");
+    console.error(error);
   }
+}
+
+// Function to print the contents of the modal
+function printFarmerReceipt() {
+  window.print();
 }
 
 function closeFarmerReceiptModal() {
   document.getElementById('farmerReceiptModal').style.display = 'none';
 }
 
-function printFarmerReceipt() {
-  window.print();
-}
+// ===========================
+// NOTIFICATIONS UTILITY FUNCTIONS
+// ===========================
 
-// ===========================
-// NOTIFICATIONS
-// ===========================
+// Helper function to mark notifications as read
+async function markNotificationsAsRead() {
+  try {
+    // 1. Fetch current list to populate the UI (in case new ones arrived)
+    await loadNotifications();
+    
+    // 2. Send request to mark them as read
+    const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}/mark-read`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!res.ok) {
+      console.error("Backend failed to mark notifications as read.");
+    }
+  } catch (error) {
+    console.error("Network error while marking notifications as read:", error);
+  }
+
+  // 3. Reload again to update the badge count (which should now be 0)
+  loadNotifications();
+}
 
 async function loadNotifications() {
   try {
     const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}`);
     const notifications = await res.json();
 
+    notificationsList.innerHTML = "";
+    let unreadCount = 0;
+
     if (res.ok && notifications.length > 0) {
-      const unreadCount = notifications.filter(n => !n.isRead).length;
-      updateNotificationBadge(unreadCount);
+      notifications.forEach(n => {
+        if (!n.read) {
+          unreadCount++;
+        }
+        const notificationItem = document.createElement('div');
+        notificationItem.className = `notification-item ${n.read ? 'read' : 'unread'}`;
+        
+        notificationItem.innerHTML = `
+          <div class="notification-icon">${getNotificationIcon(n.type)}</div>
+          <div class="notification-content">
+            <p class="notification-message">${n.message}</p>
+            <small class="notification-time">${formatTimeAgo(new Date(n.timestamp))}</small>
+          </div>
+        `;
+        notificationsList.appendChild(notificationItem);
+      });
       
-      notificationsList.innerHTML = notifications.map(notification => createNotificationItem(notification)).join('');
     } else {
-      updateNotificationBadge(0);
       notificationsList.innerHTML = `
-        <div style="text-align: center; color: #6b7280; padding: 60px 20px;">
-          <div style="font-size: 48px; margin-bottom: 20px;">🔔</div>
-          <h3 style="color: #1f2937; margin-bottom: 10px;">No Notifications</h3>
-          <p>You're all caught up! New notifications will appear here.</p>
+        <div class="empty-state" style="padding: 20px;">
+          <div class="empty-state-icon">🔔</div>
+          <h3>No New Notifications</h3>
+          <p>You're all caught up!</p>
         </div>
       `;
     }
+
+    notificationBadge.textContent = unreadCount;
+    notificationBadge.style.display = unreadCount > 0 ? 'block' : 'none';
+
   } catch (error) {
-    notificationsList.innerHTML = `
-      <div style="text-align: center; color: #ef4444; padding: 60px 20px;">
-        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-        <h3 style="color: #1f2937; margin-bottom: 10px;">Error Loading Notifications</h3>
-        <p>Please try again later</p>
-      </div>
-    `;
+    notificationsList.innerHTML = `<p style="color:red; padding: 20px;">Error loading notifications.</p>`;
   }
 }
 
-function updateNotificationBadge(count) {
-  if (count > 0) {
-    notificationBadge.textContent = count > 99 ? '99+' : count;
-    notificationBadge.style.display = 'block';
-  } else {
-    notificationBadge.style.display = 'none';
+function getNotificationIcon(type) {
+  switch(type) {
+    case 'OrderAssigned':
+      return '🚚';
+    case 'BidPlaced':
+      return '💰';
+    case 'BidAccepted':
+      return '✅';
+    case 'BidRejected':
+      return '❌';
+    case 'ReviewReceived':
+      return '⭐';
+    default:
+      return 'ℹ️';
   }
 }
 
-function createNotificationItem(notification) {
-  const timeAgo = getTimeAgo(new Date(notification.timestamp));
-  
-  return `
-    <div class="notification-item ${notification.isRead ? '' : 'unread'}">
-      <div class="notification-header">
-        <span class="notification-title">${notification.title}</span>
-        <span class="notification-time">${timeAgo}</span>
-      </div>
-      <div class="notification-message">${notification.message}</div>
-      <div class="notification-details">
-        <strong>Vehicle:</strong> ${notification.orderDetails.vehicleId}<br>
-        <strong>Dealer Contact:</strong> ${notification.orderDetails.dealerContact}
-      </div>
-    </div>
-  `;
-}
-
-function getTimeAgo(date) {
+function formatTimeAgo(date) {
   const now = new Date();
   const diffTime = Math.abs(now - date);
   const diffMinutes = Math.ceil(diffTime / (1000 * 60));
@@ -757,8 +817,6 @@ function getTimeAgo(date) {
   if (diffDays < 7) return `${diffDays} days ago`;
   return date.toLocaleDateString();
 }
-
-// ** REMOVED "Mark all as read" button logic **
 
 // ===========================
 // SIGN OUT
@@ -776,17 +834,43 @@ navSignoutBtn.onclick = (e) => {
 // INITIALIZATION & AUTO-REFRESH
 // ===========================
 document.addEventListener('DOMContentLoaded', () => {
-  showSection(inventorySection);
-  setActiveNavLink(navHomeBtn);
-  loadProfile();
-  loadCrops();
-  loadNotifications(); // Load initial notification count
+  const lastSectionName = localStorage.getItem('farmerDashboardSection');
+  let activeSection;
+  let activeNavButton;
+
+  // 1. Determine which section to show based on localStorage
+  switch (lastSectionName) {
+    case 'orders':
+      activeSection = ordersSection;
+      activeNavButton = navOrdersBtn;
+      loadFarmerOrders(); 
+      break;
+    case 'notifications':
+      activeSection = notificationsSection;
+      activeNavButton = navNotificationBtn;
+      // Load and then mark as read if it was the last viewed section on refresh
+      markNotificationsAsRead(); 
+      break;
+    case 'profile':
+      activeSection = profileSection;
+      activeNavButton = null; 
+      loadProfile();
+      break;
+    case 'inventory':
+    default:
+      activeSection = inventorySection;
+      activeNavButton = navHomeBtn;
+      loadCrops();
+      break;
+  }
   
-  // Auto-refresh notifications every 30 seconds
-  setInterval(() => {
-    // Only refresh if the notification section isn't currently displayed
-    if (notificationsSection.style.display === "none") {
-      loadNotifications();
-    }
-  }, 30000);
+  // 2. Show the determined section and set the active state
+  showSection(activeSection, lastSectionName || 'inventory');
+  setActiveNavLink(activeNavButton);
+
+  // 3. Load general data and set up refresh
+  // This ensures the badge count is always current, regardless of the active tab
+  loadNotifications();
+  // Set up auto-refresh for notifications (e.g., every 60 seconds)
+  setInterval(loadNotifications, 60000); 
 });

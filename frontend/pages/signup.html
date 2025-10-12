@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh"/>
   <title>AgroChain Signup</title>
   <link rel="stylesheet" href="../assets/css/signup.css">
@@ -13,17 +14,29 @@
         <img src="https://ik.imagekit.io/a2wpi1kd9/imgToUrl/image-to-url_ThyEiMVLh" alt="AgroChain Logo" class="logo">
         <span class="brand-name">Agro<span class="chain-text">Chain</span></span>
     </div>
-    <div class="nav-center">
-        <a href="home.html" class="nav-link">Home</a>
-        <a href="about.html" class="nav-link">About</a>
-        <a href="home.html#features" class="nav-link">Features</a>
-        <a href="home.html#roles" class="nav-link">User Roles</a>
-    </div>
-    <div class="nav-right">
-        <a href="login.html"><button class="btn">Log In</button></a>
-        <a href="signup.html"><button class="btn btn-signup">Sign Up</button></a>
+    
+    <!-- Hamburger Menu Toggle Button -->
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+      <span class="hamburger"></span>
+      <span class="hamburger"></span>
+      <span class="hamburger"></span>
+    </button>
+
+    <!-- Navigation Menu -->
+    <div class="nav-menu" id="navMenu">
+      <div class="nav-center">
+          <a href="home.html" class="nav-link">Home</a>
+          <a href="about.html" class="nav-link">About</a>
+          <a href="home.html#features" class="nav-link">Features</a>
+          <a href="home.html#roles" class="nav-link">User Roles</a>
+      </div>
+      <div class="nav-right">
+          <a href="login.html"><button class="btn">Log In</button></a>
+          <a href="signup.html"><button class="btn btn-signup">Sign Up</button></a>
+      </div>
     </div>
   </nav>
+
   <div class="signup-container">
     <h2 class="form-title">Sign up to AgroChain</h2>
     <ul class="stepper">
@@ -40,7 +53,6 @@
 
         <label>Last Name</label>
         <input type="text" id="lastName" name="lastName">
-
 
         <label>Mobile <span class="required">*</span></label>
         <input type="text" id="mobile" name="mobile" required>
@@ -130,8 +142,7 @@
                   <h4 class="role-title">Dealer</h4>
                   <p class="role-subtitle">This account type can manage</p>
                   <ul class="role-features">
-                     <p>Your hub for trade. Manage stock, contracts, and logistics for multiple growers, ensuring commodities move efficiently to the wider market.
-</p> 
+                     <p>Your hub for trade. Manage stock, contracts, and logistics for multiple growers, ensuring commodities move efficiently to the wider market.</p> 
                   </ul>
               </div>
 
@@ -153,6 +164,7 @@
             <button type="button" id="next3" disabled>Continue</button>
           </div>
       </div>
+      
       <div class="form-step" id="step4">
         <div id="farmerFields" style="display:none">
           <label>Aadhaar (12 digits) <span class="required">*</span></label>
@@ -167,7 +179,7 @@
           <label>Longitude</label>
           <input type="text" id="longitude" name="longitude" readonly>
 
-          <button type="button" id="getLocationBtn" class="otp-btn">﨟樊｡Get Geotag Location</button>
+          <button type="button" id="getLocationBtn" class="otp-btn">📍 Get Geotag Location</button>
 
           <label>Farm Size <span class="required">*</span></label>
           <input type="text" id="farmSize" name="farmSize" placeholder="e.g. 5 acres">
@@ -206,5 +218,32 @@
   </div>
 
   <script src="../assets/js/signup.js"></script>
+  <script>
+    // Mobile Menu Toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const navMenu = document.getElementById('navMenu');
+
+    menuToggle.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+      menuToggle.classList.toggle('active');
+    });
+
+    // Close menu when clicking on a link
+    const navLinks = document.querySelectorAll('.nav-link, .nav-right a');
+    navLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        navMenu.classList.remove('active');
+        menuToggle.classList.remove('active');
+      });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!navMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+        navMenu.classList.remove('active');
+        menuToggle.classList.remove('active');
+      }
+    });
+  </script>
 </body>
 </html>
