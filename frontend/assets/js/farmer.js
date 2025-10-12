@@ -47,6 +47,8 @@ const farmerOrdersGrid = document.getElementById("farmerOrdersGrid");
 // Store current crops for reference
 let allCrops = [];
 let editingCropId = null;
+let isLoadingProducts = false;
+let isSubmittingForm = false;
 
 
 // ===========================
@@ -241,7 +243,23 @@ document.getElementById("editProfileForm").addEventListener("submit", async (e) 
 // ===========================
 
 async function loadCrops() {
+  // Prevent multiple concurrent requests
+  if (isLoadingProducts) {
+    console.log('Products already loading, skipping...');
+    return;
+  }
+
+  isLoadingProducts = true;
+  const addBtn = document.getElementById('addCropToggleBtn');
+  const originalBtnText = addBtn.textContent;
+  
   try {
+    // Show loading state
+    addBtn.disabled = true;
+    addBtn.textContent = '⏳ Loading products... Please wait';
+    addBtn.style.opacity = '0.6';
+    addBtn.style.cursor = 'not-allowed';
+
     const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}`);
     const crops = await res.json();
 
@@ -274,7 +292,8 @@ async function loadCrops() {
         </div>
       `;
     }
-  } catch {
+  } catch (error) {
+    console.error('Error loading crops:', error);
     productsGrid.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">⚠️</div>
@@ -282,29 +301,50 @@ async function loadCrops() {
         <p>Please check your connection and try again</p>
       </div>
     `;
+  } finally {
+    // Reset button state
+    isLoadingProducts = false;
+    addBtn.disabled = false;
+    addBtn.textContent = originalBtnText;
+    addBtn.style.opacity = '1';
+    addBtn.style.cursor = 'pointer';
   }
 }
 
 cropForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   
-  cropError.textContent = "";
-  successMsg.textContent = "";
-
-  const formData = new FormData();
-  formData.append("productType", document.getElementById("productType").value);
-  formData.append("varietySpecies", document.getElementById("varietySpecies").value);
-  formData.append("harvestQuantity", document.getElementById("harvestQuantity").value);
-  formData.append("unitOfSale", document.getElementById("unitOfSale").value);
-  formData.append("targetPrice", document.getElementById("targetPrice").value);
-  
-  // Only append image if it's a new upload
-  const imageInput = document.getElementById("image");
-  if (imageInput.files[0]) {
-    formData.append("image", imageInput.files[0]);
+  if (isSubmittingForm) {
+    console.log('Form already submitting, please wait...');
+    return;
   }
 
+  isSubmittingForm = true;
+  const submitBtn = cropForm.querySelector("button[type='submit']");
+  const originalSubmitText = submitBtn.textContent;
+  
   try {
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Submitting... Please wait';
+    submitBtn.style.opacity = '0.6';
+    submitBtn.style.cursor = 'not-allowed';
+
+    cropError.textContent = "";
+    successMsg.textContent = "";
+
+    const formData = new FormData();
+    formData.append("productType", document.getElementById("productType").value);
+    formData.append("varietySpecies", document.getElementById("varietySpecies").value);
+    formData.append("harvestQuantity", document.getElementById("harvestQuantity").value);
+    formData.append("unitOfSale", document.getElementById("unitOfSale").value);
+    formData.append("targetPrice", document.getElementById("targetPrice").value);
+    
+    // Only append image if it's a new upload
+    const imageInput = document.getElementById("image");
+    if (imageInput.files[0]) {
+      formData.append("image", imageInput.files[0]);
+    }
+
     const endpoint = editingCropId 
       ? `http://localhost:3000/api/farmer/crops/${userEmail}/${editingCropId}`
       : `http://localhost:3000/api/farmer/crops/${userEmail}`;
@@ -335,6 +375,13 @@ cropForm.addEventListener("submit", async (e) => {
     }
   } catch (err) {
     cropError.textContent = "Network error. Please try again.";
+    console.error('Form submission error:', err);
+  } finally {
+    isSubmittingForm = false;
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalSubmitText;
+    submitBtn.style.opacity = '1';
+    submitBtn.style.cursor = 'pointer';
   }
 });
 
@@ -484,7 +531,12 @@ async function deleteCrop(cropId) {
   }
 }
 
-addCropToggleBtn.onclick = () => {
+addCropToggleBtn.onclick = function() {
+  if (isLoadingProducts) {
+    alert('⏳ Products are still loading. Please wait...');
+    return;
+  }
+  
   const isHidden = cropForm.style.display === "none";
   cropForm.style.display = isHidden ? "block" : "none";
   addCropToggleBtn.textContent = isHidden ? "Cancel" : "+ Add New Product";
