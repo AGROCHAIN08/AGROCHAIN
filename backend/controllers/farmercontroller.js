@@ -431,49 +431,81 @@ exports.getFarmerNotifications = async (req, res) => {
   try {
     const farmerEmail = req.params.email;
     
-    const recentOrders = await Order.find({ 
-      farmerEmail: farmerEmail,
-      assignedDate: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
-    }).sort({ assignedDate: -1 });
+    const farmer = await User.findOne({ 
+      email: farmerEmail, 
+      role: "farmer" 
+    });
 
-    const notifications = [];
-
-    for (let order of recentOrders) {
-      const dealer = await User.findOne({ email: order.dealerEmail, role: "dealer" });
-      const farmer = await User.findOne({ email: order.farmerEmail, role: "farmer" });
-      const vehicle = dealer?.vehicles.id(order.vehicleId);
-      
-      let product = null;
-      if (farmer && farmer.crops) {
-        farmer.crops.forEach(crop => {
-          if (crop._id.toString() === order.productId.toString()) {
-            product = crop;
-          }
-        });
-      }
-
-      if (dealer && vehicle && product) {
-        notifications.push({
-          id: order._id,
-          type: 'vehicle_assigned',
-          title: 'Vehicle Assigned to Your Product',
-          message: `${dealer.businessName || dealer.firstName} has assigned vehicle ${vehicle.vehicleId} to collect ${order.quantity} ${product.unitOfSale} of your ${product.varietySpecies}`,
-          timestamp: order.assignedDate,
-          isRead: false,
-          orderDetails: {
-            productName: product.varietySpecies,
-            quantity: order.quantity,
-            vehicleId: vehicle.vehicleId,
-            dealerName: dealer.businessName || `${dealer.firstName} ${dealer.lastName}`,
-            dealerContact: dealer.mobile
-          }
-        });
-      }
+    if (!farmer) {
+      return res.status(404).json({ msg: "Farmer not found" });
     }
 
-    res.json(notifications);
+    // Get notifications from farmer's notifications array
+    const notifications = farmer.notifications || [];
+
+    // Sort by creation date (newest first)
+    notifications.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+    // Map notifications to include read status
+    const formattedNotifications = notifications.map(n => ({
+      id: n._id,
+      type: n.type || 'vehicle_assigned',
+      title: n.title || 'Notification',
+      message: n.message,
+      timestamp: n.createdAt,
+      read: n.read || false,
+      dealerDetails: n.dealerDetails,
+      productDetails: n.productDetails
+    }));
+
+    res.json(formattedNotifications);
+
   } catch (err) {
     console.error("Error fetching farmer notifications:", err);
     res.status(500).json({ msg: "Error fetching notifications" });
+  }
+};
+
+// Mark Notifications as Read
+exports.markNotificationsAsRead = async (req, res) => {
+  try {
+    const farmerEmail = req.params.email;
+
+    const farmer = await User.findOne({ 
+      email: farmerEmail, 
+      role: "farmer" 
+    });
+
+    if (!farmer) {
+      return res.status(404).json({ msg: "Farmer not found" });
+    }
+
+    if (!farmer.notifications || farmer.notifications.length === 0) {
+      return res.json({ msg: "No notifications to mark as read", updated: 0 });
+    }
+
+    // Mark all unread notifications as read
+    let updatedCount = 0;
+    farmer.notifications.forEach(notification => {
+      if (!notification.read) {
+        notification.read = true;
+        updatedCount++;
+      }
+    });
+
+    if (updatedCount > 0) {
+      await farmer.save();
+      console.log(`✅ Marked ${updatedCount} notifications as read for ${farmerEmail}`);
+    }
+
+    res.json({ 
+      msg: "Notifications marked as read",
+      updated: updatedCount,
+      totalNotifications: farmer.notifications.length
+    });
+
+  } catch (err) {
+    console.error("Error marking notifications as read:", err);
+    res.status(500).json({ msg: "Error marking notifications as read" });
   }
 };

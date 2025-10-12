@@ -876,6 +876,11 @@ async function loadNotifications() {
             <p class="notification-message">${n.message}</p>
             <small class="notification-time">${formatTimeAgo(new Date(n.timestamp))}</small>
           </div>
+          ${!n.read ? `
+            <button class="notification-mark-read-btn" onclick="markSingleNotificationAsRead(this)" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap; margin-left: 10px;">
+              ✓ Mark Read
+            </button>
+          ` : ''}
         `;
         notificationsList.appendChild(notificationItem);
       });
@@ -895,6 +900,35 @@ async function loadNotifications() {
 
   } catch (error) {
     notificationsList.innerHTML = `<p style="color:red; padding: 20px;">Error loading notifications.</p>`;
+  }
+}
+
+// Function to mark a single notification as read
+async function markSingleNotificationAsRead(button) {
+  try {
+    // Disable button while processing
+    button.disabled = true;
+    button.textContent = '⏳ Marking...';
+    
+    const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}/mark-read`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (res.ok) {
+      // Reload notifications to update the UI
+      loadNotifications();
+    } else {
+      button.disabled = false;
+      button.textContent = '✓ Mark Read';
+      console.error("Failed to mark notification as read");
+    }
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = '✓ Mark Read';
+    console.error("Error marking notification as read:", error);
   }
 }
 
