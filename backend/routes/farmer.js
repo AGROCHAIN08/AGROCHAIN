@@ -1,6 +1,10 @@
+// ===========================
+// IN routes/farmer.js
+// ===========================
+
 const express = require("express");
 const router = express.Router();
-const { upload } = require("../config/cloudinary"); // Cloudinary upload middleware
+const { upload } = require("../config/cloudinary");
 const { 
   getFarmerProfile, 
   updateFarmerProfile, 
@@ -11,30 +15,32 @@ const {
   getFarmerOrders,
   getFarmerNotifications,
   acceptBid, 
-  rejectBid
+  rejectBid,
+  markNotificationsAsRead  // ADD THIS
 } = require("../controllers/farmercontroller");
 
 // ===========================
 // PROFILE ROUTES
 // ===========================
-router.get("/profile/:email", getFarmerProfile);       // Get farmer profile
-router.put("/profile/:email", updateFarmerProfile);    // Update farmer profile
+router.get("/profile/:email", getFarmerProfile);
+router.put("/profile/:email", updateFarmerProfile);
 
 // ===========================
 // CROP/PRODUCT MANAGEMENT ROUTES
 // ===========================
-router.post("/crops/:email", upload.single("image"), addCrop);        // Add new product
-router.get("/crops/:email", getCrops);                                 // Get all products
-router.put("/crops/:email/:id", upload.single("image"), updateCrop);  // Update product
-router.delete("/crops/:email/:id", deleteCrop);                        // Delete product
+router.post("/crops/:email", upload.single("image"), addCrop);
+router.get("/crops/:email", getCrops);
+router.put("/crops/:email/:id", upload.single("image"), updateCrop);
+router.delete("/crops/:email/:id", deleteCrop);
 
 // ===========================
 // ORDER AND NOTIFICATION ROUTES
 // ===========================
-router.get("/orders/:email", getFarmerOrders);              // Get farmer orders
-router.get("/notifications/:email", getFarmerNotifications); // Get farmer notifications
+router.get("/orders/:email", getFarmerOrders);
+router.get("/notifications/:email", getFarmerNotifications);
+router.post("/notifications/:email/mark-read", markNotificationsAsRead);  // ADD THIS LINE
 
-router.post("/accept-bid/:email", acceptBid);      // Accept bid
-router.post("/reject-bid/:email", rejectBid);      // Reject bid
+router.post("/accept-bid/:email", acceptBid);
+router.post("/reject-bid/:email", rejectBid);
 
 module.exports = router;

@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 // ===========================
 const userSchema = new mongoose.Schema({
   // Common fields for all users
-  role: { type: String, enum: ["farmer", "dealer", "retailer"], required: true },
+  role: { type: String, enum: ["farmer", "dealer", "retailer","admin"], required: true },
   firstName: { type: String, required: true },
   lastName: { type: String },
   mobile: { type: String, required: true },

@@ -13,7 +13,7 @@ body {
 }
 
 /* ===========================
-   DEALER NAVBAR (MATCHES FARMER STYLE)
+   DEALER NAVBAR
    =========================== */
 .navbar {
   display: flex;
@@ -218,6 +218,72 @@ body {
   margin: 5px 0;
 }
 
+/* Mobile Menu Button */
+.mobile-menu-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 1.8em;
+  color: #333;
+  cursor: pointer;
+  padding: 5px;
+}
+
+/* Mobile Navigation Overlay */
+.mobile-nav-overlay {
+  display: none;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.mobile-nav-overlay.show {
+  display: block;
+}
+
+.mobile-nav-menu {
+  display: none;
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: calc(100vh - 70px);
+  overflow-y: auto;
+}
+
+.mobile-nav-menu.show {
+  display: block;
+}
+
+.mobile-nav-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: white;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  color: #333;
+  font-size: 1em;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.mobile-nav-menu button:hover,
+.mobile-nav-menu button.active {
+  background-color: #e8f5e9;
+  color: #2e8b57;
+}
 
 /* ===========================
    MAIN LAYOUT
@@ -547,10 +613,12 @@ body {
   height: 100px;
   border-radius: 8px;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .order-info {
   flex: 1;
+  min-width: 0;
 }
 
 .order-info h4 {
@@ -570,6 +638,7 @@ body {
   flex-direction: column;
   gap: 8px;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .btn-assign {
@@ -799,10 +868,12 @@ body {
 .inventory-actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .btn-reduce {
   flex: 1;
+  min-width: 120px;
   background: #f59e0b;
   color: white;
   padding: 10px;
@@ -820,6 +891,7 @@ body {
 
 .btn-remove-inventory {
   flex: 1;
+  min-width: 120px;
   background: #ef4444;
   color: white;
   padding: 10px;
@@ -1106,34 +1178,15 @@ body {
 }
 
 /* ===========================
-   RESPONSIVE DESIGN
+   RESPONSIVE DESIGN - TABLET
    =========================== */
 @media (max-width: 1200px) {
   .sidebar-filters {
     width: 250px;
   }
   
-  .content-area {
+  .sidebar-visible .content-area {
     margin-left: 250px;
-  }
-}
-
-@media (max-width: 992px) {
-  .navbar-center {
-    display: none;
-  }
-  
-  .sidebar-filters {
-    transform: translateX(-100%);
-    transition: transform 0.3s;
-  }
-  
-  .sidebar-filters.show {
-    transform: translateX(0);
-  }
-  
-  .content-area {
-    margin-left: 0;
   }
   
   .products-grid,
@@ -1144,38 +1197,646 @@ body {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .navbar {
-    padding: 12px 15px;
+    padding: 12px 20px;
   }
   
-  .navbar-brand {
-    font-size: 18px;
+  .navbar-center {
+    display: none;
+  }
+  
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .sidebar-filters {
+    position: fixed;
+    left: -280px;
+    transition: left 0.3s ease;
+    z-index: 998;
+  }
+  
+  .sidebar-filters.show {
+    left: 0;
   }
   
   .content-area {
-    padding: 20px 15px;
+    margin-left: 0 !important;
+    padding: 20px;
   }
   
   .section-title {
-    font-size: 22px;
+    font-size: 24px;
+  }
+  
+  .inventory-stats {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .stat-value {
+    font-size: 28px;
   }
 }
 
+/* ===========================
+   RESPONSIVE DESIGN - MOBILE
+   =========================== */
+@media (max-width: 768px) {
+  /* Navbar adjustments */
+  .navbar {
+    padding: 10px 15px;
+    height: 60px;
+  }
+  
+  .logo {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .brand-name {
+    font-size: 1.3em;
+  }
+  
+  .nav-left {
+    gap: 8px;
+  }
+  
+  .navbar-right {
+    gap: 8px;
+  }
+  
+  .cart-btn {
+    padding: 6px 10px;
+    font-size: 1.1em;
+  }
+  
+  .profile-btn {
+    padding: 6px 12px;
+    font-size: 0.85em;
+  }
+  
+  .profile-btn span {
+    display: none;
+  }
+  
+  .profile-btn::before {
+    content: "👤";
+    font-size: 1.2em;
+  }
+  
+  /* Main container */
+  .main-container {
+    margin-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
+  
+  .sidebar-filters {
+    width: 280px;
+    height: calc(100vh - 60px);
+    padding: 20px;
+  }
+  
+  .content-area {
+    padding: 15px;
+  }
+  
+  .section-header {
+    margin-bottom: 20px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+  }
+  
+  /* Products grid */
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .product-card {
+    border-radius: 10px;
+  }
+  
+  .product-image {
+    height: 180px;
+  }
+  
+  .product-content {
+    padding: 15px;
+  }
+  
+  .product-title h3 {
+    font-size: 16px;
+  }
+  
+  .product-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .btn-secondary {
+    width: 100%;
+  }
+  
+  .order-now-box {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .order-now-box input {
+    width: 100%;
+  }
+  
+  /* Orders and cart */
+  .orders-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .order-item {
+    flex-direction: column;
+    padding: 15px;
+  }
+  
+  .order-image {
+    width: 100%;
+    height: 180px;
+    margin-bottom: 10px;
+  }
+  
+  .order-actions {
+    flex-direction: column;
+    width: 100%;
+    margin-top: 10px;
+  }
+  
+  .order-actions button {
+    width: 100%;
+  }
+  
+  /* Inventory */
+  .inventory-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .stat-card {
+    padding: 15px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .inventory-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .inventory-card-header {
+    height: 160px;
+  }
+  
+  .inventory-content {
+    padding: 15px;
+  }
+  
+  .inventory-content h3 {
+    font-size: 16px;
+  }
+  
+  .inventory-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .inventory-actions button {
+    width: 100%;
+    min-width: unset;
+  }
+  
+  /* Vehicles */
+  .vehicle-form {
+    padding: 15px;
+  }
+  
+  .vehicle-form h3 {
+    font-size: 16px;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .vehicles-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .vehicle-card {
+    padding: 15px;
+  }
+  
+  /* Filters sidebar */
+  .filter-group label {
+    font-size: 13px;
+  }
+  
+  .filter-group select,
+  .filter-group input {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .apply-filters-btn {
+    padding: 10px;
+    font-size: 13px;
+  }
+  
+  /* Profile */
+  #profileInfo {
+    padding: 15px;
+  }
+  
+  .product-detail-item {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  
+  .product-detail-label,
+  .product-detail-value {
+    font-size: 13px;
+  }
+  
+  /* Modals */
+  .modal-content {
+    margin: 10% 15px;
+    padding: 20px;
+    max-width: calc(100% - 30px);
+  }
+  
+  .modal-content h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+  
+  .modal-content label {
+    font-size: 13px;
+    margin-top: 12px;
+  }
+  
+  .modal-content select,
+  .modal-content input,
+  .modal-content textarea {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .close {
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+  }
+  
+  /* Empty states */
+  .empty-state {
+    padding: 40px 15px;
+  }
+  
+  .empty-icon {
+    font-size: 48px;
+  }
+  
+  .empty-state h3 {
+    font-size: 18px;
+  }
+  
+  .empty-state p {
+    font-size: 13px;
+  }
+  
+  /* Profile dropdown */
+  .profile-menu {
+    right: 0;
+    min-width: 180px;
+  }
+  
+  .profile-menu button {
+    padding: 10px 14px;
+    font-size: 0.9em;
+  }
+  
+  /* Mobile nav menu */
+  .mobile-nav-menu {
+    top: 60px;
+    max-height: calc(100vh - 60px);
+  }
+  
+  .mobile-nav-overlay {
+    top: 60px;
+  }
+}
+
+/* ===========================
+   RESPONSIVE DESIGN - SMALL MOBILE
+   =========================== */
+@media (max-width: 480px) {
+  .navbar {
+    padding: 8px 12px;
+    height: 55px;
+  }
+  
+  .logo {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .brand-name {
+    font-size: 1.1em;
+  }
+  
+  .cart-btn {
+    padding: 5px 8px;
+    font-size: 1em;
+  }
+  
+  .cart-badge {
+    width: 16px;
+    height: 16px;
+    font-size: 0.65em;
+  }
+  
+  .profile-btn {
+    padding: 5px 10px;
+  }
+  
+  .main-container {
+    margin-top: 55px;
+    min-height: calc(100vh - 55px);
+  }
+  
+  .sidebar-filters {
+    width: 260px;
+    height: calc(100vh - 55px);
+    padding: 15px;
+  }
+  
+  .sidebar-filters h3 {
+    font-size: 16px;
+  }
+  
+  .content-area {
+    padding: 12px;
+  }
+  
+  .section-title {
+    font-size: 18px;
+  }
+  
+  .product-card,
+  .order-item,
+  .inventory-card,
+  .vehicle-card {
+    border-radius: 8px;
+  }
+  
+  .product-image,
+  .order-image {
+    height: 150px;
+  }
+  
+  .product-content,
+  .inventory-content {
+    padding: 12px;
+  }
+  
+  .product-title h3,
+  .inventory-content h3 {
+    font-size: 15px;
+  }
+  
+  .product-type,
+  .inventory-type {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+  
+  .product-details,
+  .inventory-details {
+    padding: 12px;
+  }
+  
+  .product-detail-item,
+  .inventory-detail-row {
+    font-size: 12px;
+  }
+  
+  .btn-primary,
+  .btn-secondary,
+  .btn-assign,
+  .btn-review,
+  .btn-bid,
+  .btn-receipt,
+  .btn-remove,
+  .btn-reduce,
+  .btn-remove-inventory,
+  .btn-free,
+  .btn-delete {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .vehicle-form,
+  #profileInfo {
+    padding: 12px;
+  }
+  
+  .modal-content {
+    margin: 5% 10px;
+    padding: 15px;
+    max-width: calc(100% - 20px);
+  }
+  
+  .modal-content h3 {
+    font-size: 16px;
+  }
+  
+  .empty-state {
+    padding: 30px 10px;
+  }
+  
+  .empty-icon {
+    font-size: 40px;
+  }
+  
+  .empty-state h3 {
+    font-size: 16px;
+  }
+  
+  .mobile-nav-menu {
+    top: 55px;
+    max-height: calc(100vh - 55px);
+  }
+  
+  .mobile-nav-overlay {
+    top: 55px;
+  }
+  
+  .mobile-nav-menu button {
+    padding: 14px 15px;
+    font-size: 0.95em;
+  }
+}
+
+/* ===========================
+   LANDSCAPE ORIENTATION
+   =========================== */
+@media (max-width: 768px) and (orientation: landscape) {
+  .navbar {
+    height: 50px;
+  }
+  
+  .main-container {
+    margin-top: 50px;
+  }
+  
+  .sidebar-filters {
+    height: calc(100vh - 50px);
+  }
+  
+  .product-image,
+  .order-image {
+    height: 120px;
+  }
+  
+  .inventory-card-header {
+    height: 120px;
+  }
+  
+  .mobile-nav-menu,
+  .mobile-nav-overlay {
+    top: 50px;
+    max-height: calc(100vh - 50px);
+  }
+}
+
+/* ===========================
+   PRINT STYLES
+   =========================== */
 @media print {
   body * {
     visibility: hidden;
   }
-  #receiptContent, #receiptContent * {
+  
+  #receiptContent,
+  #receiptContent * {
     visibility: visible;
   }
+  
   #receiptContent {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
   }
+  
   .modal-content button {
     display: none !important;
+  }
+  
+  .navbar,
+  .sidebar-filters,
+  .mobile-menu-btn {
+    display: none !important;
+  }
+}
+
+/* ===========================
+   UTILITY CLASSES
+   =========================== */
+.text-center {
+  text-align: center;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+.mt-15 {
+  margin-top: 15px;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+.mb-10 {
+  margin-bottom: 10px;
+}
+
+.mb-15 {
+  margin-bottom: 15px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.p-10 {
+  padding: 10px;
+}
+
+.p-15 {
+  padding: 15px;
+}
+
+.p-20 {
+  padding: 20px;
+}
+
+/* ===========================
+   TOUCH IMPROVEMENTS
+   =========================== */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  button,
+  .btn-primary,
+  .btn-secondary,
+  .btn-assign,
+  .btn-review,
+  .btn-bid,
+  .btn-receipt,
+  .btn-remove,
+  .cart-btn,
+  .profile-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Remove hover effects on touch devices */
+  .product-card:hover,
+  .inventory-card:hover,
+  .vehicle-card:hover {
+    transform: none;
+  }
+  
+  /* Better touch feedback */
+  button:active,
+  .btn-primary:active,
+  .btn-secondary:active {
+    transform: scale(0.98);
   }
 }

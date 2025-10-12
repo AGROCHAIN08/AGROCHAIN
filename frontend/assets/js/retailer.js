@@ -456,8 +456,30 @@ async function confirmPayment() {
 }
 
 // ===========================
-// REVIEW SYSTEM
+// REVIEW SYSTEM (UPGRADED)
 // ===========================
+
+// --- New Star Rating Logic ---
+const reviewModal = document.getElementById('reviewModal');
+const reviewForm = document.getElementById('reviewForm');
+const reviewRatingContainer = document.getElementById('reviewRatingContainer');
+const stars = reviewRatingContainer.querySelectorAll('.star');
+const reviewRatingInput = document.getElementById('reviewRating');
+
+// Add click listeners to stars to handle selection
+stars.forEach(star => {
+  star.addEventListener('click', () => {
+    const value = star.getAttribute('data-value');
+    reviewRatingInput.value = value;
+    
+    // Remove 'selected' from all stars first
+    stars.forEach(s => s.classList.remove('selected'));
+    
+    // Add 'selected' class to the clicked star.
+    // The CSS sibling selector (~) will handle highlighting the previous stars
+    star.classList.add('selected');
+  });
+});
 
 function openReviewModal(orderId) {
     currentReviewOrderId = orderId;
@@ -469,29 +491,33 @@ function openReviewModal(orderId) {
     }
     
     document.getElementById('reviewModalTitle').textContent = `Review Order from ${order.dealerInfo.businessName}`;
-    document.getElementById('reviewModal').style.display = 'block';
+    reviewModal.style.display = 'block';
 }
 
 function closeReviewModal() {
-    document.getElementById('reviewModal').style.display = 'none';
-    document.getElementById('reviewForm').reset();
+    reviewModal.style.display = 'none';
+    reviewForm.reset();
     currentReviewOrderId = null;
+    
+    // Also reset the hidden input and the visual state of the stars
+    reviewRatingInput.value = '';
+    stars.forEach(s => s.classList.remove('selected'));
 }
 
-document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+reviewForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const quality = document.getElementById('reviewQuality').value;
     const comments = document.getElementById('reviewComments').value;
-    const rating = parseInt(document.getElementById('reviewRating').value);
+    const rating = reviewRatingInput.value; // Get rating from the hidden input
     
-    if (!quality || !comments || !rating) {
-        alert('Please complete all fields');
+    if (!quality || !comments) {
+        alert('Please complete all fields.');
         return;
     }
     
-    if (rating < 1 || rating > 5) {
-        alert('Rating must be between 1 and 5');
+    if (!rating) {
+        alert('Please select a star rating before submitting.');
         return;
     }
     
@@ -504,7 +530,7 @@ document.getElementById('reviewForm').addEventListener('submit', async (e) => {
                 retailerEmail: currentUser.email,
                 quality,
                 comments,
-                rating
+                rating: parseInt(rating, 10) // Ensure rating is a number
             })
         });
         
@@ -520,7 +546,7 @@ document.getElementById('reviewForm').addEventListener('submit', async (e) => {
                 order.reviewSubmitted = true;
             }
             
-            // Refresh both views to show updated reviews
+            // Refresh both views to show updated reviews and status
             displayOrders();
             loadInventory();
         } else {
@@ -531,6 +557,7 @@ document.getElementById('reviewForm').addEventListener('submit', async (e) => {
         alert('Network error. Please try again.');
     }
 });
+
 
 // ===========================
 // VIEW REVIEWS MODAL (Add this to BOTH dealer.js and retailer.js)

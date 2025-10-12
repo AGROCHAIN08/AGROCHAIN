@@ -22,6 +22,84 @@ if (!currentUser || currentUser.role !== 'dealer') {
   window.location.href = "login.html";
 }
 
+// ===========================
+// MOBILE MENU TOGGLE
+// ===========================
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileNavMenu = document.getElementById('mobileNavMenu');
+const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+
+mobileMenuBtn.addEventListener('click', function(e) {
+  e.stopPropagation();
+  mobileNavMenu.classList.toggle('show');
+  mobileNavOverlay.classList.toggle('show');
+});
+
+mobileNavOverlay.addEventListener('click', function() {
+  closeMobileMenu();
+});
+
+function closeMobileMenu() {
+  mobileNavMenu.classList.remove('show');
+  mobileNavOverlay.classList.remove('show');
+}
+
+// Mobile navigation handlers
+document.getElementById('mobileBrowseBtn').addEventListener('click', function() {
+  showSection(document.getElementById('browseSection'), this);
+  showSidebar();
+  updateMobileNavButtons(this);
+  loadProducts();
+  closeMobileMenu();
+});
+
+document.getElementById('mobileInventoryBtn').addEventListener('click', function() {
+  showSection(document.getElementById('inventorySection'), this);
+  hideSidebar();
+  updateMobileNavButtons(this);
+  loadInventory();
+  closeMobileMenu();
+});
+
+document.getElementById('mobileOrdersBtn').addEventListener('click', function() {
+  showSection(document.getElementById('ordersSection'), this);
+  hideSidebar();
+  updateMobileNavButtons(this);
+  loadOrders();
+  closeMobileMenu();
+});
+
+document.getElementById('mobileVehiclesBtn').addEventListener('click', function() {
+  showSection(document.getElementById('vehiclesSection'), this);
+  hideSidebar();
+  updateMobileNavButtons(this);
+  loadVehicles();
+  closeMobileMenu();
+});
+
+document.getElementById('mobileRetailerOrdersBtn').addEventListener('click', function() {
+  showSection(document.getElementById('retailerOrdersSection'), this);
+  hideSidebar();
+  updateMobileNavButtons(this);
+  loadRetailerOrders();
+  closeMobileMenu();
+});
+
+document.getElementById('mobileCartBtn').addEventListener('click', function() {
+  showSection(document.getElementById('cartSection'), this);
+  hideSidebar();
+  updateMobileNavButtons(this);
+  loadCart();
+  closeMobileMenu();
+});
+
+function updateMobileNavButtons(activeBtn) {
+  const mobileButtons = document.querySelectorAll('.mobile-nav-menu button');
+  mobileButtons.forEach(btn => btn.classList.remove('active'));
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+  }
+}
 
 // Profile dropdown toggle
 document.getElementById('profileBtn').addEventListener('click', function(e) {
@@ -38,14 +116,14 @@ document.addEventListener('click', function() {
   }
 });
 
+// Desktop navigation handlers
 document.getElementById('navBrowseBtn').addEventListener('click', function() {
   showSection(document.getElementById('browseSection'), this);
-  showSidebar();  // Show filters for browse section
+  showSidebar();
   updateNavButtons(this);
   loadProducts();
 });
 
-// NEW: Navbar navigation handlers (replacing old sidebar buttons)
 document.getElementById('navInventoryBtn').addEventListener('click', function() {
   showSection(document.getElementById('inventorySection'), this);
   hideSidebar();
@@ -89,11 +167,20 @@ document.getElementById('viewProfileBtn').addEventListener('click', function() {
   document.getElementById('profileMenu').classList.remove('show');
 });
 
-// NEW: Helper function to show/hide sidebar
+// Sign out handler
+document.getElementById('signoutBtn').addEventListener('click', function() {
+  if (confirm('Are you sure you want to sign out?')) {
+    localStorage.removeItem('agroChainUser');
+    window.location.href = 'login.html';
+  }
+});
+
+// Helper functions
 function hideSidebar() {
   const sidebar = document.getElementById('sidebarFilters');
   if (sidebar) {
     sidebar.style.display = 'none';
+    sidebar.classList.remove('show');
   }
   document.body.classList.add('sidebar-hidden');
   document.body.classList.remove('sidebar-visible');
@@ -108,8 +195,6 @@ function showSidebar() {
   document.body.classList.remove('sidebar-hidden');
 }
 
-
-// NEW: Helper function to update active nav buttons
 function updateNavButtons(activeBtn) {
   const navButtons = document.querySelectorAll('.navbar-center button');
   navButtons.forEach(btn => btn.classList.remove('active'));
@@ -118,7 +203,6 @@ function updateNavButtons(activeBtn) {
   }
 }
 
-// NEW: Update cart badge count
 function updateCartBadge() {
   const badge = document.getElementById('cartBadge');
   const count = cartItems ? cartItems.length : 0;
@@ -126,23 +210,32 @@ function updateCartBadge() {
   badge.style.display = count > 0 ? 'flex' : 'none';
 }
 
+// Close sidebar when clicking overlay on mobile
+mobileNavOverlay.addEventListener('click', function() {
+  const sidebar = document.getElementById('sidebarFilters');
+  if (sidebar && sidebar.classList.contains('show')) {
+    sidebar.classList.remove('show');
+    mobileNavOverlay.classList.remove('show');
+  }
+});
 
 // ===========================
-// SIDEBAR NAVIGATION
+// SECTION NAVIGATION
 // ===========================
-const sections = document.querySelectorAll(".section");
-const buttons = document.querySelectorAll(".sidebar button");
-
 function showSection(sectionToShow, activeBtn) {
   const sections = document.querySelectorAll(".section");
   sections.forEach(s => s.classList.remove("active"));
   sectionToShow.classList.add("active");
   
-  // Show sidebar only for browse section
   if (sectionToShow.id === 'browseSection') {
     showSidebar();
   } else {
     hideSidebar();
+  }
+  
+  // Scroll to top on mobile
+  if (window.innerWidth <= 768) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
 
@@ -226,17 +319,17 @@ function createVehicleCard(vehicle) {
   const statusBadgeClass = `status-${vehicle.currentStatus.toLowerCase().replace(' ', '-')}-vehicle`;
 
   const actionButtons = vehicle.currentStatus !== 'AVAILABLE' ? `
-    <div style="display: flex; gap: 10px; margin-top: 10px;">
-      <button class="btn-free" onclick="freeVehicle('${vehicle._id}')">
+    <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+      <button class="btn-free" onclick="freeVehicle('${vehicle._id}')" style="flex: 1; min-width: 120px;">
         ✓ Free Vehicle
       </button>
-      <button class="btn-delete" onclick="deleteVehicle('${vehicle._id}')">
+      <button class="btn-delete" onclick="deleteVehicle('${vehicle._id}')" style="flex: 1; min-width: 120px;">
         🗑️ Delete
       </button>
     </div>
   ` : `
     <div style="display: flex; gap: 10px; margin-top: 10px;">
-      <button class="btn-delete" onclick="deleteVehicle('${vehicle._id}')">
+      <button class="btn-delete" onclick="deleteVehicle('${vehicle._id}')" style="width: 100%;">
         🗑️ Delete
       </button>
     </div>
@@ -244,8 +337,8 @@ function createVehicleCard(vehicle) {
 
   return `
     <div class="vehicle-card ${statusClass}">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <h3 style="margin: 0; color: #1f2937;">${vehicle.vehicleId}</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+        <h3 style="margin: 0; color: #1f2937; word-break: break-word;">${vehicle.vehicleId}</h3>
         <span class="vehicle-status ${statusBadgeClass}">${vehicle.currentStatus}</span>
       </div>
       <div class="product-details">
@@ -376,9 +469,6 @@ function displayProducts(products) {
   productsGrid.innerHTML = availableProducts.map(product => createProductCard(product)).join('');
 }
 
-// ===========================
-// QUANTITY VALIDATION FUNCTION
-// ===========================
 function validateQuantity(productId, maxQuantity) {
   const input = document.getElementById(`qty-${productId}`);
   const errorDiv = document.getElementById(`qty-error-${productId}`);
@@ -485,6 +575,15 @@ function applyFilters() {
   });
 
   displayProducts(filtered);
+  
+  // Close sidebar on mobile after applying filters
+  if (window.innerWidth <= 992) {
+    const sidebar = document.getElementById('sidebarFilters');
+    if (sidebar) {
+      sidebar.classList.remove('show');
+    }
+    mobileNavOverlay.classList.remove('show');
+  }
 }
 
 // ===========================
@@ -533,103 +632,19 @@ window.onclick = (e) => {
   if (e.target === modal) {
     modal.style.display = 'none';
   }
+  
+  // Close other modals
+  const modals = document.querySelectorAll('.modal');
+  modals.forEach(m => {
+    if (e.target === m) {
+      m.style.display = 'none';
+    }
+  });
 };
 
 // ===========================
-// ORDER PLACEMENT
+// CART MANAGEMENT
 // ===========================
-
-function placeOrder(productId) {
-  const qty = parseFloat(document.getElementById(`qty-${productId}`).value);
-
-  if (!qty || qty <= 0) {
-    alert('Enter valid quantity');
-    return;
-  }
-
-  const product = allProducts.find(p => p._id === productId);
-  if (!product) return;
-
-  const newOrder = {
-    ...product,
-    quantity: qty,
-    orderId: generateUniqueOrderId(),
-    vehicleAssigned: false,
-    reviewSubmitted: false,
-    bidPlaced: false,
-    bidStatus: null
-  };
-
-  orderItems.push(newOrder);
-  localStorage.setItem("dealerOrders", JSON.stringify(orderItems));
-  alert("✅ Product successfully added to My Orders");
-}
-
-function loadOrders() {
-  const ordersGrid = document.getElementById("ordersGrid");
-
-  if (!orderItems || orderItems.length === 0) {
-    ordersGrid.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📦</div>
-        <h3>No orders yet</h3>
-        <p>Place your first order to get started</p>
-      </div>`;
-    return;
-  }
-
-  ordersGrid.innerHTML = orderItems.map(item => {
-    console.log('Order item:', item);
-
-    let actionButtons = '';
-
-    if (item.bidStatus === 'Accepted') {
-      actionButtons = `
-        <span class="bid-accepted">✓ Bid Accepted</span>
-        <button class="btn-receipt" onclick="viewReceipt('${item.orderId}')">📄 View Receipt</button>
-      `;
-    } else if (item.bidStatus === 'Rejected') {
-      actionButtons = `<span class="bid-rejected">✗ Bid Cancelled</span>`;
-    } else if (item.bidPlaced) {
-      actionButtons = `<span class="bid-pending">⏳ Bid Pending</span>`;
-    } else if (item.vehicleAssigned && !item.reviewSubmitted) {
-      actionButtons = `<button class="btn-review" onclick="openReviewModal('${item._id}', '${item.varietySpecies}', '${item.orderId}')">⭐ Add Review</button>`;
-    } else if (item.vehicleAssigned && item.reviewSubmitted && !item.bidPlaced) {
-      if (item.orderId) {
-        actionButtons = `<button class="btn-bid" onclick="openBidModal('${item._id}', '${item.varietySpecies}', ${item.targetPrice}, '${item.unitOfSale}', '${item.orderId}')">💰 Place Bid</button>`;
-      } else {
-        actionButtons = `<span style="color: #dc2626;">Error: Order ID missing</span>`;
-        console.error('Order item missing orderId:', item);
-      }
-    } else {
-      if (item.orderId) {
-        actionButtons = `<button class="btn-assign" onclick="openAssignVehicleModal('${item._id}', '${item.farmerEmail}', '${item.orderId}')">Assign Vehicle</button>`;
-      } else {
-        actionButtons = `<span style="color: #dc2626;">Error: Order ID missing</span>`;
-        console.error('Order item missing orderId:', item);
-      }
-    }
-
-    return `
-      <div class="order-item">
-        <img src="${item.imageUrl}" alt="${item.varietySpecies}" class="order-image">
-        <div class="order-info">
-          <h4>${item.varietySpecies}</h4>
-          <p>${item.productType}</p>
-          <p>₹${item.targetPrice} per ${item.unitOfSale}</p>
-          <p><b>Quantity:</b> ${item.quantity}</p>
-          ${item.orderId ? `<p style="font-size: 12px; color: #6b7280;"><b>Order ID:</b> ${item.orderId.substring(0, 8)}...</p>` : ''}
-          ${item.bidPrice ? `<p><b>Your Bid:</b> ₹${item.bidPrice} per ${item.unitOfSale}</p>` : ''}
-          ${item.reviewSubmitted ? `<p style="color: #10b981; font-size: 12px;">✓ Review Submitted</p>` : ''}
-        </div>
-        <div class="order-actions">
-          ${actionButtons}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
 function addToCart(productId) {
   const qtyInput = document.getElementById(`qty-${productId}`);
   const qty = parseFloat(qtyInput.value);
@@ -738,9 +753,10 @@ function orderFromCart(productId) {
 
   orderItems.push(newOrder);
   localStorage.setItem("dealerOrders", JSON.stringify(orderItems));
-  alert("✅ Order placed successfully!");
+  alert("✅ Proceed to My Orders to Assign a Vehicle!");
   removeFromCart(productId);
 
+  const ordersSection = document.getElementById('ordersSection');
   if (ordersSection.classList.contains('active')) {
     loadOrders();
   }
@@ -749,9 +765,76 @@ function orderFromCart(productId) {
 }
 
 // ===========================
+// ORDER MANAGEMENT
+// ===========================
+function loadOrders() {
+  const ordersGrid = document.getElementById("ordersGrid");
+
+  if (!orderItems || orderItems.length === 0) {
+    ordersGrid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h3>No orders yet</h3>
+        <p>Place your first order to get started</p>
+      </div>`;
+    return;
+  }
+
+  ordersGrid.innerHTML = orderItems.map(item => {
+    console.log('Order item:', item);
+
+    let actionButtons = '';
+
+    if (item.bidStatus === 'Accepted') {
+      actionButtons = `
+        <span class="bid-accepted">✓ Bid Accepted</span>
+        <button class="btn-receipt" onclick="viewReceipt('${item.orderId}')">📄 View Receipt</button>
+      `;
+    } else if (item.bidStatus === 'Rejected') {
+      actionButtons = `<span class="bid-rejected">✗ Bid Cancelled</span>`;
+    } else if (item.bidPlaced) {
+      actionButtons = `<span class="bid-pending">⏳ Bid Pending</span>`;
+    } else if (item.vehicleAssigned && !item.reviewSubmitted) {
+      actionButtons = `<button class="btn-review" onclick="openReviewModal('${item._id}', '${item.varietySpecies}', '${item.orderId}')">⭐ Add Review</button>`;
+    } else if (item.vehicleAssigned && item.reviewSubmitted && !item.bidPlaced) {
+      if (item.orderId) {
+        actionButtons = `<button class="btn-bid" onclick="openBidModal('${item._id}', '${item.varietySpecies}', ${item.targetPrice}, '${item.unitOfSale}', '${item.orderId}')">💰 Place Bid</button>`;
+      } else {
+        actionButtons = `<span style="color: #dc2626;">Error: Order ID missing</span>`;
+        console.error('Order item missing orderId:', item);
+      }
+    } else {
+      if (item.orderId) {
+        actionButtons = `<button class="btn-assign" onclick="openAssignVehicleModal('${item._id}', '${item.farmerEmail}', '${item.orderId}')">Assign Vehicle</button>`;
+      } else {
+        actionButtons = `<span style="color: #dc2626;">Error: Order ID missing</span>`;
+        console.error('Order item missing orderId:', item);
+      }
+    }
+
+    return `
+      <div class="order-item">
+        <img src="${item.imageUrl}" alt="${item.varietySpecies}" class="order-image">
+        <div class="order-info">
+          <h4>${item.varietySpecies}</h4>
+          <p>${item.productType}</p>
+          <p>₹${item.targetPrice} per ${item.unitOfSale}</p>
+          <p><b>Quantity:</b> ${item.quantity}</p>
+          ${item.orderId ? `<p style="font-size: 12px; color: #6b7280;"><b>Order ID:</b> ${item.orderId.substring(0, 8)}...</p>` : ''}
+          ${item.bidPrice ? `<p><b>Your Bid:</b> ₹${item.bidPrice} per ${item.unitOfSale}</p>` : ''}
+          ${item.reviewSubmitted ? `<p style="color: #10b981; font-size: 12px;">✓ Review Submitted</p>` : ''}
+        </div>
+        <div class="order-actions">
+          ${actionButtons}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===========================
 // VEHICLE ASSIGNMENT
 // ===========================
-
 async function openAssignVehicleModal(productId, farmerEmail, orderId) {
   selectedProductId = productId;
   selectedFarmerEmail = farmerEmail;
@@ -786,8 +869,8 @@ function closeAssignVehicleModal() {
 // Async Function
 
 async function confirmAssignVehicle() {
-  const vehicleId = document.getElementById("vehicleSelect").value;
-  const tentativeDate = document.getElementById("tentativeDate").value;
+  const vehicleId = document.getElementById("vehicleSelect").value;  // ← FIX: Read from vehicleSelect dropdown
+  const tentativeDate = document.getElementById("tentativeDate").value;  // ← FIX: Read from date input
 
   if (!vehicleId || !tentativeDate) {
     alert("Please select vehicle and tentative date!");
@@ -817,9 +900,9 @@ async function confirmAssignVehicle() {
         dealerEmail: currentUser.email,
         productId: selectedProductId,
         farmerEmail: selectedFarmerEmail,
-        vehicleId,
+        vehicleId: vehicleId,  // Now correctly reading from dropdown
         quantity: orderItem.quantity,
-        tentativeDate
+        tentativeDate: tentativeDate  // Now correctly reading from date input
       })
     });
 
@@ -837,7 +920,7 @@ async function confirmAssignVehicle() {
       loadOrders();
       loadVehicles();
     } else {
-      alert("⌛ Error assigning vehicle: " + result.msg);
+      alert("❌ Error assigning vehicle: " + result.msg);
     }
   } catch (error) {
     console.error("Error in confirmAssignVehicle:", error);
