@@ -313,7 +313,7 @@ async function loadVehicles() {
     `;
   }
 }
-
+// DYNAMIC HTML
 function createVehicleCard(vehicle) {
   const statusClass = `vehicle-${vehicle.currentStatus.toLowerCase().replace(' ', '-')}`;
   const statusBadgeClass = `status-${vehicle.currentStatus.toLowerCase().replace(' ', '-')}-vehicle`;
@@ -449,7 +449,7 @@ async function loadProducts() {
     browseMessage.innerHTML = `<p style="color:red;">Network error loading products</p>`;
   }
 }
-
+// DYNAMIC HTML
 function displayProducts(products) {
   const productsGrid = document.getElementById('productsGrid');
 
@@ -487,7 +487,7 @@ function validateQuantity(productId, maxQuantity) {
     errorDiv.style.display = 'none';
   }
 }
-
+// DYNAMIC HTML
 function createProductCard(product) {
   if (product.harvestQuantity <= 0) {
     return '';
@@ -1213,7 +1213,7 @@ async function loadInventory() {
     inventoryGrid.innerHTML = `<div class="empty-state"><h3>Error loading inventory. Please refresh.</h3></div>`;
   }
 }
-
+// DYNAMIC HTML
 function createInventoryCard(item) {
   const unitPrice = parseFloat(item.unitPrice) || 0;
   const quantity = parseFloat(item.quantity) || 0;
