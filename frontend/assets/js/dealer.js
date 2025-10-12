@@ -154,6 +154,8 @@ function generateUniqueOrderId() {
 // VEHICLE MANAGEMENT
 // ===========================
 
+// Async Function
+
 document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -185,6 +187,9 @@ document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
     showMessage('vehicleMessage', 'Network error. Please try again.', 'error');
   }
 });
+
+
+// Async Function
 
 async function loadVehicles() {
   try {
@@ -264,6 +269,8 @@ function createVehicleCard(vehicle) {
   `;
 }
 
+// Async Function
+
 async function freeVehicle(vehicleId) {
   if (!confirm('Are you sure you want to free this vehicle? The order will be cancelled.')) {
     return;
@@ -288,6 +295,8 @@ async function freeVehicle(vehicleId) {
     alert('Network error. Please try again.');
   }
 }
+
+// Async Function
 
 async function deleteVehicle(vehicleId) {
   if (!confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) {
@@ -317,6 +326,8 @@ async function deleteVehicle(vehicleId) {
 // ===========================
 // BROWSE PRODUCTS
 // ===========================
+
+// Async Function
 
 async function loadProducts() {
   const productsGrid = document.getElementById("productsGrid");
@@ -479,6 +490,8 @@ function applyFilters() {
 // ===========================
 // FARMER DETAILS MODAL
 // ===========================
+
+// Async Function
 
 async function showFarmerDetails(email) {
   const modal = document.getElementById('farmerModal');
@@ -770,6 +783,8 @@ function closeAssignVehicleModal() {
   document.getElementById("assignVehicleModal").style.display = "none";
 }
 
+// Async Function
+
 async function confirmAssignVehicle() {
   const vehicleId = document.getElementById("vehicleSelect").value;
   const tentativeDate = document.getElementById("tentativeDate").value;
@@ -850,6 +865,8 @@ function closeReviewModal() {
   currentReviewProductId = null;
   currentReviewOrderId = null;
 }
+
+// Async Function
 
 document.getElementById('reviewForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -943,6 +960,8 @@ function closeBidModal() {
   document.getElementById('bidForm').reset();
   currentBidOrderId = null;
 }
+
+// Async Function
 
 document.getElementById('bidForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -1069,6 +1088,8 @@ function printReceipt() {
 // ===========================
 // INVENTORY MANAGEMENT
 // ===========================
+
+// Async Function
 
 async function loadInventory() {
   const inventoryGrid = document.getElementById("inventoryGrid");
@@ -1203,6 +1224,7 @@ function addToInventory(order) {
   loadInventory();
 }
 
+// Async Function
 async function changeInventoryPrice(inventoryId) {
     const item = inventory.find(i => i._id === inventoryId);
     if (!item) {
@@ -1245,6 +1267,8 @@ async function changeInventoryPrice(inventoryId) {
         alert('Network error. Please try again.');
     }
 }
+
+// Async Function
 
 async function reduceInventoryQuantity(inventoryId) {
     const item = inventory.find(i => i._id === inventoryId);
@@ -1299,6 +1323,8 @@ async function reduceInventoryQuantity(inventoryId) {
         alert('Network error. Please try again.');
     }
 }
+
+// Async Function
 
 async function removeFromInventory(inventoryId) {
     const item = inventory.find(i => i._id === inventoryId);
@@ -1478,6 +1504,8 @@ function closeViewReviewsModal() {
 // RETAILER ORDER MANAGEMENT
 // ===========================
 
+// Async Function
+
 async function loadRetailerOrders() {
     const grid = document.getElementById('retailerOrdersGrid');
     grid.innerHTML = `<p>Loading orders from retailers...</p>`;
@@ -1580,6 +1608,8 @@ async function loadRetailerOrders() {
 // PROFILE
 // ===========================
 
+// Async Function
+
 async function loadProfile() {
   try {
     const response = await fetch(`http://localhost:3000/api/dealer/profile/${currentUser.email}`);
@@ -1638,6 +1668,8 @@ function showMessage(elementId, message, type) {
 // POLLING FOR BID UPDATES
 // ===========================
 
+// Async Function
+
 async function checkBidUpdates() {
   try {
     const response = await fetch(`http://localhost:3000/api/dealer/orders/${currentUser.email}`);
@@ -1686,6 +1718,8 @@ async function checkBidUpdates() {
 }
 
 setInterval(checkBidUpdates, 10000);
+
+// Async Function
 
 setInterval(async () => {
   if (browseSection.classList.contains('active')) {
