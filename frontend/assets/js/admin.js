@@ -66,7 +66,7 @@ document.getElementById("signoutBtn").addEventListener("click", () => {
 // ===========================
 async function loadStats() {
   try {
-    const res = await fetch("http://localhost:3000/api/admin/stats");
+    const res = await fetch(" https://agrochain-i1h0.onrender.com/api/admin/stats");
     const data = await res.json();
     
     if (res.ok) {
@@ -334,7 +334,7 @@ async function loadUsers() {
   container.innerHTML = `<p class="loading-text">⏳ Loading users...</p>`;
   
   try {
-    const res = await fetch("http://localhost:3000/api/admin/users");
+    const res = await fetch(" https://agrochain-i1h0.onrender.com/api/admin/users");
     const users = await res.json();
     
     if (res.ok) {
@@ -478,7 +478,7 @@ async function deleteUser(id) {
   if (!confirm("⚠️ Are you sure you want to permanently delete this user?\n\nThis action cannot be undone!")) return;
   
   try {
-    const res = await fetch(`http://localhost:3000/api/admin/users/${id}`, { 
+    const res = await fetch(` https://agrochain-i1h0.onrender.com/api/admin/users/${id}`, { 
       method: "DELETE" 
     });
     
@@ -501,7 +501,7 @@ async function deactivateUser(id) {
   if (!confirm(`Are you sure you want to ${action} this user?`)) return;
   
   try {
-    const res = await fetch(`http://localhost:3000/api/admin/deactivate/${id}`, { 
+    const res = await fetch(` https://agrochain-i1h0.onrender.com/api/admin/deactivate/${id}`, { 
       method: "PUT" 
     });
     
@@ -566,7 +566,7 @@ async function loadLogs() {
   container.innerHTML = `<p class="loading-text">⏳ Loading activity logs...</p>`;
   
   try {
-    const res = await fetch("http://localhost:3000/api/admin/logs");
+    const res = await fetch(" https://agrochain-i1h0.onrender.com/api/admin/logs");
     const logs = await res.json();
     
     if (res.ok) {

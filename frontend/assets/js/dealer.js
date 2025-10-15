@@ -261,7 +261,7 @@ document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
   };
 
   try {
-    const response = await fetch(`http://localhost:3000/api/dealer/vehicles/${currentUser.email}`, {
+    const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/vehicles/${currentUser.email}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(vehicleData)
@@ -286,7 +286,7 @@ document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
 
 async function loadVehicles() {
   try {
-    const response = await fetch(`http://localhost:3000/api/dealer/vehicles/${currentUser.email}`);
+    const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/vehicles/${currentUser.email}`);
     const vehicles = await response.json();
 
     const vehiclesGrid = document.getElementById('vehiclesGrid');
@@ -370,7 +370,7 @@ async function freeVehicle(vehicleId) {
   }
 
   try {
-    const response = await fetch(`http://localhost:3000/api/dealer/vehicles/free/${currentUser.email}/${vehicleId}`, {
+    const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/vehicles/free/${currentUser.email}/${vehicleId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -397,7 +397,7 @@ async function deleteVehicle(vehicleId) {
   }
 
   try {
-    const response = await fetch(`http://localhost:3000/api/dealer/vehicles/${currentUser.email}/${vehicleId}`, {
+    const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/vehicles/${currentUser.email}/${vehicleId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -428,7 +428,7 @@ async function loadProducts() {
   productsGrid.innerHTML = `<p>Loading products...</p>`;
 
   try {
-    const response = await fetch("http://localhost:3000/api/dealer/all-products");
+    const response = await fetch("https://agrochain-i1h0.onrender.com/api/dealer/all-products");
     const data = await response.json();
 
     if (!response.ok) {
@@ -599,7 +599,7 @@ async function showFarmerDetails(email) {
   modal.style.display = 'block';
 
   try {
-    const response = await fetch(`http://localhost:3000/api/farmer/profile/${email}`);
+    const response = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/profile/${email}`);
     const data = await response.json();
 
     if (response.ok) {
@@ -843,7 +843,7 @@ async function openAssignVehicleModal(productId, farmerEmail, orderId) {
   const modal = document.getElementById("assignVehicleModal");
   modal.style.display = "block";
 
-  const response = await fetch(`http://localhost:3000/api/dealer/vehicles/${currentUser.email}`);
+  const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/vehicles/${currentUser.email}`);
   let vehicles = [];
 
   if (response.ok) {
@@ -893,7 +893,7 @@ async function confirmAssignVehicle() {
   }
 
   try {
-    const response = await fetch("http://localhost:3000/api/dealer/assign-vehicle", {
+    const response = await fetch("https://agrochain-i1h0.onrender.com/api/dealer/assign-vehicle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -964,7 +964,7 @@ document.getElementById('reviewForm').addEventListener('submit', async (e) => {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/api/dealer/submit-review', {
+    const response = await fetch('https://agrochain-i1h0.onrender.com/api/dealer/submit-review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1070,7 +1070,7 @@ document.getElementById('bidForm').addEventListener('submit', async (e) => {
   });
 
   try {
-    const response = await fetch('http://localhost:3000/api/dealer/place-bid', {
+    const response = await fetch('https://agrochain-i1h0.onrender.com/api/dealer/place-bid', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1179,7 +1179,7 @@ async function loadInventory() {
   inventoryGrid.innerHTML = `<p>Loading inventory...</p>`;
 
   try {
-    const response = await fetch(`http://localhost:3000/api/dealer/profile/${currentUser.email}`);
+    const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/profile/${currentUser.email}`);
     const dealerData = await response.json();
 
     if (!response.ok) {
@@ -1327,7 +1327,7 @@ async function changeInventoryPrice(inventoryId) {
     }
 
     try {
-        const response = await fetch(`http://localhost:3000/api/dealer/inventory/update-price`, {
+        const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/inventory/update-price`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1374,7 +1374,7 @@ async function reduceInventoryQuantity(inventoryId) {
     }
 
     try {
-        const response = await fetch(`http://localhost:3000/api/dealer/inventory/update-quantity`, {
+        const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/inventory/update-quantity`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1418,7 +1418,7 @@ async function removeFromInventory(inventoryId) {
     }
 
     try {
-        const response = await fetch(`http://localhost:3000/api/dealer/inventory/remove`, {
+        const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/inventory/remove`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1595,7 +1595,7 @@ async function loadRetailerOrders() {
 
     try {
         console.log('📥 Fetching retailer orders for:', currentUser.email);
-        const response = await fetch(`http://localhost:3000/api/dealer/retailer-orders/${currentUser.email}`);
+        const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/retailer-orders/${currentUser.email}`);
         const orders = await response.json();
 
         console.log('📊 Response status:', response.status);
@@ -1695,7 +1695,7 @@ async function loadRetailerOrders() {
 
 async function loadProfile() {
   try {
-    const response = await fetch(`http://localhost:3000/api/dealer/profile/${currentUser.email}`);
+    const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/profile/${currentUser.email}`);
     const data = await response.json();
 
     if (response.ok) {
@@ -1755,7 +1755,7 @@ function showMessage(elementId, message, type) {
 
 async function checkBidUpdates() {
   try {
-    const response = await fetch(`http://localhost:3000/api/dealer/orders/${currentUser.email}`);
+    const response = await fetch(`https://agrochain-i1h0.onrender.com/api/dealer/orders/${currentUser.email}`);
     const serverOrders = await response.json();
 
     if (response.ok && Array.isArray(serverOrders)) {
@@ -1807,7 +1807,7 @@ setInterval(checkBidUpdates, 10000);
 setInterval(async () => {
   if (browseSection.classList.contains('active')) {
     try {
-      const response = await fetch("http://localhost:3000/api/dealer/all-products");
+      const response = await fetch("https://agrochain-i1h0.onrender.com/api/dealer/all-products");
       const data = await response.json();
 
       if (response.ok) {

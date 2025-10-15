@@ -155,7 +155,7 @@ function showSection(section, sectionName) {
 // ===========================
 async function loadProfile() {
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/profile/${userEmail}`);
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/profile/${userEmail}`);
     const data = await res.json();
 
     if (res.ok) {
@@ -218,7 +218,7 @@ document.getElementById("editProfileForm").addEventListener("submit", async (e) 
   };
 
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/profile/${userEmail}`, {
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/profile/${userEmail}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedDetails),
@@ -260,7 +260,7 @@ async function loadCrops() {
     addBtn.style.opacity = '0.6';
     addBtn.style.cursor = 'not-allowed';
 
-    const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}`);
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/crops/${userEmail}`);
     const crops = await res.json();
 
     // Store all crops for reference
@@ -346,8 +346,8 @@ cropForm.addEventListener("submit", async (e) => {
     }
 
     const endpoint = editingCropId 
-      ? `http://localhost:3000/api/farmer/crops/${userEmail}/${editingCropId}`
-      : `http://localhost:3000/api/farmer/crops/${userEmail}`;
+      ? `https://agrochain-i1h0.onrender.com/api/farmer/crops/${userEmail}/${editingCropId}`
+      : `https://agrochain-i1h0.onrender.com/api/farmer/crops/${userEmail}`;
     
     const method = editingCropId ? "PUT" : "POST";
 
@@ -514,7 +514,7 @@ async function deleteCrop(cropId) {
   if (!confirm("Are you sure you want to delete this product?")) return;
   
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/crops/${userEmail}/${cropId}`, { 
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/crops/${userEmail}/${cropId}`, { 
       method: "DELETE" 
     });
     
@@ -569,7 +569,7 @@ document.querySelectorAll('#cropForm input, #cropForm select, #cropForm textarea
 
 async function loadFarmerOrders() {
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/orders/${userEmail}`);
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/orders/${userEmail}`);
     
     const data = await res.json(); 
 
@@ -707,7 +707,7 @@ async function acceptBid(orderId) {
   if (!confirm('Are you sure you want to accept this bid?')) return;
   
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/accept-bid/${userEmail}`, {
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/accept-bid/${userEmail}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderId })
@@ -732,7 +732,7 @@ async function rejectBid(orderId) {
   if (!confirm('Are you sure you want to reject this bid? The product will become available again.')) return;
   
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/reject-bid/${userEmail}`, {
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/reject-bid/${userEmail}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderId })
@@ -758,7 +758,7 @@ async function rejectBid(orderId) {
 
 async function viewFarmerReceipt(orderId) {
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/orders/${userEmail}`);
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/orders/${userEmail}`);
     const contentType = res.headers.get("content-type");
     let orders;
     if (contentType && contentType.indexOf("application/json") !== -1) {
@@ -837,7 +837,7 @@ async function markNotificationsAsRead() {
   try {
     await loadNotifications();
     
-    const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}/mark-read`, {
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/notifications/${userEmail}/mark-read`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -856,7 +856,7 @@ async function markNotificationsAsRead() {
 
 async function loadNotifications() {
   try {
-    const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}`);
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/notifications/${userEmail}`);
     const notifications = await res.json();
 
     notificationsList.innerHTML = "";
@@ -910,7 +910,7 @@ async function markSingleNotificationAsRead(button) {
     button.disabled = true;
     button.textContent = '⏳ Marking...';
     
-    const res = await fetch(`http://localhost:3000/api/farmer/notifications/${userEmail}/mark-read`, {
+    const res = await fetch(`https://agrochain-i1h0.onrender.com/api/farmer/notifications/${userEmail}/mark-read`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

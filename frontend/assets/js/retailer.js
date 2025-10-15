@@ -86,7 +86,7 @@ async function loadInventory() {
   const inventoryGrid = document.getElementById("inventoryGrid");
   inventoryGrid.innerHTML = `<p>Loading products...</p>`;
   try {
-    const response = await fetch("http://localhost:3000/api/retailer/dealer-inventory");
+    const response = await fetch("https://agrochain-i1h0.onrender.com/api/retailer/dealer-inventory");
     const data = await response.json();
     if (response.ok) {
       allInventory = data;
@@ -246,7 +246,7 @@ async function handleCheckout() {
     }
     if (!confirm('Are you sure you want to place this order?')) return;
     try {
-        const response = await fetch('http://localhost:3000/api/retailer/place-order', {
+        const response = await fetch('https://agrochain-i1h0.onrender.com/api/retailer/place-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -279,7 +279,7 @@ async function displayOrders() {
     const ordersGrid = document.getElementById('ordersGrid');
     ordersGrid.innerHTML = `<p>Loading your orders...</p>`;
     try {
-        const response = await fetch(`http://localhost:3000/api/retailer/orders/${currentUser.email}`);
+        const response = await fetch(`https://agrochain-i1h0.onrender.com/api/retailer/orders/${currentUser.email}`);
         const orders = await response.json();
         retailerOrders = orders;
         if (response.ok) {
@@ -432,7 +432,7 @@ async function confirmPayment() {
     if (!currentPaymentOrder) return;
     const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
     try {
-        const response = await fetch(`http://localhost:3000/api/retailer/orders/${currentPaymentOrder._id}/complete-payment`, {
+        const response = await fetch(`https://agrochain-i1h0.onrender.com/api/retailer/orders/${currentPaymentOrder._id}/complete-payment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -522,7 +522,7 @@ reviewForm.addEventListener('submit', async (e) => {
     }
     
     try {
-        const response = await fetch('http://localhost:3000/api/retailer/submit-review', {
+        const response = await fetch('https://agrochain-i1h0.onrender.com/api/retailer/submit-review', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -762,7 +762,7 @@ function applyFilters() {
 async function loadProfile() {
     const profileInfo = document.getElementById('profileInfo');
     try {
-        const response = await fetch(`http://localhost:3000/api/auth/profile/${currentUser.email}`);
+        const response = await fetch(`https://agrochain-i1h0.onrender.com/api/auth/profile/${currentUser.email}`);
         const data = await response.json();
         if (response.ok) {
             profileInfo.innerHTML = `

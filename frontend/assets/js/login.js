@@ -77,7 +77,7 @@ function redirectToRolePage(role, email) {
 function handleGoogleLogin(response) {
   const credential = response.credential;
 
-  fetch("http://localhost:3000/api/auth/login-google", {
+  fetch("https://agrochain-i1h0.onrender.com/api/auth/login-google", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token: credential }),
@@ -113,7 +113,7 @@ document.getElementById("sendOtpBtn").addEventListener("click", async () => {
   btn.textContent = "Sending...";
 
   try {
-    const res = await fetch("http://localhost:3000/api/auth/send-login-otp", {
+    const res = await fetch("https://agrochain-i1h0.onrender.com/api/auth/send-login-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -149,7 +149,7 @@ document.getElementById("verifyOtpBtn").addEventListener("click", async () => {
   btn.textContent = "Verifying...";
 
   try {
-    const res = await fetch("http://localhost:3000/api/auth/verify-login-otp", {
+    const res = await fetch("https://agrochain-i1h0.onrender.com/api/auth/verify-login-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otp }),

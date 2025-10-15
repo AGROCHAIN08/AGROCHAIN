@@ -86,7 +86,7 @@ document.getElementById("next1").addEventListener("click", () => {
 window.handleGoogleSignIn = function(response) { // Use window.functionName for GSI callback
   const credential = response.credential;
   
-  fetch("http://localhost:3000/api/auth/verify-google", {
+  fetch("https://agrochain-i1h0.onrender.com/api/auth/verify-google", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token: credential })
@@ -130,7 +130,7 @@ document.getElementById("sendOtpBtn").addEventListener("click", async () => {
   sendBtn.textContent = "Sending...";
   
   try {
-    const response = await fetch("http://localhost:3000/api/auth/send-otp", {
+    const response = await fetch("https://agrochain-i1h0.onrender.com/api/auth/send-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email })
@@ -174,7 +174,7 @@ document.getElementById("verifyOtpBtn").addEventListener("click", async () => {
   verifyBtn.textContent = "Verifying...";
   
   try {
-    const response = await fetch("http://localhost:3000/api/auth/verify-otp", {
+    const response = await fetch("https://agrochain-i1h0.onrender.com/api/auth/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otp })
@@ -336,7 +336,7 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
       const data = Object.fromEntries(formData);
       data.googleToken = googleCredential;
       
-      response = await fetch("http://localhost:3000/api/auth/signup-google", {
+      response = await fetch("https://agrochain-i1h0.onrender.com/api/auth/signup-google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -347,7 +347,7 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
       const data = Object.fromEntries(formData);
       data.emailVerified = emailVerified;
       
-      response = await fetch("http://localhost:3000/api/auth/signup", {
+      response = await fetch("https://agrochain-i1h0.onrender.com/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
