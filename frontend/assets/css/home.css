@@ -59,7 +59,7 @@ html {
 }
 /* ADDED: Style for the 'Chain' part of the brand name */
 .brand-name .chain-text {
-    color: #81c784; 
+    color: #42b148; 
 }
 
 /* Mobile Menu Toggle Button */
@@ -80,7 +80,7 @@ html {
 }
 
 .nav-center .nav-link {
-    color: #FFD700; /* MODIFIED: Set link color to yellow */
+    color: #33a538; /* MODIFIED: Set link color to yellow */
     text-decoration: none;
     font-size: 1.05em;
     font-weight: 500;
@@ -95,7 +95,7 @@ html {
     height: 2px;
     bottom: -5px;
     left: 0;
-    background-color: #81c784;
+    background-color: #FFD700;
     transition: width 0.3s ease;
 }
 
@@ -266,9 +266,9 @@ html {
 .image-top-left {
     width: 200px;
     height: 200px;
-    top: 0;
+    top: -35px;
     /* Adjusted to previous near-center-left placement */
-    left: -700%; 
+    left: -140%; 
     z-index: 4;
 }
 
@@ -651,7 +651,7 @@ html {
 
 .footer-column h3 {
     font-size: 1.2em;
-    color: yellow; 
+    color: #FFD700; 
     margin-bottom: 20px;
     font-weight: 600;
 }
@@ -681,7 +681,7 @@ html {
 
 .footer-column p i {
     margin-right: 10px;
-    color: yellow;
+    color: #FFD700;
     width: 15px; 
 }
 
@@ -698,7 +698,7 @@ html {
 }
 
 .social-icons a:hover {
-    color: yellow;
+    color: #FFD700;
 }
 
 .footer-bottom {

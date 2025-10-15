@@ -14,7 +14,7 @@ body {
     min-height: 100vh;
 }
 
-/* Navbar Styling (Modified for color change) */
+/* Navbar Styling - Enhanced for Mobile */
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -26,30 +26,18 @@ body {
     position: sticky;
     top: 0;
     z-index: 1000;
+    flex-wrap: wrap;
 }
 
 .nav-left {
     display: flex;
     align-items: center;
+    gap: 10px;
 }
-
-/* ------------------------------------------------------------------ */
-/* NEW CSS ADDITION FOR FUNCTIONALITY WITHOUT STYLE CHANGE */
-/* Targets the new anchor tag to remove default link styles (underline, blue color) */
-.nav-left .brand-link {
-    text-decoration: none;
-    display: flex; /* Keeps the logo and text aligned */
-    align-items: center;
-    cursor: pointer;
-    /* Prevent the anchor tag from overriding the colors defined in .brand-name */
-    color: inherit; 
-}
-/* ------------------------------------------------------------------ */
 
 .logo {
     width: 45px;
     height: 45px;
-    margin-left: 12px;
 }
 
 /* MODIFIED: brand-name to use a span for 'Chain' for split color */
@@ -60,17 +48,28 @@ body {
 }
 /* ADDED: Style for the 'Chain' part of the brand name */
 .brand-name .chain-text {
-    color: #81c784; 
+    color: #42b148; 
 }
 
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    color: #FFD700;
+    cursor: pointer;
+    padding: 5px;
+}
 
 .nav-center {
     display: flex;
     gap: 30px;
+    align-items: center;
 }
 
 .nav-center .nav-link {
-    color: #FFD700; /* MODIFIED: Set link color to yellow */
+    color: #33a538; /* MODIFIED: Set link color to yellow */
     text-decoration: none;
     font-size: 1.05em;
     font-weight: 500;
@@ -85,7 +84,7 @@ body {
     height: 2px;
     bottom: -5px;
     left: 0;
-    background-color: #81c784;
+    background-color: #FFD700;
     transition: width 0.3s ease;
 }
 
@@ -96,6 +95,7 @@ body {
 .nav-right {
     display: flex;
     gap: 10px;
+    align-items: center;
 }
 
 .nav-right .btn {
@@ -108,6 +108,7 @@ body {
     transition: all 0.3s ease;
     font-weight: 600;
     font-size: 0.95em;
+    white-space: nowrap;
 }
 
 .nav-right .btn:hover {
@@ -127,6 +128,7 @@ body {
 }
 
 
+
 /* Header Section */
 .about-header {
     background: linear-gradient(90deg, #2e7d32, #4caf50);
@@ -136,6 +138,7 @@ body {
 }
 
 .about-header h1 {
+    color: #FFD700;
     font-size: 2.5em;
     font-weight: 700;
     margin-bottom: 10px;
@@ -257,7 +260,7 @@ body {
 .team-title {
     text-align: center;
     font-size: 2.5em;
-    color: green;
+    color: rgb(18, 144, 18);
     margin-bottom: 10px;
     font-weight: 700;
 }
@@ -265,7 +268,7 @@ body {
 .team-underline {
     width: 120px;
     height: 4px;
-    background-color: green;
+    background-color: #FFD700;
     border-radius: 2px;
     margin: 0 auto 50px;
 }
@@ -342,13 +345,7 @@ body {
 /* -------------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------------- */
-/* MODIFIED: Increased scale and rotation for a stronger 'pop outside' effect */
-.team-card:hover .team-image {
-    border-color: green;
-    border-radius: 10px; 
-    /* Increased scale to 1.1 (10% larger) for a clear "pop" */
-    transform: scale(1.1) rotate(2deg); 
-}
+
 /* -------------------------------------------------------------------------------- */
 
 .team-image img {
@@ -365,7 +362,7 @@ body {
 }
 
 .team-role {
-    color: yellowgreen;
+    color: green;
     font-weight: 600;
     font-size: 1.05em;
     margin-bottom: 15px;
@@ -473,6 +470,8 @@ body {
     margin: 30px auto 0;
 }
 
+
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .team-container,
@@ -489,18 +488,57 @@ body {
 @media (max-width: 900px) {
     /* Responsive nav bar for smaller screens */
     .navbar {
-        padding: 10px 20px;
+        padding: 15px 20px;
     }
-    .navbar-links {
-        display: none; 
+    
+    .mobile-menu-toggle {
+        display: block;
+        order: 3;
     }
-    .navbar-logo {
-        font-size: 1.5em;
+    
+    .nav-center {
+        display: none;
+        flex-basis: 100%;
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px 0;
+        order: 4;
+    }
+    
+    .nav-center.active {
+        display: flex;
+    }
+    
+    .nav-right {
+        order: 2;
+        gap: 8px;
+    }
+    
+    .nav-right .btn {
+        padding: 8px 15px;
+        font-size: 0.9em;
     }
 }
 
 
 @media (max-width: 768px) {
+     .navbar {
+        padding: 12px 15px;
+    }
+    
+    .brand-name {
+        font-size: 1.2em;
+    }
+    
+    .logo {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .nav-right .btn {
+        padding: 6px 12px;
+        font-size: 0.85em;
+    }
     .about-header h1 {
         font-size: 2em;
     }
@@ -548,6 +586,15 @@ body {
 }
 
 @media (max-width: 480px) {
+     .brand-name {
+        font-size: 1.1em;
+    }
+    
+    .logo {
+        width: 32px;
+        height: 32px;
+    }
+    
     .about-header {
         padding: 60px 15px;
     }
